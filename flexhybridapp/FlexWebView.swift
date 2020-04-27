@@ -36,6 +36,14 @@ open class FlexWebView : WKWebView {
         super.init(frame: frame, configuration: mComponent.config)
         mComponent.afterWebViewInit(self)
     }
+    
+    public func evalFlexFunc(_ funcName: String) {
+        mComponent.evalJS("$flex.web.\(funcName)()")
+    }
+    
+    public func evalFlexFunc(_ funcName: String, prompt: String) {
+        mComponent.evalJS("$flex.web.\(funcName)(\(prompt))")
+    }
         
     public func getComponent() -> FlexComponent {
         mComponent
@@ -63,6 +71,9 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
     open var config: WKWebViewConfiguration = WKWebViewConfiguration()
     
     fileprivate func beforeWebViewInit() {
+        for n in FlexString.FLEX_LOGS {
+            config.userContentController.add(self, name: n)
+        }
         for (n, _) in interfaces {
             config.userContentController.add(self, name: n)
         }
@@ -73,7 +84,7 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
         checkDelegateChange()
         do {
             jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.min.js", encoding: .utf8)
-            jsString = jsString?.replacingOccurrences(of: "keysfromios", with: "'[\"" + interfaces.keys.joined(separator: "\",\"") + "\"]'")
+            jsString = jsString?.replacingOccurrences(of: "keysfromios", with: "'[\"\(FlexString.FLEX_LOGS.joined(separator: "\",\""))\",\"\( interfaces.keys.joined(separator: "\",\""))\"]'")
         } catch {
             FlexMsg.err(error.localizedDescription)
         }
@@ -88,7 +99,7 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
         }
     }
     
-    private func evalJS(_ js: String) {
+    fileprivate func evalJS(_ js: String) {
         DispatchQueue.main.async {
             self.flexWebView?.evaluateJavaScript(js, completionHandler: { (result, error) in
                 if error != nil {
@@ -98,9 +109,12 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
         }
     }
     
-    
             
     public func addInterface(_ name: String, _ action: @escaping (_ propertys: Array<Any?>?) -> String?) {
+        if name.contains("flex") {
+            FlexMsg.err(FlexString.ERROR3)
+            return
+        }
         if flexWebView != nil {
             FlexMsg.err(FlexString.ERROR1)
             return
@@ -125,7 +139,10 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
     }
             
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        if interfaces[message.name] != nil, let data: [String:Any] = message.body as? Dictionary {
+        if FlexString.FLEX_LOGS.contains(message.name), let data: [String:Any] = message.body as? Dictionary {
+            FlexMsg.webLog(message.name, data["property"])
+            self.evalJS("window[\"\(data["funName"] as! String)\"]()")
+        } else if interfaces[message.name] != nil, let data: [String:Any] = message.body as? Dictionary {
             let fName = data["funName"] as! String
             let mName = message.name
             DispatchQueue.global(qos: .background).async {
@@ -136,7 +153,6 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
     }
         
     public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        flexInitInPage()
         userNavigation?.webView?(webView, didCommit: navigation)
     }
     
@@ -145,6 +161,7 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
     }
     
     public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        flexInitInPage()
         userNavigation?.webView?(webView, didStartProvisionalNavigation: navigation)
     }
     

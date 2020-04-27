@@ -9,7 +9,7 @@
 Pod::Spec.new do |spec|
 
   spec.name         = "FlexHybridApp"
-  spec.version      = "0.1.2"
+  spec.version      = "0.1.2.1"
   spec.summary      = "FlexibleHybridApp-iOS"
   spec.ios.deployment_target = '11.0'
   spec.swift_version = '5.2.2'
@@ -22,5 +22,5 @@ Pod::Spec.new do |spec|
                    DESC
 
   spec.homepage     = "https://github.com/Kyun-J/FlexHybridApp-iOS"
-  
+
 end
