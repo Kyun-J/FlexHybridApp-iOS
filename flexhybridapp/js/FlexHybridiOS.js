@@ -14,8 +14,6 @@ Object.defineProperties($flex,
         web: { value: {}, writable: false }
     }
 )
-const originW = webkit.messageHandlers;
-webkit.messageHandlers = undefined;
 JSON.parse(k).forEach(key => {
     if($flex.key === undefined) {
         $flex[key] =
@@ -26,10 +24,10 @@ JSON.parse(k).forEach(key => {
                     resolve(r);
                     window[name] = undefined;
                 };
-                originW[key].postMessage(
+                webkit.messageHandlers[key].postMessage(
                     {
                         funName: name,
-                        property: args
+                        arguments: args
                     }
                 );
             });

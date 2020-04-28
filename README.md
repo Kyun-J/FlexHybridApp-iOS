@@ -1,6 +1,8 @@
 
 [한국어 README](https://github.com/Kyun-J/FlexHybridApp-iOS/blob/master/README-ko.md)
 
+[DEMO](https://github.com/Kyun-J/FlexHybridApp-iOS-DEMO)
+
 [Android Version](https://github.com/Kyun-J/FlexHybridApp-Android)
 
 
@@ -63,7 +65,7 @@ window.onload = function() {
 ```
 The `$flex` Object is automatically generated from the html page loaded by FlexWebView.  
 
-## $flex 구성요소
+## $flex component
 #### `$flex.version`
 > Get the version of the library.
 
@@ -79,7 +81,7 @@ Interfaces added with FlexComponent.addInterface are retained.
 #### `$flex.web`
 > If you add a function through the `$flex.web` object argument, you can easily call those functions from Native through `evalFlexFunc`.
 
-# Native 클래스
+# Native Class
 ## **FlexComponent**
 FlexComponent is a required component of FlexWebView and includes WKWebViewConfiguration.
 You can add FlexWebView's JS interface through `addInterface` of FlexComponent.

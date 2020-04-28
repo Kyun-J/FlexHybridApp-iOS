@@ -15,7 +15,8 @@ enum FlexError: Error {
 struct FlexString {
     static let ERROR1 = "After FlextWebView is initialized, you cannot add interfaces"
     static let ERROR2 = "You can only change interfaces that have already been added."
-    static let ERROR3 = "You cannot set the interface name with flex";
+    static let ERROR3 = "You cannot set the interface or FlexAction name with flex";
+    static let ERROR4 = "You can only change FlexAction that have already been added."
     
     static let FLEX_LOGS = ["flexlog","flexerror","flexdebug","flexinfo"]
 }

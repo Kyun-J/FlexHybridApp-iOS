@@ -42,7 +42,7 @@ open class FlexWebView : WKWebView {
     }
     
     public func evalFlexFunc(_ funcName: String, prompt: String) {
-        mComponent.evalJS("$flex.web.\(funcName)(\(prompt))")
+        mComponent.evalJS("$flex.web.\(funcName)(\"\(prompt)\")")
     }
         
     public func getComponent() -> FlexComponent {
@@ -63,7 +63,8 @@ open class FlexWebView : WKWebView {
 
 open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScriptMessageHandler {
    
-    private var interfaces: [String:(_ property: Array<Any?>?) -> String?] = [:]
+    private var interfaces: [String:(_ arguments: Array<Any?>?) -> String?] = [:]
+    private var actions: [String: FlexAction] = [:]
     private var flexWebView: FlexWebView?
     private var jsString: String?
     private var userNavigation: WKNavigationDelegate?
@@ -77,14 +78,17 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
         for (n, _) in interfaces {
             config.userContentController.add(self, name: n)
         }
+        for (n, _) in actions {
+            config.userContentController.add(self, name: n)
+        }
     }
     
     fileprivate func afterWebViewInit(_ webView: FlexWebView) {
         flexWebView = webView
         checkDelegateChange()
         do {
-            jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.min.js", encoding: .utf8)
-            jsString = jsString?.replacingOccurrences(of: "keysfromios", with: "'[\"\(FlexString.FLEX_LOGS.joined(separator: "\",\""))\",\"\( interfaces.keys.joined(separator: "\",\""))\"]'")
+            jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.js", encoding: .utf8)
+            jsString = jsString?.replacingOccurrences(of: "keysfromios", with: "'[\"\(FlexString.FLEX_LOGS.joined(separator: "\",\""))\",\"\( interfaces.keys.joined(separator: "\",\""))\",\"\(actions.keys.joined(separator: "\",\""))\"]'")
         } catch {
             FlexMsg.err(error.localizedDescription)
         }
@@ -109,8 +113,33 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
         }
     }
     
+    public func addAction(_ name: String, _ action: FlexAction) {
+        if name.contains("flex") {
+            FlexMsg.err(FlexString.ERROR3)
+            return
+        }
+        if flexWebView != nil {
+            FlexMsg.err(FlexString.ERROR1)
+            return
+        }
+        action.mComponent = self
+        actions[name] = action
+    }
+    
+    public func getAction(_ name: String) -> FlexAction? {
+        return actions[name]
+    }
+    
+    public func setAction(_ name: String, _ action: FlexAction) {
+        if actions[name] == nil {
+            FlexMsg.err(FlexString.ERROR2)
+            return
+        }
+        action.mComponent = self
+        actions[name] = action
+    }
             
-    public func addInterface(_ name: String, _ action: @escaping (_ propertys: Array<Any?>?) -> String?) {
+    public func addInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> String?) {
         if name.contains("flex") {
             FlexMsg.err(FlexString.ERROR3)
             return
@@ -122,7 +151,7 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
         interfaces[name] = action
     }
     
-    public func setInterface(_ name: String, _ action: @escaping (_ propertys: Array<Any?>?) -> String?) {
+    public func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> String?) {
         if interfaces[name] == nil {
             FlexMsg.err(FlexString.ERROR2)
             return
@@ -139,15 +168,25 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
     }
             
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        if FlexString.FLEX_LOGS.contains(message.name), let data: [String:Any] = message.body as? Dictionary {
-            FlexMsg.webLog(message.name, data["property"])
-            self.evalJS("window[\"\(data["funName"] as! String)\"]()")
-        } else if interfaces[message.name] != nil, let data: [String:Any] = message.body as? Dictionary {
-            let fName = data["funName"] as! String
+        if let data: [String:Any] = message.body as? Dictionary {
             let mName = message.name
-            DispatchQueue.global(qos: .background).async {
-                let value: String = self.interfaces[mName]!(data["property"] as? Array<Any?>) ?? ""
-                self.evalJS("window[\"\(fName)\"](\(value))")
+            let fName = data["funName"] as! String
+            let argu = data["arguments"] as? Array<Any?>
+            if FlexString.FLEX_LOGS.contains(mName) {
+                FlexMsg.webLog(mName, data["arguments"])
+                self.evalJS("window[\"\(fName)\"]()")
+            } else if interfaces[mName] != nil {
+                DispatchQueue.global(qos: .background).async {
+                    let value: String = self.interfaces[mName]!(argu) ?? ""
+                    self.evalJS("window[\"\(fName)\"](\"\(value)\")")
+                }
+            } else if actions[mName] != nil {
+                let action = actions[mName]!
+                DispatchQueue.global(qos: .background).async {
+                    action.doAction(action, argu)
+                    action.funcName = fName
+                    action.onReady?()
+                }
             }
         }
     }
@@ -229,5 +268,37 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
     private func inWeb(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, preferences: WKWebpagePreferences, decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
         decisionHandler(.allow, preferences)
     }
+    
+}
+
+
+open class FlexAction {
+    
+    fileprivate var doAction: (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void
+    fileprivate var funcName: String? = nil
+    fileprivate var mComponent: FlexComponent? = nil
+    
+    public var isReady: Bool {
+        funcName != nil
+    }
+    
+    public var onReady: (() -> Void)? = nil
+    
+    public func PromiseReturn(_ response: String?) {
+        if isReady {
+            mComponent?.evalJS("window[\"\(funcName!)\"](\"\(response ?? "")\")")
+            funcName = nil
+        }
+    }
+    
+    public init (_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void) {
+        self.doAction = action
+    }
+    
+    public convenience init (_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void, _ readyAction: @escaping (() -> Void)) {
+        self.init(action)
+        self.onReady = readyAction
+    }
+    
     
 }
