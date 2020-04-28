@@ -8,7 +8,7 @@ const logs = { log: console.log, debug: console.debug, error: console.error, inf
 window.$flex = {};
 Object.defineProperties($flex,
     {
-        version: { value: '0.1.2.1', writable: false },
+        version: { value: '0.1.2.2', writable: false },
         addEventListener: { value: function(event, callback) { events.push({ e: event, c: callback }) }, writable: false },
         init: { value: function() { window.Function(script)(); }, writable: false },
         web: { value: {}, writable: false }
