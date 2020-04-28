@@ -8,7 +8,7 @@
 
 # FlexibleHybrid
 
-FlexibleHybridApp is a Framework that provides various convenience functions to develop HybridApp, such as implementing Web-> Native Call as a promise.
+FlexHybridApp is the Framework that provides various convenience functions to develop HybridApp, such as implementing Web-> Native Call as a promise.
 
 # Add Framework
 
@@ -38,7 +38,7 @@ const t1 = async () => {
 }
 ```
 # `$flex` Object
-`$flex` Object is responsible for the interface between Web <-> Native in the Web of FlexHybrid library.  
+`$flex` Object is responsible for the interface between Web <-> Native in the Web of FlexHybrid framework.  
 In `$flex`, functions registered as`addInterface(name, action)`in FlexComponent are created, and these functions return Promise.
 ```swift
 //in native
@@ -67,7 +67,7 @@ The `$flex` Object is automatically generated from the html page loaded by FlexW
 
 ## $flex component
 #### `$flex.version`
-> Get the version of the library.
+> Get the version of the framework.
 
 #### `$flex.addEventListener(event, callback)`
 > *developing*  
@@ -97,7 +97,7 @@ You can add FlexWebView's JS interface through `addInterface` of FlexComponent.
 
 #### `func addAction(_ name: String, _ action: FlexAction)`
 > Add FlexAction class. It is available only before FlexWebView is Init.
-> For detailed usage of FlexAction, refer to [FlexAction](##FlexAction).
+> For detailed usage of FlexAction, refer to [FlexAction](#FlexAction).
 
 #### `func getAction(_ name: String) -> FlexAction?`
 > Get the FlexAction added by addAction.
@@ -156,8 +156,8 @@ component.addAction("testAction", FlexAction { (this, arguments) -> Void in
 > True if `PromiseReturn` is callable.
 
 #### `onReady: (() -> Void)?`
-> `PromiseReturn` is triggered when it can be called.
+> `PromiseReturn` triggers onReady when it can be called.
 
 #### `func PromiseReturn(_ response: String?)`
-> Return return value in the form of Promise to web. If you are not ready to return, nothing will happen.  
-> Use `isReady: Bool` or` onReady: (()-> Void)? `at a time when it can be called.
+> Return value in the form of Promise to web. If FlexAction is not ready to return, nothing will happen.  
+> Use `isReady: Bool` or `onReady: (()-> Void)?` to check if `PromiseReturn` is callable.
