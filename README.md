@@ -22,9 +22,9 @@ add to podFile
 
 Unlike the existing WKWebView `userContentController`, interface patterns can be defined similar to functions in the form of closures.
 ```swift
-component.addInterface("FuncName") { (property) -> String? in
-    if property != nil {
-        return String(property![0] as! Int + 1)
+component.addInterface("FuncName") { (arguments) -> String? in
+    if arguments != nil {
+        return String(arguments![0] as! Int + 1)
     } else {
         return "novalue"
     }
@@ -42,7 +42,7 @@ const t1 = async () => {
 In `$flex`, functions registered as`addInterface(name, action)`in FlexComponent are created, and these functions return Promise.
 ```swift
 //in native
-component.addInterface("likeThis") { (property) -> String? in
+component.addInterface("likeThis") { (arguments) -> String? in
 .....
 }
 ```
@@ -87,13 +87,23 @@ FlexComponent is a required component of FlexWebView and includes WKWebViewConfi
 You can add FlexWebView's JS interface through `addInterface` of FlexComponent.
 `addInterface` must be set before FlexWebView is created.
 
-#### `func addInterface(_ name: String, _ action: @escaping (_ propertys: Array<Any?>?) -> String?)`
+#### `func addInterface(_ name: String, _ action: @escaping (_ argumentss: Array<Any?>?) -> String?)`
 > Add JS interface of FlexWebView. It is available only before FlexWebView is Init.
 > The parameters passed from the web are passed in the form of `Array<Any?>` And can return a String or nil value.
 > The set Closure operates in the Background.
 
-#### `func setInterface(_ name: String, _ action: @escaping (_ propertys: Array<Any?>?) -> String?)`
+#### `func setInterface(_ name: String, _ action: @escaping (_ argumentss: Array<Any?>?) -> String?)`
 > Reset the Closure of an interface already added with addInterface. 
+
+#### `func addAction(_ name: String, _ action: FlexAction)`
+> Add FlexAction class. It is available only before FlexWebView is Init.
+> For detailed usage of FlexAction, refer to [FlexAction](##FlexAction).
+
+#### `func getAction(_ name: String) -> FlexAction?`
+> Get the FlexAction added by addAction.
+
+#### `func setAction(_ name: String, _ action: FlexAction)`
+> Reset the FlexAction added with addAction.
 
 #### `func getFlexWebView() -> FlexWebView?`
 > Get the assigned FlexWebView. Before FlexWebView is created, it returns nil.
@@ -120,3 +130,34 @@ You can add FlexWebView's JS interface through `addInterface` of FlexComponent.
 
 #### `var parentViewController: UIViewController?`
 > Return ViewController that contains FlexWebView.
+
+## **FlexAction**
+FlexAction is a class that can freely control the point when Retrun is given to the Web when called through `$flex`.
+```swift
+component.addAction("testAction", FlexAction { (this, arguments) -> Void in
+    // do Anything....
+    // when js function ready to call
+    this.onReady = { () -> Void in
+        this.PromiseReturn("testSuccess!") // Promise return at anytime
+    }
+    // or use like this
+    // if this.isReady {
+    //    this.PromiseReturn("testSuccess!")
+    // }
+})
+```
+#### `FlexAction(_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void)`
+> Create FlexAction. The generated FlexAction and arguments contain the arguments passed from the web.
+
+#### `FlexAction(_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void, _ readyAction: @escaping (() -> Void))`
+> Create FlexAction. readyAction is a Closure that tells when `PromiseReturn` can be called.
+
+#### `isReady: Bool`
+> True if `PromiseReturn` is callable.
+
+#### `onReady: (() -> Void)?`
+> `PromiseReturn` is triggered when it can be called.
+
+#### `func PromiseReturn(_ response: String?)`
+> Return return value in the form of Promise to web. If you are not ready to return, nothing will happen.  
+> Use `isReady: Bool` or` onReady: (()-> Void)? `at a time when it can be called.

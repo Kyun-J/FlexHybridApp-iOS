@@ -14,9 +14,9 @@ podFile에 다음을 추가
 
 기존의 WKWebView의 `userContentController`와 달리, Closure 형태로 함수와 유사하게 인터페이스 패턴을 정의할 수 있습니다
 ```swift
-component.addInterface("FuncName") { (property) -> String? in
-    if property != nil {
-        return String(property![0] as! Int + 1)
+component.addInterface("FuncName") { (arguments) -> String? in
+    if arguments != nil {
+        return String(arguments![0] as! Int + 1)
     } else {
         return "novalue"
     }
@@ -34,7 +34,7 @@ const t1 = async () => {
 `$flex`안에는 FlexComponent에서 `addInterface(name, action)`으로 등록한 함수들이 생성되어 있으며, 이 함수들은 Promise를 반환 합니다.  
 ```swift
 //in native
-component.addInterface("likeThis") { (property) -> String? in
+component.addInterface("likeThis") { (arguments) -> String? in
 .....
 }
 ```
@@ -80,13 +80,23 @@ FlexComponent는 FlexWebView의 필수 구성요소이며 WKWebViewConfiguration
 FlexComponent의 `addInterface`를 통해 FlexWebView의 JS인터페이스를 추가할 수 있습니다.  
 `addInterface`는 FlexWebView가 생성되기 전에 미리 설정되어야 합니다.
 
-#### `func addInterface(_ name: String, _ action: @escaping (_ propertys: Array<Any?>?) -> String?)`
+#### `func addInterface(_ name: String, _ action: @escaping (_ argumentss: Array<Any?>?) -> String?)`
 > FlexWebView의 JS인터페이스를 추가합니다. FlexWebView가 Init되기 전에만 사용 가능합니다.  
 > Web에서 전달한 파라미터는 `Array<Any?>`형태로 전달되며, String 혹은 nil 값을 return할 수 있습니다.  
 > 설정한 Closure는 Background에서 동작합니다.
 
-#### `func setInterface(_ name: String, _ action: @escaping (_ propertys: Array<Any?>?) -> String?)`
+#### `func setInterface(_ name: String, _ action: @escaping (_ argumentss: Array<Any?>?) -> String?)`
 > addInterface로 이미 추가된 인터페이스의 Closure를 재설정합니다.  
+
+#### `func addAction(_ name: String, _ action: FlexAction)`
+> FlexAction 클래스를 추가합니다. FlexWebView가 Init되기 전에만 사용 가능합니다.  
+> FlexAction의 상세한 사용법은 [FlexAction](##FlexAction)을 참조하세요.
+
+#### `func getAction(_ name: String) -> FlexAction?`
+> addAction으로 추가된 FlexAction을 가져옵니다.
+
+#### `func setAction(_ name: String, _ action: FlexAction)`
+> addAction으로 추가된 FlexAction을 재설정합니다.
 
 #### `func getFlexWebView() -> FlexWebView?`
 > 할당된 FlexWebView를 가져옵니다. FlexWebView가 생성되기 이전에는 nil을 Return합니다.
@@ -113,3 +123,34 @@ FlexComponent의 `addInterface`를 통해 FlexWebView의 JS인터페이스를 �
 
 #### `var parentViewController: UIViewController?`
 > FlexWebView가 포함된 ViewController를 Return합니다.
+
+## **FlexAction**
+FlexAction은 `$flex`를 통해 호출되었을 때 Web에 Retrun을 주는 시점을 자유롭게 조절할 수 있는 클래스입니다.
+```swift
+component.addAction("testAction", FlexAction { (this, arguments) -> Void in
+    // do Anything....
+    // when js function ready to call
+    this.onReady = { () -> Void in
+        this.PromiseReturn("testSuccess!") // Promise return at anytime
+    }
+    // or use like this
+    // if this.isReady {
+    //    this.PromiseReturn("testSuccess!")
+    // }
+})
+```
+#### `FlexAction(_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void)`
+> FlexAction을 생성합니다. this에는 생성된 FlexAction, arguments에는 web에서 전달된 arguments가 담겨 있습니다.
+
+#### `FlexAction(_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void, _ readyAction: @escaping (() -> Void))`
+> FlexAction을 생성합니다. readyAction은 `PromiseReturn`이 호출 가능한 시점을 알려주는 Closure입니다.
+
+#### `isReady: Bool`
+> `PromiseReturn`이 호출 가능한 상태이면, true입니다.
+
+#### `onReady: (() -> Void)?`
+> `PromiseReturn`이 호출 가능한 시점에 트리거됩니다.
+
+#### `func PromiseReturn(_ response: String?)`
+> web에 Promise 형식으로 return 값을 전달합니다. return 할 준비가 되어있지 않으면, 아무 일도 일어나지 않습니다.  
+> `isReady: Bool` 혹은 `onReady: (() -> Void)?`을 사용하여 호출 가능한 시점에 사용하세요.
