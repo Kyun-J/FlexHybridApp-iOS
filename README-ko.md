@@ -6,7 +6,7 @@ FlexibleHybridApp은 Web->Native Call을 Promise로 구현하는 등, HybridApp�
 
 podFile에 다음을 추가
 
-```pod
+```
     pod 'FlexHybridApp'
 ```
 
@@ -66,6 +66,11 @@ window.onload = function() {
 > *개발중*  
 > 이벤트 청취자를 추가합니다.
 
+#### `$flex.init()`
+> $flex Object를 초기화합니다.  
+> 사용자가 추가한 $flex.web 내의 함수, eventListener가 사라집니다.  
+> FlexComponent.addInterface로 추가한 인터페이스는 유지됩니다.
+
 #### `$flex.web`
 > web Object 인자를 통해 함수를 추가하면, `evalFlexFunc`를 통해 해당 함수들을 Native에서 손쉽게 호출할 수 있습니다.   
 
@@ -77,11 +82,34 @@ FlexComponent의 `addInterface`를 통해 FlexWebView의 JS인터페이스를 �
 
 #### `func addInterface(_ name: String, _ action: @escaping (_ propertys: Array<Any?>?) -> String?)`
 > FlexWebView의 JS인터페이스를 추가합니다. FlexWebView가 Init되기 전에만 사용 가능합니다.  
-> Web에서 전달한 파라미터는 `Array<Any?>`형태로 전달되며, String 혹은 nil 값을 return할 수 있습니다.
+> Web에서 전달한 파라미터는 `Array<Any?>`형태로 전달되며, String 혹은 nil 값을 return할 수 있습니다.  
 > 설정한 Closure는 Background에서 동작합니다.
 
+#### `func setInterface(_ name: String, _ action: @escaping (_ propertys: Array<Any?>?) -> String?)`
+> addInterface로 이미 추가된 인터페이스의 Closure를 재설정합니다.  
+
+#### `func getFlexWebView() -> FlexWebView?`
+> 할당된 FlexWebView를 가져옵니다. FlexWebView가 생성되기 이전에는 nil을 Return합니다.
+
+#### `func flexInitInPage()`
+> FlexWebView 내의 `$flex` Object를 초기화합니다.  
+> `$flex.init()`와 동일합니다.
+
 ## **FlexWebView**
+**FlexWebView는 WKWebView를 기반으로 합니다**  WKWebViewConfiguration을 포함하는 FlexComponent가 필수로 요구됩니다.
 
 #### `FlexWebView(frame: CGRect, configuration: WKWebViewConfiguration)`
-> FlexWebView를 생성합니다
-> 
+> FlexWebView를 생성합니다. 다만 WKWebViewConfiguration에서 userContentController로 추가한 인터페이스는 사용할 수 없습니다.
+
+#### `FlexWebView(frame: CGRect, component: FlexComponent)`
+> FlexWebView를 생성합니다. FlexComponent의 addInterface로 추가한 인터페이스들은 web내에 `$flex` 안의 함수로 구현됩니다.
+
+#### `func evalFlexFunc(_ funcName: String)`
+#### `func evalFlexFunc(_ funcName: String, prompt: String)`
+> `$flex.web` 내에 선언된 함수를 호출합니다. 값을 전달할 때는 String 형식만 전달 가능합니다.
+
+#### `func getComponent() -> FlexComponent`
+> FlexWebView를 생성할 때 설정한 FlexComponent를 Retrun합니다
+
+#### `var parentViewController: UIViewController?`
+> FlexWebView가 포함된 ViewController를 Return합니다.
