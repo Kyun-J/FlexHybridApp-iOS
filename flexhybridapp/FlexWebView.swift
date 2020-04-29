@@ -2,8 +2,8 @@
 //  FlexWebView.swift
 //  flexhybridapp
 //
-//  Created by 황견주 on 2020/04/13.
-//  Copyright © 2020 황견주. All rights reserved.
+//  Created by dvkyun on 2020/04/13.
+//  Copyright © 2020 dvkyun. All rights reserved.
 //
 
 import Foundation
@@ -20,14 +20,19 @@ open class FlexWebView : WKWebView {
         }
     }
     
-    required convenience public init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    required public init?(coder: NSCoder) {
+        component = FlexComponent()
+        component.beforeWebViewInit()
+        super.init(coder: coder)
+        component.afterWebViewInit(self)
     }
         
-    convenience public override init(frame: CGRect, configuration: WKWebViewConfiguration) {
-        let _component = FlexComponent()
-        _component.config = configuration
-        self.init(frame: frame, component: _component)
+    public override init(frame: CGRect, configuration: WKWebViewConfiguration) {
+        component = FlexComponent()
+        component.config = configuration
+        component.beforeWebViewInit()
+        super.init(frame: frame, configuration: component.config)
+        component.afterWebViewInit(self)
     }
             
     public init (frame: CGRect, component: FlexComponent) {

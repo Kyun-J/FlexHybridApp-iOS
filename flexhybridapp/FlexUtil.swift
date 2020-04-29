@@ -1,9 +1,9 @@
 //
-//  FlexError.swift
+//  FlexUtil.swift
 //  flexhybridapp
 //
-//  Created by 황견주 on 2020/04/24.
-//  Copyright © 2020 황견주. All rights reserved.
+//  Created by dvkyun on 2020/04/24.
+//  Copyright © 2020 dvkyun. All rights reserved.
 //
 
 import Foundation
