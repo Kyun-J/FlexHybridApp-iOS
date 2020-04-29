@@ -12,11 +12,11 @@ import WebKit
 @IBDesignable
 open class FlexWebView : WKWebView {
 
-    private let mComponent: FlexComponent
+    public let component: FlexComponent
     
     open override var navigationDelegate: WKNavigationDelegate? {
         didSet {
-            mComponent.checkDelegateChange()
+            component.checkDelegateChange()
         }
     }
     
@@ -31,22 +31,22 @@ open class FlexWebView : WKWebView {
     }
             
     public init (frame: CGRect, component: FlexComponent) {
-        mComponent = component
-        mComponent.beforeWebViewInit()
-        super.init(frame: frame, configuration: mComponent.config)
-        mComponent.afterWebViewInit(self)
+        self.component = component
+        self.component.beforeWebViewInit()
+        super.init(frame: frame, configuration: self.component.config)
+        self.component.afterWebViewInit(self)
     }
     
     public func evalFlexFunc(_ funcName: String) {
-        mComponent.evalJS("$flex.web.\(funcName)()")
+        component.evalJS("$flex.web.\(funcName)()")
     }
     
     public func evalFlexFunc(_ funcName: String, prompt: String) {
-        mComponent.evalJS("$flex.web.\(funcName)(\"\(prompt)\")")
+        component.evalJS("$flex.web.\(funcName)(\"\(prompt)\")")
     }
-        
-    public func getComponent() -> FlexComponent {
-        mComponent
+    
+    public func flexInitInPage() {
+        component.flexInitInPage()
     }
     
     public var parentViewController: UIViewController? {
@@ -59,6 +59,7 @@ open class FlexWebView : WKWebView {
         }
         return nil
     }
+    
 }
 
 open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScriptMessageHandler {
@@ -68,8 +69,7 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
     private var flexWebView: FlexWebView?
     private var jsString: String?
     private var userNavigation: WKNavigationDelegate?
-    
-    open var config: WKWebViewConfiguration = WKWebViewConfiguration()
+    fileprivate var config: WKWebViewConfiguration = WKWebViewConfiguration()
     
     fileprivate func beforeWebViewInit() {
         for n in FlexString.FLEX_LOGS {
@@ -87,7 +87,7 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
         flexWebView = webView
         checkDelegateChange()
         do {
-            jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.js", encoding: .utf8)
+            jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.min.js", encoding: .utf8)
             jsString = jsString?.replacingOccurrences(of: "keysfromios", with: "'[\"\(FlexString.FLEX_LOGS.joined(separator: "\",\""))\",\"\( interfaces.keys.joined(separator: "\",\""))\",\"\(actions.keys.joined(separator: "\",\""))\"]'")
         } catch {
             FlexMsg.err(error.localizedDescription)
@@ -111,6 +111,18 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
                 }
             })
         }
+    }
+    
+    fileprivate func flexInitInPage() {
+        evalJS(jsString!)
+    }
+    
+    public var FlexWebView: FlexWebView? {
+        flexWebView
+    }
+       
+    public var configration: WKWebViewConfiguration {
+        config
     }
     
     public func addAction(_ name: String, _ action: FlexAction) {
@@ -158,15 +170,7 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
         }
         interfaces[name] = action
     }
-    
-    public func getFlexWebView() -> FlexWebView? {
-        return flexWebView
-    }
-    
-    public func flexInitInPage() {
-        evalJS(jsString!)
-    }
-            
+                    
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if let data: [String:Any] = message.body as? Dictionary {
             let mName = message.name
@@ -299,6 +303,5 @@ open class FlexAction {
         self.init(action)
         self.onReady = readyAction
     }
-    
     
 }

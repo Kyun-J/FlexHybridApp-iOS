@@ -82,12 +82,46 @@ Interfaces added with FlexComponent.addInterface are retained.
 > If you add a function through the `$flex.web` object argument, you can easily call those functions from Native through `evalFlexFunc`.
 
 # Native Class
+## **FlexWebView**
+**FlexWebView is based on WKWebView.** FlexWebView requires FlexComponent which includes WKWebViewConfiguration.
+
+#### `FlexWebView(frame: CGRect, configuration: WKWebViewConfiguration)`
+> Create FlexWebView. However, the interface added as userContentController in WKWebViewConfiguration cannot be used.
+
+#### `FlexWebView(frame: CGRect, component: FlexComponent)`
+> Create FlexWebView. Interfaces added by addInterface of FlexComponent are implemented as functions in `$flex` in the web.
+
+#### `func evalFlexFunc(_ funcName: String)`
+#### `func evalFlexFunc(_ funcName: String, prompt: String)`
+> Call the function declared in `$flex.web`. When passing a value, only String format can be passed.
+
+#### `func flexInitInPage()`
+> Initialize the `$flex` Object in FlexWebView. Same as `$flex.init()`.
+
+#### `component: FlexComponent`
+> Retrun the FlexComponent set when creating the FlexWebView
+
+#### `parentViewController: UIViewController?`
+> Return ViewController that contains FlexWebView.
+
+### `configration: WKWebViewConfiguration`
+> Returns WKWebViewConfiguration. This is the same object as the configured FlexComponent configration.
+
 ## **FlexComponent**
 FlexComponent is a required component of FlexWebView and includes WKWebViewConfiguration.
 You can add FlexWebView's JS interface through `addInterface` of FlexComponent.
 `addInterface` must be set before FlexWebView is created.
 
 #### `func addInterface(_ name: String, _ action: @escaping (_ argumentss: Array<Any?>?) -> String?)`
+```swift
+component.addInterface("FunctionName") { (arguments) -> String? in
+    if arguments != nil {
+        return String(arguments![0] as! Int + 1)
+    } else {
+        return nil
+    }
+}
+```
 > Add JS interface of FlexWebView. It is available only before FlexWebView is Init.
 > The parameters passed from the web are passed in the form of `Array<Any?>` And can return a String or nil value.
 > The set Closure operates in the Background.
@@ -105,31 +139,11 @@ You can add FlexWebView's JS interface through `addInterface` of FlexComponent.
 #### `func setAction(_ name: String, _ action: FlexAction)`
 > Reset the FlexAction added with addAction.
 
-#### `func getFlexWebView() -> FlexWebView?`
+#### `FlexWebView: FlexWebView?`
 > Get the assigned FlexWebView. Before FlexWebView is created, it returns nil.
 
-#### `func flexInitInPage()`
-> Initialize the `$flex` Object in FlexWebView.
-> Same as `$flex.init ()`.
-
-## **FlexWebView**
-**FlexWebView is based on WKWebView** FlexComponent including WKWebViewConfiguration is required.
-
-#### `FlexWebView(frame: CGRect, configuration: WKWebViewConfiguration)`
-> Create FlexWebView. However, the interface added as userContentController in WKWebViewConfiguration cannot be used.
-
-#### `FlexWebView(frame: CGRect, component: FlexComponent)`
-> Create FlexWebView. Interfaces added by addInterface of FlexComponent are implemented as functions in `$flex` in the web.
-
-#### `func evalFlexFunc(_ funcName: String)`
-#### `func evalFlexFunc(_ funcName: String, prompt: String)`
-> Call the function declared in `$flex.web`. When passing a value, only String format can be passed.
-
-#### `func getComponent() -> FlexComponent`
-> Retrun the FlexComponent set when creating the FlexWebView
-
-#### `var parentViewController: UIViewController?`
-> Return ViewController that contains FlexWebView.
+### `configration: WKWebViewConfiguration`
+> Returns WKWebViewConfiguration. This is the same object as the FlexWebView's configration.
 
 ## **FlexAction**
 FlexAction is a class that can freely control the point when Retrun is given to the Web when called through `$flex`.
@@ -161,3 +175,6 @@ component.addAction("testAction", FlexAction { (this, arguments) -> Void in
 #### `func PromiseReturn(_ response: String?)`
 > Return value in the form of Promise to web. If FlexAction is not ready to return, nothing will happen.  
 > Use `isReady: Bool` or `onReady: (()-> Void)?` to check if `PromiseReturn` is callable.
+
+# Todo Next
+1. When return value is returned to web, basic data type, Array, and Dictionary value are transmitted.

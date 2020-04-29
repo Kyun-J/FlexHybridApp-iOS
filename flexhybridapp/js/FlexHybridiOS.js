@@ -3,33 +3,49 @@ let k = keysfromios;
 let lib = `(function() {
 const keys = k;
 const script = lib;
-const events = [];
+const listeners = [];
 const logs = { log: console.log, debug: console.debug, error: console.error, info: console.info }
 window.$flex = {};
 Object.defineProperties($flex,
     {
-        version: { value: '0.1.2.2', writable: false },
-        addEventListener: { value: function(event, callback) { events.push({ e: event, c: callback }) }, writable: false },
+        version: { value: '0.1.2.5', writable: false },
+        addEventListener: { value: function(event, callback) { listeners.push({ e: event, c: callback }) }, writable: false },
         init: { value: function() { window.Function(script)(); }, writable: false },
         web: { value: {}, writable: false }
     }
 )
+const genFName = () => {
+    const name = 'f' + Math.random().toString(10).substr(2,8);
+    if(window[name] === undefined) {
+        return Promise.resolve(name)
+    } else {
+        return Promise.resolve(genFName())
+    }
+}
+const triggerEventListener = (name, val) => {
+    listeners.forEach(element => {
+        if(element.e === name && typeof element.c === 'function') {
+            element.c(val);
+        }
+    });
+}
 JSON.parse(k).forEach(key => {
-    if($flex.key === undefined) {
+    if($flex[key] === undefined) {
         $flex[key] =
         function(...args) {
             return new Promise(resolve => {
-                const name = 'f' + Math.random().toString(10).substr(2,8);
-                window[name] = (r) => {
-                    resolve(r);
-                    window[name] = undefined;
-                };
-                webkit.messageHandlers[key].postMessage(
-                    {
-                        funName: name,
-                        arguments: args
-                    }
-                );
+                genFName().then(name => {
+                    window[name] = (r) => {
+                        resolve(r);
+                        delete window[name];
+                    };
+                    webkit.messageHandlers[key].postMessage(
+                        {
+                            funName: name,
+                            arguments: args
+                        }
+                    );
+                });
             });
         }
     }

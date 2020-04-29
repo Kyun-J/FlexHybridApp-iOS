@@ -75,12 +75,47 @@ window.onload = function() {
 > web Object 인자를 통해 함수를 추가하면, `evalFlexFunc`를 통해 해당 함수들을 Native에서 손쉽게 호출할 수 있습니다.   
 
 # Native 클래스
+## **FlexWebView**
+**FlexWebView는 WKWebView를 기반으로 합니다.**  WKWebViewConfiguration을 포함하는 FlexComponent가 필수로 요구됩니다.
+
+#### `FlexWebView(frame: CGRect, configuration: WKWebViewConfiguration)`
+> FlexWebView를 생성합니다. 다만 WKWebViewConfiguration에서 userContentController로 추가한 인터페이스는 사용할 수 없습니다.
+
+#### `FlexWebView(frame: CGRect, component: FlexComponent)`
+> FlexWebView를 생성합니다. FlexComponent의 addInterface로 추가한 인터페이스들은 web내에 `$flex` 안의 함수로 구현됩니다.
+
+#### `func evalFlexFunc(_ funcName: String)`
+#### `func evalFlexFunc(_ funcName: String, prompt: String)`
+> `$flex.web` 내에 선언된 함수를 호출합니다. 값을 전달할 때는 String 형식만 전달 가능합니다.
+
+#### `func flexInitInPage()`
+> FlexWebView 내의 `$flex` Object를 초기화합니다.  
+> `$flex.init()`와 동일합니다.
+
+#### `component: FlexComponent`
+> FlexWebView를 생성할 때 설정한 FlexComponent를 Retrun합니다
+
+#### `parentViewController: UIViewController?`
+> FlexWebView가 포함된 ViewController를 Return합니다.
+
+### `configration: WKWebViewConfiguration`
+> WKWebViewConfiguration을 반환합니다. 설정된 FlexComponent의 configration과 동일한 객체입니다.
+
 ## **FlexComponent**
 FlexComponent는 FlexWebView의 필수 구성요소이며 WKWebViewConfiguration를 포함하고 있습니다.  
 FlexComponent의 `addInterface`를 통해 FlexWebView의 JS인터페이스를 추가할 수 있습니다.  
 `addInterface`는 FlexWebView가 생성되기 전에 미리 설정되어야 합니다.
 
 #### `func addInterface(_ name: String, _ action: @escaping (_ argumentss: Array<Any?>?) -> String?)`
+```swift
+component.addInterface("FunctionName") { (arguments) -> String? in
+    if arguments != nil {
+        return String(arguments![0] as! Int + 1)
+    } else {
+        return nil
+    }
+}
+```
 > FlexWebView의 JS인터페이스를 추가합니다. FlexWebView가 Init되기 전에만 사용 가능합니다.  
 > Web에서 전달한 파라미터는 `Array<Any?>`형태로 전달되며, String 혹은 nil 값을 return할 수 있습니다.  
 > 설정한 Closure는 Background에서 동작합니다.
@@ -98,31 +133,11 @@ FlexComponent의 `addInterface`를 통해 FlexWebView의 JS인터페이스를 �
 #### `func setAction(_ name: String, _ action: FlexAction)`
 > addAction으로 추가된 FlexAction을 재설정합니다.
 
-#### `func getFlexWebView() -> FlexWebView?`
+#### `FlexWebView: FlexWebView?`
 > 할당된 FlexWebView를 가져옵니다. FlexWebView가 생성되기 이전에는 nil을 Return합니다.
 
-#### `func flexInitInPage()`
-> FlexWebView 내의 `$flex` Object를 초기화합니다.  
-> `$flex.init()`와 동일합니다.
-
-## **FlexWebView**
-**FlexWebView는 WKWebView를 기반으로 합니다**  WKWebViewConfiguration을 포함하는 FlexComponent가 필수로 요구됩니다.
-
-#### `FlexWebView(frame: CGRect, configuration: WKWebViewConfiguration)`
-> FlexWebView를 생성합니다. 다만 WKWebViewConfiguration에서 userContentController로 추가한 인터페이스는 사용할 수 없습니다.
-
-#### `FlexWebView(frame: CGRect, component: FlexComponent)`
-> FlexWebView를 생성합니다. FlexComponent의 addInterface로 추가한 인터페이스들은 web내에 `$flex` 안의 함수로 구현됩니다.
-
-#### `func evalFlexFunc(_ funcName: String)`
-#### `func evalFlexFunc(_ funcName: String, prompt: String)`
-> `$flex.web` 내에 선언된 함수를 호출합니다. 값을 전달할 때는 String 형식만 전달 가능합니다.
-
-#### `func getComponent() -> FlexComponent`
-> FlexWebView를 생성할 때 설정한 FlexComponent를 Retrun합니다
-
-#### `var parentViewController: UIViewController?`
-> FlexWebView가 포함된 ViewController를 Return합니다.
+### `configration: WKWebViewConfiguration`
+> WKWebViewConfiguration을 반환합니다. FlexWebView의 configration과 동일한 객체입니다.
 
 ## **FlexAction**
 FlexAction은 `$flex`를 통해 호출되었을 때 Web에 Retrun을 주는 시점을 자유롭게 조절할 수 있는 클래스입니다.
@@ -154,3 +169,6 @@ component.addAction("testAction", FlexAction { (this, arguments) -> Void in
 #### `func PromiseReturn(_ response: String?)`
 > web에 Promise 형식으로 return 값을 전달합니다. return 할 준비가 되어있지 않으면, 아무 일도 일어나지 않습니다.  
 > `isReady: Bool` 혹은 `onReady: (() -> Void)?`을 사용하여 호출 가능한 시점에 사용하세요.
+
+# Todo Next
+1. web에 return값을 전달할 때 기본 자료형 및 Array, Dictionary 값을 전달.
