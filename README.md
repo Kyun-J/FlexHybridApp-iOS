@@ -104,7 +104,7 @@ Interfaces added with FlexComponent.addInterface are retained.
 #### `parentViewController: UIViewController?`
 > Return ViewController that contains FlexWebView.
 
-### `configration: WKWebViewConfiguration`
+#### `configration: WKWebViewConfiguration`
 > Returns WKWebViewConfiguration. This is the same object as the configured FlexComponent configration.
 
 ## **FlexComponent**
@@ -142,7 +142,7 @@ component.addInterface("FunctionName") { (arguments) -> String? in
 #### `FlexWebView: FlexWebView?`
 > Get the assigned FlexWebView. Before FlexWebView is created, it returns nil.
 
-### `configration: WKWebViewConfiguration`
+#### `configration: WKWebViewConfiguration`
 > Returns WKWebViewConfiguration. This is the same object as the FlexWebView's configration.
 
 ## **FlexAction**
@@ -177,4 +177,4 @@ component.addAction("testAction", FlexAction { (this, arguments) -> Void in
 > Use `isReady: Bool` or `onReady: (()-> Void)?` to check if `PromiseReturn` is callable.
 
 # Todo Next
-1. When return value is returned to web, basic data type, Array, and Dictionary value are transmitted.
+1. Passing primitive data types, arrays, and dictionary data types when values are returned to the web.

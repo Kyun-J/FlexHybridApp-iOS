@@ -98,7 +98,7 @@ window.onload = function() {
 #### `parentViewController: UIViewController?`
 > FlexWebView가 포함된 ViewController를 Return합니다.
 
-### `configration: WKWebViewConfiguration`
+#### `configration: WKWebViewConfiguration`
 > WKWebViewConfiguration을 반환합니다. 설정된 FlexComponent의 configration과 동일한 객체입니다.
 
 ## **FlexComponent**
@@ -136,7 +136,7 @@ component.addInterface("FunctionName") { (arguments) -> String? in
 #### `FlexWebView: FlexWebView?`
 > 할당된 FlexWebView를 가져옵니다. FlexWebView가 생성되기 이전에는 nil을 Return합니다.
 
-### `configration: WKWebViewConfiguration`
+#### `configration: WKWebViewConfiguration`
 > WKWebViewConfiguration을 반환합니다. FlexWebView의 configration과 동일한 객체입니다.
 
 ## **FlexAction**
