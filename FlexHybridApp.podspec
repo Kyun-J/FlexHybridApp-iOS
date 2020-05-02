@@ -17,7 +17,7 @@ Pod::Spec.new do |spec|
   spec.source       = { :git => "https://github.com/Kyun-J/FlexHybridApp-iOS.git", :tag => "#{spec.version}" }
   spec.license      = { :type => "BSD", :file => "license" }
   spec.source_files = "framework/flexhybridapp/**/*.{swift,xib}"
-  spec.preserve_paths = "framework/flexhybridapp/**/*.js"
+  spec.resources = "framework/flexhybridapp/js/*.js"
   spec.description  = <<-DESC
   FlexibleHybridApp iOS Version
                    DESC
