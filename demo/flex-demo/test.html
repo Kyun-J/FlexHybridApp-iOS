@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+</head>
+<script type="text/javascript">
+    let t = 0;
+    const t1 = async () => {
+        console.log('Send to Native --- ' + t);
+        const z = await $flex.test1(t);
+        console.log('Return by Native with t1 --- ' + z);
+        t = z;
+    }
+    const t2 = async () => {
+       await $flex.test2();
+    }
+    const t3 = async () => {
+        const z = await $flex.testAction1();
+        console.log(z); // {key1: "value1", key3: ["arrayValue1", 100], key2: {subkey2: 1000.1, subkey1: ["dictionaryValue", 0.12]}}
+        console.log(typeof z) // Object
+    }
+    // when $flex on ready.....
+    window.onFlexLoad = function() {
+        $flex.web.receive = function(data) {
+            console.log('Received by Native ---- ' + data);
+        }
+    }
+</script>
+<body style="width: 100%; height: 450px;">
+<button onclick='t1()' style="width: 100%; height: 150px;">test1</button>
+<button onclick='t2()' style="width: 100%; height: 150px;">test2</button>
+<button onclick='t3()' style="width: 100%; height: 150px;">testAction</button>
+</body>
+</html>
+

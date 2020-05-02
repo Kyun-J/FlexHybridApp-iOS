@@ -1,6 +1,6 @@
 'use strict';
-let k = keysfromios;
-let lib = `(function() {
+var k = keysfromios;
+var lib = `(function() {
 const keys = k;
 const script = lib;
 const listeners = [];
@@ -8,7 +8,7 @@ const logs = { log: console.log, debug: console.debug, error: console.error, inf
 window.$flex = {};
 Object.defineProperties($flex,
     {
-        version: { value: '0.1.2.6', writable: false },
+        version: { value: '0.1.3', writable: false },
         addEventListener: { value: function(event, callback) { listeners.push({ e: event, c: callback }) }, writable: false },
         init: { value: function() { window.Function(script)(); }, writable: false },
         web: { value: {}, writable: false }
@@ -56,8 +56,13 @@ console.error = function(...args) { $flex.flexerror(...args); logs.error(...args
 console.info = function(...args) { $flex.flexinfo(...args); logs.info(...args); };
 const frames = window.frames;
 for(let i = 0 ; i < frames.length; i++) {
-    frames[i].Function("let k=" + keys + ",lib=" + script + ";window.Function(lib)(),k=void 0,lib=void 0;")();
+    frames[i].Function("var k=" + keys + ",var lib=" + script + ";window.Function(lib)(),k=void 0,lib=void 0;")();
 }
+setTimeout(() => {
+    if(typeof window.onFlexLoad === 'function') {
+        window.onFlexLoad()
+    }
+},0)
 })();`;
 window.Function(lib)();
 k = undefined;

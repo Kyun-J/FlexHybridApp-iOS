@@ -69,7 +69,7 @@ open class FlexWebView : WKWebView {
 
 open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScriptMessageHandler {
    
-    private var interfaces: [String:(_ arguments: Array<Any?>?) -> String?] = [:]
+    private var interfaces: [String:(_ arguments: Array<Any?>?) -> Any?] = [:]
     private var actions: [String: FlexAction] = [:]
     private var flexWebView: FlexWebView?
     private var jsString: String?
@@ -156,7 +156,7 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
         actions[name] = action
     }
             
-    public func addInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> String?) {
+    public func addInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?) {
         if name.contains("flex") {
             FlexMsg.err(FlexString.ERROR3)
             return
@@ -168,7 +168,7 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
         interfaces[name] = action
     }
     
-    public func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> String?) {
+    public func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?) {
         if interfaces[name] == nil {
             FlexMsg.err(FlexString.ERROR2)
             return
@@ -186,14 +186,25 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
                 self.evalJS("window[\"\(fName)\"]()")
             } else if interfaces[mName] != nil {
                 DispatchQueue.global(qos: .background).async {
-                    let value: String = self.interfaces[mName]!(argu) ?? ""
-                    self.evalJS("window[\"\(fName)\"](\"\(value)\")")
+                    let value: Any? = self.interfaces[mName]!(argu)
+                    if value == nil {
+                        self.evalJS("window[\"\(fName)\"]()")
+                    } else {
+                        do {
+                            self.evalJS("window[\"\(fName)\"](\(try FlexFunc.convertValue(value!)))")
+                        } catch FlexError.UnuseableTypeCameIn {
+                            FlexMsg.err(FlexString.ERRPR5)
+                        } catch {
+                            FlexMsg.err(error)
+                        }
+                    }
                 }
             } else if actions[mName] != nil {
                 let action = actions[mName]!
                 DispatchQueue.global(qos: .background).async {
                     action.doAction(action, argu)
                     action.funcName = fName
+                    action.onIntReady?(action)
                     action.onReady?()
                 }
             }
@@ -205,11 +216,11 @@ open class FlexComponent: NSObject, WKUIDelegate, WKNavigationDelegate, WKScript
     }
     
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        flexInitInPage()
         userNavigation?.webView?(webView, didFinish: navigation)
     }
     
     public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        flexInitInPage()
         userNavigation?.webView?(webView, didStartProvisionalNavigation: navigation)
     }
     
@@ -286,16 +297,27 @@ open class FlexAction {
     fileprivate var doAction: (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void
     fileprivate var funcName: String? = nil
     fileprivate var mComponent: FlexComponent? = nil
+    fileprivate var onIntReady: ((_ this: FlexAction) -> Void)? = nil
+    
+    public var onReady: (() -> Void)? = nil
     
     public var isReady: Bool {
         funcName != nil
     }
-    
-    public var onReady: (() -> Void)? = nil
-    
-    public func PromiseReturn(_ response: String?) {
+        
+    public func PromiseReturn(_ response: Any?) {
         if isReady {
-            mComponent?.evalJS("window[\"\(funcName!)\"](\"\(response ?? "")\")")
+            if response == nil {
+                mComponent?.evalJS("window[\"\(funcName!)\"]()")
+            } else {
+                do {
+                    mComponent?.evalJS("window[\"\(funcName!)\"](\(try FlexFunc.convertValue(response!)))")
+                } catch FlexError.UnuseableTypeCameIn {
+                    FlexMsg.err(FlexString.ERRPR5)
+                } catch {
+                    FlexMsg.err(error)
+                }
+            }
             funcName = nil
         }
     }
@@ -304,9 +326,9 @@ open class FlexAction {
         self.doAction = action
     }
     
-    public convenience init (_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void, _ readyAction: @escaping (() -> Void)) {
+    public convenience init (_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void, _ readyAction: @escaping ((_ this: FlexAction) -> Void)) {
         self.init(action)
-        self.onReady = readyAction
+        self.onIntReady = readyAction
     }
     
 }

@@ -1,14 +1,11 @@
 
 [한국어 README](https://github.com/Kyun-J/FlexHybridApp-iOS/blob/master/README-ko.md)
 
-[DEMO](https://github.com/Kyun-J/FlexHybridApp-iOS-DEMO)
-
 [Android Version](https://github.com/Kyun-J/FlexHybridApp-Android)
-
 
 # FlexibleHybrid
 
-FlexHybridApp is the Framework that provides various convenience functions to develop HybridApp, such as implementing Web-> Native Call as a promise.
+FlexibleHybridApp is an iOS and iPadOS framework that provides various convenience functions to develop HybridApp through WKWebView, such as implementing Web-> Native Call as a Promise.
 
 # Add Framework
 
@@ -18,15 +15,17 @@ add to podFile
     pod 'FlexHybridApp'
 ```
 
+*** iOS Deployment Target is 11.0. ***
+
 # JSInterface Return Promise
 
 Unlike the existing WKWebView `userContentController`, interface patterns can be defined similar to functions in the form of closures.
 ```swift
-component.addInterface("FuncName") { (arguments) -> String? in
+component.addInterface("FuncName") { (arguments) -> Any? in
     if arguments != nil {
-        return String(arguments![0] as! Int + 1)
+        return arguments![0] as! Int + 1
     } else {
-        return "novalue"
+        return nil
     }
 }
 ```
@@ -42,7 +41,7 @@ const t1 = async () => {
 In `$flex`, functions registered as`addInterface(name, action)`in FlexComponent are created, and these functions return Promise.
 ```swift
 //in native
-component.addInterface("likeThis") { (arguments) -> String? in
+component.addInterface("likeThis") { (arguments) -> Any? in
 .....
 }
 ```
@@ -66,6 +65,9 @@ window.onload = function() {
 The `$flex` Object is automatically generated from the html page loaded by FlexWebView.  
 
 ## $flex component
+#### `window.onFlexLoad()`
+> When the `$flex` Object is loaded, only the first one is executed. After this function is executed, add functions in `$flex.web`.
+
 #### `$flex.version`
 > Get the version of the framework.
 
@@ -74,12 +76,13 @@ The `$flex` Object is automatically generated from the html page loaded by FlexW
 > Add an event listener.
 
 #### `$flex.init()`
-> Initialize $ flex Object.  
-> The function, eventListener in $ flex.web added by the user disappears.  
+> Initialize `$flex` Object.  
+> The function, eventListener in `$flex.web` added by the user disappears.  
 Interfaces added with FlexComponent.addInterface are retained.
 
 #### `$flex.web`
-> If you add a function through the `$flex.web` object argument, you can easily call those functions from Native through `evalFlexFunc`.
+> If you add a function through the `$flex.web` object argument, you can easily call those functions from Native through `evalFlexFunc`.  
+> Add the function after window.onFlexLoad() is called.
 
 # Native Class
 ## **FlexWebView**
@@ -112,19 +115,38 @@ FlexComponent is a required component of FlexWebView and includes WKWebViewConfi
 You can add FlexWebView's JS interface through `addInterface` of FlexComponent.
 `addInterface` must be set before FlexWebView is created.
 
-#### `func addInterface(_ name: String, _ action: @escaping (_ argumentss: Array<Any?>?) -> String?)`
+#### `func addInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?)`
+> Add JS interface of FlexWebView. It is available only before FlexWebView is Init.
+> Arguments delivered from the web are delivered in the form of `Array <Any?>` And can be returned to the web with the following data types.
+#### ** Int, Double, Float, Character, String, Dictionary<String, Any>, Array\<Any> **
+> Int, Double and Float are passed as JS Number, String and Character are passed as JS String.
+> Dictionary<String, Any> is an Object of JS, and Array\<Any> is transformed into an Array of JS, and each Any value must be (Int, Double, Float, Character, String, Dictionary<String, Any>, Array\< Any>).
+> For example, it works like this:
 ```swift
-component.addInterface("FunctionName") { (arguments) -> String? in
+// Example...
+// in native
+component.addInterface("FunctionName") { (arguments) -> Any? in
     if arguments != nil {
-        return String(arguments![0] as! Int + 1)
+        var returnValue: [String:Any] = [:]
+        var dictionaryValue: [String:Any] = [:]
+        dictionaryValue["subkey1"] = ["dictionaryValue",0.12]
+        dictionaryValue["subkey2"] = 1000.100
+        returnValue["key1"] = "value1"
+        returnValue["key2"] = dictionaryValue
+        returnValue["key3"] = ["arrayValue1",arguments![0] as! Int]
+        return returnValue
     } else {
         return nil
     }
 }
 ```
-> Add JS interface of FlexWebView. It is available only before FlexWebView is Init.
-> The parameters passed from the web are passed in the form of `Array<Any?>` And can return a String or nil value.
-> The set Closure operates in the Background.
+```js
+...
+const example = await $flex.FunctionName(100);
+// example is {key1: "value1", key3: ["arrayValue1", 100], key2: {subkey2: 1000.1, subkey1: ["dictionaryValue", 0.12]}}
+...
+```
+> Also, the set Closure operates in the Background.
 
 #### `func setInterface(_ name: String, _ action: @escaping (_ argumentss: Array<Any?>?) -> String?)`
 > Reset the Closure of an interface already added with addInterface. 
@@ -150,9 +172,16 @@ FlexAction is a class that can freely control the point when Retrun is given to 
 ```swift
 component.addAction("testAction", FlexAction { (this, arguments) -> Void in
     // do Anything....
+    var returnValue: [String:Any] = [:]
+    var dictionaryValue: [String:Any] = [:]
+    dictionaryValue["subkey1"] = ["dictionaryValue",0.12]
+    dictionaryValue["subkey2"] = 1000.100
+    returnValue["key1"] = "value1"
+    returnValue["key2"] = dictionaryValue
+    returnValue["key3"] = ["arrayValue1",100]
     // when js function ready to call
     this.onReady = { () -> Void in
-        this.PromiseReturn("testSuccess!") // Promise return at anytime
+        this.PromiseReturn(returnValue) // Promise return at anytime
     }
     // or use like this
     // if this.isReady {
@@ -172,9 +201,12 @@ component.addAction("testAction", FlexAction { (this, arguments) -> Void in
 #### `onReady: (() -> Void)?`
 > `PromiseReturn` triggers onReady when it can be called.
 
-#### `func PromiseReturn(_ response: String?)`
-> Return value in the form of Promise to web. If FlexAction is not ready to return, nothing will happen.  
-> Use `isReady: Bool` or `onReady: (()-> Void)?` to check if `PromiseReturn` is callable.
+#### `func PromiseReturn(_ response: Any?)`
+> Return return value in the form of Promise to web. If you are not ready to return, nothing will happen.
+> Use `isReady: Bool` or`onReady: (()-> Void)?`at a time when it can be called.
+> Passable value is the same as Action of FlexComponent.addInterface.
+#### ** Int, Double, Float, Character, String, Dictionary<String, Any>, Array\<Any> **
 
 # Todo Next
-1. Passing primitive data types, arrays, and dictionary data types when values are returned to the web.
+1. The $flex.web function passes the value to Native
+2. Add multiple event points to $flex
