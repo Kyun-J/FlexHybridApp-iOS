@@ -18,7 +18,7 @@ struct FlexString {
     static let ERROR2 = "You can only change interfaces that have already been added."
     static let ERROR3 = "You cannot set the interface or FlexAction name with flex";
     static let ERROR4 = "You can only change FlexAction that have already been added."
-    static let ERRPR5 = ""
+    static let ERRPR5 = "Only possible Int, Double, Float, Character, String, Dictionary<String,Any>, Array<Any>"
     
     static let FLEX_LOGS = ["flexlog","flexerror","flexdebug","flexinfo"]
 }
