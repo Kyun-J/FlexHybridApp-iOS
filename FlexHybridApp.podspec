@@ -9,7 +9,7 @@
 Pod::Spec.new do |spec|
 
   spec.name         = "FlexHybridApp"
-  spec.version      = "0.1.3.3"
+  spec.version      = "0.1.3.4"
   spec.summary      = "FlexibleHybridApp-iOS"
   spec.ios.deployment_target = '11.0'
   spec.swift_version = '5.2.2'
@@ -18,7 +18,6 @@ Pod::Spec.new do |spec|
   spec.license      = { :type => "BSD", :file => "license" }
   spec.source_files = "framework/flexhybridapp/**/*.{swift,xib}"
   spec.resources = "framework/flexhybridapp/**/*.js"
-  spec.preserve_paths = "framework/flexhybridapp/**/*.js"
   spec.description  = <<-DESC
   FlexibleHybridApp iOS Version
                    DESC
