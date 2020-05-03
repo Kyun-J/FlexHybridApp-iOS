@@ -15,7 +15,7 @@ add to podFile
     pod 'FlexHybridApp'
 ```
 
-*** iOS Deployment Target is 11.0. ***
+***iOS Deployment Target is 11.0.***
 
 # JSInterface Return Promise
 
@@ -53,13 +53,19 @@ const NatieveValue = await $flex.likeThis();
 If you create a function in `$flex.web`, you can easily call these functions in Native through `evalFlexFunc` of FlexWebView.
 ```swift
 // in native
-flexWebView.evalFlexFunc('WebFunction', 'test')
+flexWebView.evalFlexFunc("WebFunction", "test")
+{ (value) -> Void in
+    // value is "testtest"
+}
 ```
-When registering a function in `$flex.web`, it must be registered after window.onload is called.  
+When registering a function in `$flex.web`, it must be registered after window.onFlexLoad is called.  
 ```js
 // in js
-window.onload = function() {
-    $flex.web.WebFunction = (msg) => { console.log(msg); }
+window.onFlexLoad = function() {
+    $flex.web.WebFunction = (msg) => {
+        // msg is "test"
+        return Promise.resolve(msg + msg) // return "testtest"
+    }
 }
 ```
 The `$flex` Object is automatically generated from the html page loaded by FlexWebView.  
@@ -95,8 +101,36 @@ Interfaces added with FlexComponent.addInterface are retained.
 > Create FlexWebView. Interfaces added by addInterface of FlexComponent are implemented as functions in `$flex` in the web.
 
 #### `func evalFlexFunc(_ funcName: String)`
-#### `func evalFlexFunc(_ funcName: String, prompt: String)`
-> Call the function declared in `$flex.web`. When passing a value, only String format can be passed.
+> Call the function declared in `$flex.web`. Pass in a value or take no return.
+
+#### `func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void))`
+> Call the function declared in `$flex.web`. It does not pass a value, but it can receive a return value.
+```swift
+// call $flex.web.funcName()
+mWebView.evalFlexFunc("funcName")
+{ (value) -> Void in
+    // Retrun from $flex.web.funcName
+    ... 
+}
+```
+
+#### `func evalFlexFunc(_ funcName: String, arguments: Any)`
+> Call the function declared in `$flex.web`. It also passes values ​​to functions.   
+The value that can be passed is the same as the Action of `FlexComponent.addInterface`.
+#### **Int, Double, Float, Character, String, Dictionary<String,Any>, Array\<Any>**
+
+#### `func evalFlexFunc(_ funcName: String, arguments: Any, _ returnAs: @escaping (_ data: Any?) -> Void)`
+> Call the function declared in `$flex.web`. You can pass values ​​to functions and receive returns.
+```swift
+// call $flex.web.funcName(["test1","test2"])
+mWebView.evalFlexFunc("funcName", arguments: ["test1","test2"])
+{ (value) -> Void in
+    // Retrun from $flex.web.funcName
+    ... 
+}
+```
+> The value that can be passed is the same as the Action of `FlexComponent.addInterface`.
+#### **Int, Double, Float, Character, String, Dictionary<String,Any>, Array\<Any>**
 
 #### `func flexInitInPage()`
 > Initialize the `$flex` Object in FlexWebView. Same as `$flex.init()`.
@@ -118,7 +152,7 @@ You can add FlexWebView's JS interface through `addInterface` of FlexComponent.
 #### `func addInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?)`
 > Add JS interface of FlexWebView. It is available only before FlexWebView is Init.
 > Arguments delivered from the web are delivered in the form of `Array <Any?>` And can be returned to the web with the following data types.
-#### ** Int, Double, Float, Character, String, Dictionary<String, Any>, Array\<Any> **
+#### **Int, Double, Float, Character, String, Dictionary<String, Any>, Array\<Any>**
 > Int, Double and Float are passed as JS Number, String and Character are passed as JS String.
 > Dictionary<String, Any> is an Object of JS, and Array\<Any> is transformed into an Array of JS, and each Any value must be (Int, Double, Float, Character, String, Dictionary<String, Any>, Array\< Any>).
 > For example, it works like this:
@@ -179,34 +213,19 @@ component.addAction("testAction", FlexAction { (this, arguments) -> Void in
     returnValue["key1"] = "value1"
     returnValue["key2"] = dictionaryValue
     returnValue["key3"] = ["arrayValue1",100]
-    // when js function ready to call
-    this.onReady = { () -> Void in
-        this.PromiseReturn(returnValue) // Promise return at anytime
-    }
-    // or use like this
-    // if this.isReady {
-    //    this.PromiseReturn("testSuccess!")
-    // }
+    // Promise return to Web
+    // PromiseReturn can be called at any time
+    this.PromiseReturn(returnValue)
 })
 ```
 #### `FlexAction(_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void)`
 > Create FlexAction. The generated FlexAction and arguments contain the arguments passed from the web.
 
-#### `FlexAction(_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void, _ readyAction: @escaping (() -> Void))`
-> Create FlexAction. readyAction is a Closure that tells when `PromiseReturn` can be called.
-
-#### `isReady: Bool`
-> True if `PromiseReturn` is callable.
-
-#### `onReady: (() -> Void)?`
-> `PromiseReturn` triggers onReady when it can be called.
-
 #### `func PromiseReturn(_ response: Any?)`
 > Return return value in the form of Promise to web. If you are not ready to return, nothing will happen.
 > Use `isReady: Bool` or`onReady: (()-> Void)?`at a time when it can be called.
 > Passable value is the same as Action of FlexComponent.addInterface.
-#### ** Int, Double, Float, Character, String, Dictionary<String, Any>, Array\<Any> **
+#### **Int, Double, Float, Character, String, Dictionary<String, Any>, Array\<Any>**
 
 # Todo Next
-1. The $flex.web function passes the value to Native
-2. Add multiple event points to $flex
+1. Add multiple event points to $flex

@@ -48,13 +48,19 @@ const NatieveValue = await $flex.likeThis();
 `$flex.web`안에 함수를 생성하면, FlexWebView의 `evalFlexFunc`를 통해 해당 함수들을 Native에서 손쉽게 호출할 수 있습니다.   
 ```swift
 // in native
-flexWebView.evalFlexFunc('WebFunction', 'test')
+flexWebView.evalFlexFunc("WebFunction", "test")
+{ (value) -> Void in
+    // value is "testtest"
+}
 ```
-`$flex.web`에 함수 등록시, window.onload가 호출된 이후에 등록해야 합니다.  
+`$flex.web`에 함수 등록시, window.onFlexLoad가 호출된 이후에 등록해야 합니다.  
 ```js
 // in js
-window.onload = function() {
-    $flex.web.WebFunction = (msg) => { console.log(msg); }
+window.onFlexLoad = function() {
+    $flex.web.WebFunction = (msg) => {
+        // msg is "test"
+        return Promise.resolve(msg + msg) // return "testtest"
+    }
 }
 ```
 `$flex` Object는 FlexWebView에서 로드한 html 페이지에서 자동 생성됩니다.  
@@ -91,8 +97,36 @@ WKWebViewConfiguration을 포함하는 FlexComponent가 필수로 요구됩니�
 > FlexWebView를 생성합니다. FlexComponent의 addInterface로 추가한 인터페이스들은 web내에 `$flex` 안의 함수로 구현됩니다.
 
 #### `func evalFlexFunc(_ funcName: String)`
-#### `func evalFlexFunc(_ funcName: String, prompt: String)`
-> `$flex.web` 내에 선언된 함수를 호출합니다. 값을 전달할 때는 String 형식만 전달 가능합니다.
+> `$flex.web` 내에 선언된 함수를 호출합니다. 값을 전달하거나, 리턴을 받지 않습니다.
+
+#### `func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void))`
+> `$flex.web` 내에 선언된 함수를 호출합니다. 값을 전달하진 않으나, 리턴값을 전달받을 수 있습니다.
+```swift
+// call $flex.web.funcName()
+mWebView.evalFlexFunc("funcName")
+{ (value) -> Void in
+    // Retrun from $flex.web.funcName
+    ... 
+}
+```
+
+#### `func evalFlexFunc(_ funcName: String, arguments: Any)`
+> `$flex.web` 내에 선언된 함수를 호출합니다. 또한 함수에 값을 전달합니다.  
+> 전달 가능한 값은 FlexComponent.addInterface 의 Action과 동일합니다.
+#### **Int, Double, Float, Character, String, Dictionary<String,Any>, Array\<Any>**
+
+#### `func evalFlexFunc(_ funcName: String, arguments: Any, _ returnAs: @escaping (_ data: Any?) -> Void)`
+> `$flex.web` 내에 선언된 함수를 호출합니다. 함수에 값을 전달하고 리턴도 전달받을 수 있습니다.
+```swift
+// call $flex.web.funcName(["test1","test2"])
+mWebView.evalFlexFunc("funcName", arguments: ["test1","test2"])
+{ (value) -> Void in
+    // Retrun from $flex.web.funcName
+    ... 
+}
+```
+> 전달 가능한 값은 FlexComponent.addInterface 의 Action과 동일합니다.
+#### **Int, Double, Float, Character, String, Dictionary<String,Any>, Array\<Any>**
 
 #### `func flexInitInPage()`
 > FlexWebView 내의 `$flex` Object를 초기화합니다.  
@@ -140,7 +174,7 @@ component.addInterface("FunctionName") { (arguments) -> Any? in
 ```js
 ...
 const example = await $flex.FunctionName(100);
-// example is {key1: "value1", key3: ["arrayValue1", 100], key2: {subkey2: 1000.1, subkey1: ["dictionaryValue", 0.12]}}
+// example is {key1: "value1", key2: {subkey2: 1000.1, subkey1: ["dictionaryValue", 0.12]}, key3: ["arrayValue1", 100]}
 ...
 ```
 > 또한 설정한 Closure는 Background에서 동작합니다.
@@ -176,27 +210,14 @@ component.addAction("testAction", FlexAction { (this, arguments) -> Void in
     returnValue["key1"] = "value1"
     returnValue["key2"] = dictionaryValue
     returnValue["key3"] = ["arrayValue1",100]
-    // when js function ready to call
-    this.onReady = { () -> Void in
-        this.PromiseReturn(returnValue) // Promise return at anytime
-    }
-    // or use like this
-    // if this.isReady {
-    //    this.PromiseReturn("testSuccess!")
-    // }
+    // Promise return to Web
+    // PromiseReturn can be called at any time.
+    this.PromiseReturn(returnValue)
 })
 ```
+
 #### `FlexAction(_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void)`
 > FlexAction을 생성합니다. this에는 생성된 FlexAction, arguments에는 web에서 전달된 arguments가 담겨 있습니다.
-
-#### `FlexAction(_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void, _ readyAction: @escaping ((_ this: FlexAction) -> Void))`
-> FlexAction을 생성합니다. readyAction은 `PromiseReturn`이 호출 가능한 시점을 알려주는 Closure입니다.
-
-#### `isReady: Bool`
-> `PromiseReturn`이 호출 가능한 상태이면, true입니다.
-
-#### `onReady: (() -> Void)?`
-> `PromiseReturn`이 호출 가능한 시점에 트리거됩니다.
 
 #### `func PromiseReturn(_ response: Any?)`
 > web에 Promise 형식으로 return 값을 전달합니다. return 할 준비가 되어있지 않으면, 아무 일도 일어나지 않습니다.  
@@ -205,5 +226,4 @@ component.addAction("testAction", FlexAction { (this, arguments) -> Void in
 #### **Int, Double, Float, Character, String, Dictionary<String,Any>, Array\<Any>**
 
 # Todo Next
-1. $flex.web 함수가 Native에 값을 전달
-2. $flex에 여러 이벤트 시점을 추가
+1. $flex에 여러 이벤트 시점을 추가

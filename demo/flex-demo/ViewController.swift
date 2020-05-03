@@ -56,10 +56,6 @@ class ViewController: UIViewController, WKNavigationDelegate {
             // Promise return to Web
             // PromiseReturn can be called at any time.
             this.PromiseReturn(returnValue)
-            // or use like this
-            // if this.isReady {
-            //     this.PromiseReturn("testSuccess!")
-            // }
         })
 
         mWebView = FlexWebView(frame: self.view.frame, component: component)
