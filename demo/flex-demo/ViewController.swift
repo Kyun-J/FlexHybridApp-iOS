@@ -20,7 +20,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
 
         // add js interface
         component.addInterface("test1") { (arguments) -> Any? in
-            // Action in background...
+            // Action work in background...
             if arguments != nil {
                 return arguments![0] as! Int + 1
             } else {
@@ -28,13 +28,22 @@ class ViewController: UIViewController, WKNavigationDelegate {
             }
         }
         component.addInterface("test2") { (arguments) -> Any? in
-            // Action in background...
-            self.mWebView.evalFlexFunc("receive",prompt: "callJSFunction")
+            // Action work in background...
+            
+            // call $flex.web function
+            // same as $flex.web.help("Help me Flex!") in js
+            self.mWebView.evalFlexFunc("help", arguments: "Help me Flex!")
+            { (value) -> Void in
+                // Retrun from $flex.web.help func
+                print("Web Func Retrun ---------------")
+                print(value)
+                print("-------------------------------")
+            }
             return nil
         }
         // add FlexAction
-        component.addAction("testAction1", FlexAction { (this, arguments) -> Void in
-            // Action in background...
+        component.addAction("testAction", FlexAction { (this, arguments) -> Void in
+            // Action work in background...
             // do Anything....
             // ....
             var returnValue: [String:Any] = [:]
@@ -44,23 +53,14 @@ class ViewController: UIViewController, WKNavigationDelegate {
             returnValue["key1"] = "value1"
             returnValue["key2"] = dictionaryValue
             returnValue["key3"] = ["arrayValue1",100]
-            // when js function ready to call
-            this.onReady = { () -> Void in
-                this.PromiseReturn(returnValue) // Promise return
-            }
+            // Promise return to Web
+            // PromiseReturn can be called at any time.
+            this.PromiseReturn(returnValue)
             // or use like this
             // if this.isReady {
             //     this.PromiseReturn("testSuccess!")
             // }
         })
-        
-        component.addAction("testAction2", FlexAction({ (this, arguments) -> Void in
-            // Action in background
-            // do your job
-        }, { (this) -> Void in
-            // when ready to return value to web
-            // this.PromiseReturn(value)
-        }))
 
         mWebView = FlexWebView(frame: self.view.frame, component: component)
         mWebView.translatesAutoresizingMaskIntoConstraints = false

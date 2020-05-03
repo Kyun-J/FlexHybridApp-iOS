@@ -20,7 +20,7 @@ struct FlexString {
     static let ERROR4 = "You can only change FlexAction that have already been added."
     static let ERRPR5 = "Only possible Int, Double, Float, Character, String, Dictionary<String,Any>, Array<Any>"
     
-    static let FLEX_LOGS = ["flexlog","flexerror","flexdebug","flexinfo"]
+    static let FLEX_DEFINE = ["flexlog","flexerror","flexdebug","flexinfo","flexreturn"]
 }
 
 struct FlexMsg {
@@ -42,13 +42,13 @@ struct FlexMsg {
     static func webLog(_ type: String, _ msg: Any?) {
         var t = ""
         switch type {
-        case FlexString.FLEX_LOGS[0]:
+        case FlexString.FLEX_DEFINE[0]:
             t = "LOG"
-        case FlexString.FLEX_LOGS[1]:
+        case FlexString.FLEX_DEFINE[1]:
             t = "ERROR"
-        case FlexString.FLEX_LOGS[2]:
+        case FlexString.FLEX_DEFINE[2]:
             t = "DEBUG"
-        case FlexString.FLEX_LOGS[3]:
+        case FlexString.FLEX_DEFINE[3]:
             t = "INFO"
         default:
             t = type

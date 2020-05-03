@@ -8,12 +8,12 @@ const logs = { log: console.log, debug: console.debug, error: console.error, inf
 window.$flex = {};
 Object.defineProperties($flex,
     {
-        version: { value: '0.1.3.4', writable: false },
+        version: { value: '0.1.4', writable: false },
         addEventListener: { value: function(event, callback) { listeners.push({ e: event, c: callback }) }, writable: false },
         init: { value: function() { window.Function(script)(); }, writable: false },
-        web: { value: {}, writable: false }
+        web: { value: {} , writable: false },
     }
-)
+);
 const genFName = () => {
     const name = 'f' + Math.random().toString(10).substr(2,8);
     if(window[name] === undefined) {

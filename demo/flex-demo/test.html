@@ -15,14 +15,15 @@
        await $flex.test2();
     }
     const t3 = async () => {
-        const z = await $flex.testAction1();
-        console.log(z); // {key1: "value1", key3: ["arrayValue1", 100], key2: {subkey2: 1000.1, subkey1: ["dictionaryValue", 0.12]}}
+        const z = await $flex.testAction();
+        console.log(z); // {key1: "value1", key2: {subkey2: 1000.1, subkey1: ["dictionaryValue", 0.12]}, key3: ["arrayValue1", 100]}
         console.log(typeof z) // Object
     }
     // when $flex on ready.....
     window.onFlexLoad = function() {
-        $flex.web.receive = function(data) {
+        $flex.web.help = function(data) {
             console.log('Received by Native ---- ' + data);
+            return Promise.resolve('Thanks Flex!')
         }
     }
 </script>
