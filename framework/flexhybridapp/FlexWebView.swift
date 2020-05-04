@@ -52,9 +52,9 @@ open class FlexWebView : WKWebView {
         component.evalJS("(async function() { const V = await $flex.web.\(funcName)(); $flex.flexreturn({ TID: \(TID), Value: V }); })(); void 0")
     }
     
-    public func evalFlexFunc(_ funcName: String, arguments: Any) {
+    public func evalFlexFunc(_ funcName: String, sendData: Any) {
         do {
-            component.evalJS("$flex.web.\(funcName)(\(try FlexFunc.convertValue(arguments)))")
+            component.evalJS("$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)))")
         } catch FlexError.UnuseableTypeCameIn {
             FlexMsg.err(FlexString.ERRPR5)
         } catch {
@@ -62,11 +62,11 @@ open class FlexWebView : WKWebView {
         }
     }
     
-    public func evalFlexFunc(_ funcName: String, arguments: Any, _ returnAs: @escaping (_ data: Any?) -> Void) {
+    public func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: Any?) -> Void) {
         do {
             let TID = Int.random(in: 1..<10000)
             component.returnFromWeb[TID] = returnAs
-            component.evalJS("(async function() { const V = await $flex.web.\(funcName)(\(try FlexFunc.convertValue(arguments))); $flex.flexreturn({ TID: \(TID), Value: V }); })(); void 0")
+            component.evalJS("(async function() { const V = await $flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData))); $flex.flexreturn({ TID: \(TID), Value: V }); })(); void 0")
         } catch FlexError.UnuseableTypeCameIn {
             FlexMsg.err(FlexString.ERRPR5)
         } catch {
@@ -135,6 +135,10 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     
     fileprivate func evalJS(_ js: String) {
         DispatchQueue.main.async {
+            if self.flexWebView == nil {
+                FlexMsg.err(FlexString.ERRPR6)
+                return
+            }
             self.flexWebView?.evaluateJavaScript(js, completionHandler: { (result, error) in
                 if error != nil {
                     FlexMsg.err(error!.localizedDescription)
@@ -155,47 +159,37 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         config
     }
     
-    public func addAction(_ name: String, _ action: FlexAction) {
-        if name.contains("flex") {
-            FlexMsg.err(FlexString.ERROR3)
-            return
-        }
+    public func setAction(_ name: String, _ action: FlexAction) {
         if flexWebView != nil {
             FlexMsg.err(FlexString.ERROR1)
             return
         }
-        action.mComponent = self
+        if actions[name] != nil {
+            
+            return
+        }
+        if name.contains("flex") {
+            FlexMsg.err(FlexString.ERROR3)
+            return
+        }
         actions[name] = action
     }
     
     public func getAction(_ name: String) -> FlexAction? {
         return actions[name]
     }
-    
-    public func setAction(_ name: String, _ action: FlexAction) {
-        if actions[name] == nil {
-            FlexMsg.err(FlexString.ERROR2)
-            return
-        }
-        action.mComponent = self
-        actions[name] = action
-    }
             
-    public func addInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?) {
-        if name.contains("flex") {
-            FlexMsg.err(FlexString.ERROR3)
-            return
-        }
+    public func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?) {
         if flexWebView != nil {
             FlexMsg.err(FlexString.ERROR1)
             return
         }
-        interfaces[name] = action
-    }
-    
-    public func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?) {
-        if interfaces[name] == nil {
-            FlexMsg.err(FlexString.ERROR2)
+        if interfaces[name] != nil {
+            
+            return
+        }
+        if name.contains("flex") {
+            FlexMsg.err(FlexString.ERROR3)
             return
         }
         interfaces[name] = action
@@ -241,6 +235,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                 }
             } else if actions[mName] != nil {
                 let action = actions[mName]!
+                action.mComponent = self
                 DispatchQueue.global(qos: .background).async {
                     action.doAction(action, data["arguments"] as? Array<Any?>)
                     action.funcName = fName
@@ -339,14 +334,14 @@ open class FlexAction {
         }
     }
     fileprivate var mComponent: FlexComponent? = nil
-    fileprivate var onReady: (() -> Void)? = nil
+    private var onReady: (() -> Void)? = nil
     
     private func action(_ response: Any?) {
         if response == nil {
-            mComponent?.evalJS("window[\"\(funcName!)\"]()")
+            mComponent?.evalJS("window.\(funcName!)()")
         } else {
             do {
-                mComponent?.evalJS("window[\"\(funcName!)\"](\(try FlexFunc.convertValue(response!)))")
+                mComponent?.evalJS("window.\(funcName!)(\(try FlexFunc.convertValue(response!)))")
             } catch FlexError.UnuseableTypeCameIn {
                 FlexMsg.err(FlexString.ERRPR5)
             } catch {
@@ -354,6 +349,7 @@ open class FlexAction {
             }
         }
         funcName = nil
+        mComponent = nil
     }
         
     public func PromiseReturn(_ response: Any?) {

@@ -19,6 +19,7 @@ struct FlexString {
     static let ERROR3 = "You cannot set the interface or FlexAction name with flex";
     static let ERROR4 = "You can only change FlexAction that have already been added."
     static let ERRPR5 = "Only possible Int, Double, Float, Character, String, Dictionary<String,Any>, Array<Any>"
+    static let ERRPR6 = "FlexWebView to run javascript is null."
     
     static let FLEX_DEFINE = ["flexlog","flexerror","flexdebug","flexinfo","flexreturn"]
 }
