@@ -14,11 +14,8 @@
 		291A5260245C369E00558FE8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 291A525F245C369E00558FE8 /* Assets.xcassets */; };
 		291A5263245C369E00558FE8 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 291A5261245C369E00558FE8 /* LaunchScreen.storyboard */; };
 		291A5277245D598000558FE8 /* test.html in Resources */ = {isa = PBXBuildFile; fileRef = 291A5276245D598000558FE8 /* test.html */; };
-		DF30142E245E7A9A0066C5A3 /* FlexHybridApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DF30142D245E7A990066C5A3 /* FlexHybridApp.framework */; };
-		DF30142F245E7A9A0066C5A3 /* FlexHybridApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DF30142D245E7A990066C5A3 /* FlexHybridApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		DFFBAF85246662060028F412 /* FlexHybridApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DF30142D245E7A990066C5A3 /* FlexHybridApp.framework */; };
-		DFFBAF87246662DB0028F412 /* FlexHybridApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DFFBAF86246662DB0028F412 /* FlexHybridApp.framework */; };
-		DFFBAF88246662DB0028F412 /* FlexHybridApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DFFBAF86246662DB0028F412 /* FlexHybridApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		DFB6D96B24695E9500C76FFE /* FlexHybridApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DFB6D96A24695E9500C76FFE /* FlexHybridApp.framework */; };
+		DFB6D96C24695E9500C76FFE /* FlexHybridApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DFB6D96A24695E9500C76FFE /* FlexHybridApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -28,8 +25,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				DF30142F245E7A9A0066C5A3 /* FlexHybridApp.framework in Embed Frameworks */,
-				DFFBAF88246662DB0028F412 /* FlexHybridApp.framework in Embed Frameworks */,
+				DFB6D96C24695E9500C76FFE /* FlexHybridApp.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -46,8 +42,7 @@
 		291A5262245C369E00558FE8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		291A5264245C369E00558FE8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		291A5276245D598000558FE8 /* test.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = test.html; sourceTree = "<group>"; };
-		DF30142D245E7A990066C5A3 /* FlexHybridApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FlexHybridApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		DFFBAF86246662DB0028F412 /* FlexHybridApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FlexHybridApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		DFB6D96A24695E9500C76FFE /* FlexHybridApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FlexHybridApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,9 +50,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DF30142E245E7A9A0066C5A3 /* FlexHybridApp.framework in Frameworks */,
-				DFFBAF85246662060028F412 /* FlexHybridApp.framework in Frameworks */,
-				DFFBAF87246662DB0028F412 /* FlexHybridApp.framework in Frameworks */,
+				DFB6D96B24695E9500C76FFE /* FlexHybridApp.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -99,8 +92,7 @@
 		291A526A245C372E00558FE8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				DFFBAF86246662DB0028F412 /* FlexHybridApp.framework */,
-				DF30142D245E7A990066C5A3 /* FlexHybridApp.framework */,
+				DFB6D96A24695E9500C76FFE /* FlexHybridApp.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";

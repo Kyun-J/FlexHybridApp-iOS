@@ -21,6 +21,7 @@
     }
     // when $flex on ready.....
     window.onFlexLoad = function() {
+        console.log('Flex Load Success!!');
         $flex.web.help = function(data) {
             console.log('Received by Native ---- ' + data);
             return Promise.resolve('Thanks Flex!')

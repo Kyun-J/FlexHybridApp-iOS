@@ -11,15 +11,16 @@ import Foundation
 enum FlexError: Error {
     case FlexWebViewAlreadyInit
     case UnuseableTypeCameIn
+    case UnauthorizedProtocol
 }
 
 struct FlexString {
-    static let ERROR1 = "After FlextWebView is initialized, you cannot add interfaces"
-    static let ERROR2 = "You can only change interfaces that have already been added."
-    static let ERROR3 = "You cannot set the interface or FlexAction name with flex";
-    static let ERROR4 = "You can only change FlexAction that have already been added."
-    static let ERRPR5 = "Only possible Int, Double, Float, Character, String, Dictionary<String,Any>, Array<Any>"
-    static let ERRPR6 = "FlexWebView to run javascript is null."
+    static let ERROR1 = "After the FlextWebView is initialized, BaseUrl, Interface, Action cannot be added."
+    static let ERROR2 = "You cannot set the interface or FlexAction name with flex";
+    static let ERROR3 = "Only possible Int, Double, Float, Character, String, Dictionary<String,Any>, Array<Any>"
+    static let ERROR4 = "FlexWebView to run javascript is null."
+    static let ERROR5 = "The Interface or Action with the same name is already registered."
+    static let ERROR6 = "The BaseUrl can only use file, http, https protocols."
     
     static let FLEX_DEFINE = ["flexlog","flexerror","flexdebug","flexinfo","flexreturn"]
 }
@@ -54,7 +55,9 @@ struct FlexMsg {
         default:
             t = type
         }
-        print("\(t) on FlexWebView --- \(msg ?? "nil")")
+        let date = DateFormatter()
+        date.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
+        print("\(date.string(from: Date())) : \(t) on FlexWebView\n\(msg ?? "nil")")
     }
 }
 

@@ -10,8 +10,8 @@ import UIKit
 import WebKit
 import FlexHybridApp
 
-class ViewController: UIViewController, WKNavigationDelegate {
-
+class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHandler {
+    
     var mWebView: FlexWebView!
     var component = FlexComponent()
     
@@ -37,11 +37,12 @@ class ViewController: UIViewController, WKNavigationDelegate {
             { (value) -> Void in
                 // Retrun from $flex.web.help func
                 print("Web Func Retrun ---------------")
-                print(value)
+                print(value!)
                 print("-------------------------------")
             }
             return nil
         }
+        
         // add FlexAction
         component.setAction("testAction")
         { (action, arguments) -> Void in
@@ -58,8 +59,14 @@ class ViewController: UIViewController, WKNavigationDelegate {
             action.PromiseReturn(returnValue)
         }
         
+        // add user-custom contentController
+        component.configration.userContentController.add(self, name: "userCC")
+        // setBaseUrl
+        component.setBaseUrl("file://")
+        
         mWebView = FlexWebView(frame: self.view.frame, component: component)
         mWebView.translatesAutoresizingMaskIntoConstraints = false
+        mWebView.scrollView.bounces = false
         view.addSubview(mWebView)
 
         if #available(iOS 13.0, *) {
@@ -87,11 +94,16 @@ class ViewController: UIViewController, WKNavigationDelegate {
     }
 
     override func viewWillAppear(_ animated: Bool) {
+        // set user-custom navigationDelegate
         mWebView.navigationDelegate = self
     }
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        print("suc")
+        print("user navigationDelegate")
+    }
+    
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        print("user contentController")
     }
 
 }

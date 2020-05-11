@@ -56,7 +56,7 @@ open class FlexWebView : WKWebView {
         do {
             component.evalJS("$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)))")
         } catch FlexError.UnuseableTypeCameIn {
-            FlexMsg.err(FlexString.ERRPR5)
+            FlexMsg.err(FlexString.ERROR3)
         } catch {
             FlexMsg.err(error)
         }
@@ -68,7 +68,7 @@ open class FlexWebView : WKWebView {
             component.returnFromWeb[TID] = returnAs
             component.evalJS("(async function() { const V = await $flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData))); $flex.flexreturn({ TID: \(TID), Value: V }); })(); void 0")
         } catch FlexError.UnuseableTypeCameIn {
-            FlexMsg.err(FlexString.ERRPR5)
+            FlexMsg.err(FlexString.ERROR3)
         } catch {
             FlexMsg.err(error)
         }
@@ -92,10 +92,25 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     private var interfaces: [String:(_ arguments: Array<Any?>?) -> Any?] = [:]
     private var actions: [String: (_ action: FlexAction, _ arguments: Array<Any?>?) -> Void?] = [:]
     fileprivate var returnFromWeb: [Int:(_ data: Any?) -> Void] = [:]
-    private var flexWebView: FlexWebView?
-    private var jsString: String?
-    private var userNavigation: WKNavigationDelegate?
+    private var flexWebView: FlexWebView? = nil
+    private var jsString: String? = nil
+    private var baseUrl: String? = nil
+    private var userNavigation: WKNavigationDelegate? = nil
+    private let queue = DispatchQueue(label: "FlexibleHybridApp", qos: DispatchQoS.background)
     fileprivate var config: WKWebViewConfiguration = WKWebViewConfiguration()
+    
+    public func setBaseUrl(_ url: String) {
+        if flexWebView != nil {
+            FlexMsg.err(FlexString.ERROR1)
+        } else if url.prefix(7) != "file://" && url.prefix(7) != "http://" && url.prefix(8) != "https://" {
+            FlexMsg.err(FlexString.ERROR6)
+        }
+        baseUrl = url
+    }
+    
+    public var BaseUrl: String? {
+        baseUrl
+    }
     
     fileprivate func beforeWebViewInit() {
         for n in FlexString.FLEX_DEFINE {
@@ -113,7 +128,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         flexWebView = webView
         checkDelegateChange()
         do {
-            jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.js", encoding: .utf8)
+            jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.min.js", encoding: .utf8)
             var keys = ""
             keys.append("[\"")
             keys.append(FlexString.FLEX_DEFINE.joined(separator: "\",\""))
@@ -144,7 +159,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     fileprivate func evalJS(_ js: String) {
         DispatchQueue.main.async {
             if self.flexWebView == nil {
-                FlexMsg.err(FlexString.ERRPR6)
+                FlexMsg.err(FlexString.ERROR4)
                 return
             }
             self.flexWebView?.evaluateJavaScript(js, completionHandler: { (result, error) in
@@ -154,11 +169,6 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             })
         }
     }
-    
-    private func flexInitInPage() {
-        evalJS(jsString!)
-    }
-    
     public var FlexWebView: FlexWebView? {
         flexWebView
     }
@@ -166,37 +176,29 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     public var configration: WKWebViewConfiguration {
         config
     }
-    
+        
     public func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?) {
         if flexWebView != nil {
             FlexMsg.err(FlexString.ERROR1)
-            return
+        } else if interfaces[name] != nil || actions[name] != nil {
+            FlexMsg.err(FlexString.ERROR5)
+        } else if name.contains("flex") {
+            FlexMsg.err(FlexString.ERROR2)
+        } else {
+            interfaces[name] = action
         }
-        if interfaces[name] != nil || actions[name] != nil {
-            
-            return
-        }
-        if name.contains("flex") {
-            FlexMsg.err(FlexString.ERROR3)
-            return
-        }
-        interfaces[name] = action
     }
     
     public func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: Array<Any?>?) -> Void?) {
         if flexWebView != nil {
             FlexMsg.err(FlexString.ERROR1)
-            return
+        } else if interfaces[name] != nil || actions[name] != nil {
+            FlexMsg.err(FlexString.ERROR5)
+        } else if name.contains("flex") {
+            FlexMsg.err(FlexString.ERROR2)
+        } else {
+            actions[name] = action
         }
-        if interfaces[name] != nil || actions[name] != nil {
-            
-            return
-        }
-        if name.contains("flex") {
-            FlexMsg.err(FlexString.ERROR3)
-            return
-        }
-        actions[name] = action
     }
                                 
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -223,7 +225,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                         break;
                 }
             } else if interfaces[mName] != nil {
-                DispatchQueue.global(qos: .background).async {
+                queue.async {
                     let value: Any? = self.interfaces[mName]!(data["arguments"] as? Array<Any?>)
                     if value == nil {
                         self.evalJS("window.\(fName)()")
@@ -231,7 +233,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                         do {
                             self.evalJS("window.\(fName)(\(try FlexFunc.convertValue(value!)))")
                         } catch FlexError.UnuseableTypeCameIn {
-                            FlexMsg.err(FlexString.ERRPR5)
+                            FlexMsg.err(FlexString.ERROR3)
                         } catch {
                             FlexMsg.err(error)
                         }
@@ -239,7 +241,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                 }
             } else if actions[mName] != nil {
                 let action = actions[mName]!
-                DispatchQueue.global(qos: .background).async {
+                queue.async {
                     action(FlexAction(fName, self), data["arguments"] as? Array<Any?>)
                 }
             }
@@ -251,7 +253,9 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        flexInitInPage()
+        if baseUrl == nil || (baseUrl != nil && webView.url != nil && webView.url!.absoluteString.contains(baseUrl!)) {
+            evalJS(jsString!)
+        }
         userNavigation?.webView?(webView, didFinish: navigation)
     }
     
@@ -306,7 +310,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                     if success {
                         FlexMsg.log("Opend \(navigationAction.request.url?.absoluteString ?? "")")
                     } else {
-                        FlexMsg.log("Failed \(navigationAction.request.url?.absoluteString ?? "")")
+                        FlexMsg.err("Failed \(navigationAction.request.url?.absoluteString ?? "")")
                     }
                 })
             }
@@ -343,7 +347,7 @@ open class FlexAction {
             do {
                 mComponent.evalJS("window.\(funcName)(\(try FlexFunc.convertValue(response!)))")
             } catch FlexError.UnuseableTypeCameIn {
-                FlexMsg.err(FlexString.ERRPR5)
+                FlexMsg.err(FlexString.ERROR3)
             } catch {
                 FlexMsg.err(error)
             }
