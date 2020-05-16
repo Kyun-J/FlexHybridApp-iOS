@@ -14,7 +14,7 @@ Add the following to podFile
     pod 'FlexHybridApp'
 ```
 
-*** iOS Deployment Target is 11.0. ***
+***iOS Deployment Target is 11.0.***
 
 # Key features of Flex Framework interface
 Basically, various functions have been added to WKWebView userContentController.
@@ -160,7 +160,7 @@ FlexComponent replaces WKWebViewConfiguration and has the following features.
 2. Add asynchronous interface between Native and Web to FlexWebView through setInterface, setAction.
 3. By setting the BaseUrl, you can set the interface to native only on the specified page.
 
-### BaseUrl 설정
+### BaseUrl Setting
 $flex Object can be used only in the page containing the configured BaseUrl.  
 If you don't set BaseUrl, you can use $flex Object on any page.  
 Once set, the BaseUrl cannot be modified again.
