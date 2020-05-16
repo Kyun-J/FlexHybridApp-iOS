@@ -1,6 +1,6 @@
 # FlexibleHybrid
 
-FlexibleHybridApp은 Web->Native Call을 Promise로 구현하는 등, WKWebView를 통해 HybridApp을 개발하기 위해 여러 편의 기능을 제공하는 iOS, iPadOS 프레임워크입니다.
+FlexibleHybridApp은 Web, Native 상호간의 Interface을 Promise로 구현하는 등, HybridApp을 개발하기 위해 여러 편의 기능을 제공하는 프레임워크 입니다.
 
 # framework 추가 방법
 
@@ -12,218 +12,190 @@ podFile에 다음을 추가
 
 ***iOS Deployment Target은 11.0 입니다.***
 
-# JSInterface Return Promise
+# Flex Framework 인터페이스 주요 특징
+기본적으로 WKWebView userContentController에 여러가지 기능이 추가되었습니다.
+1. Web에서 Native 함수 호출시, **Native함수의 Return이 Web에 Promise로** 전달됩니다.
+2. Native에서 Web함수 호출시, **Web에서 Native로 Async**하게 반환값을 전달 할 수 있습니다.
+3. WKWebViewConfiguration 대신, FlexComponent를 사용해야 합니다. FlexComponent는 WKWebViewConfiguration를 포함하고 있습니다.
+4. userContentController와는 다르게, 각 인터페이스의 **네이티브 동작을 별도의 코드 블럭(Clouser)** 으로 지정할 수 있습니다.
+5. 기본 자료형을 포함하여 **JS의 Array를 Swift의 Array\<Any>로, JS의 Object를 Swift의 Dictionary\<String,Any>으로** 전달할 수 있습니다.
+6. Web에서 Native 호출시, **Native 코드 블럭은 Background(DispatchQoS.background)** 안에서 동작합니다
+7. FlexWebView에 BaseUrl을 지정하여, **타 사이트 및 페이지에서 Native와 Interface하는 것을 방지**할 수 있습니다.
 
-기존의 WKWebView의 `userContentController`와 달리, Closure 형태로 함수와 유사하게 인터페이스 패턴을 정의할 수 있습니다
+# Flex 인터페이스 구현
+## 전달 가능한 데이터 타입
+1. WKWebView userContentController와 같이 일반 자료형, 문자열, Array, Dictionary형식으로 전송 가능합니다. 
+2. JS의 Array를 Swift의 Array\<Any>로, JS의 Object를 Swift의 Dictionary\<String,Any>으로 전송 가능합니다.  
+3. Array와 Object형식의 데이터를 전송할 때 안에 포함된 데이터는 **반드시 Nil, undefined를 제외한 아래 자료형 중 하나여야 합니다**.  
+
+| JS | Swift |
+|:--:|:--:|
+| Number | Int, Float, Double |
+| String | String, Character | 
+| Array [] | Array\<Any> |
+| Object {} | Dictionary<String,Any> |
+| undefined (Single Argument Only) | Nil (Single Property Only) |
+
+## WebToNative 인터페이스
+WebToNative 인터페이스는 다음의 특징을 지닙니다.
+1. 함수 return으로 값을 전달하는 Normal Interface, Method 호출로 값을 전달하는 Action Interface 2가지 종류
+2. Clouser형태로 인터페이스 코드 블럭을 추가
+3. Native 코드 블럭은 별도의 Background(DispatchQoS.background)에서 동작
+4. 추가된 인터페이스는 Web에서 $flex.함수명 형태로 호출 가능
+5. $flex Object는 window.onFlexLoad가 호출된 이후 사용 가능
+
+### ***Nomal Interface***
+Normal Interface는 기본적으로 다음과 같이 사용합니다.
 ```swift
-component.addInterface("FuncName") { (arguments) -> Any? in
-    if arguments != nil {
-        return arguments![0] as! Int + 1
-    } else {
-        return nil
-    }
+// in Swfit
+flexComponent.setInterface("Normal") // "Normal" becomes the function name in Web JavaScript. 
+{ arguments -> Any? in
+    // arguments is Arguemnts Data from web. Type is Array<Any>
+    // ["data1", 2, false]
+    return "HiFlexWeb" // "HiFlexWeb" is passed to web in Promise pattern.
 }
+flexWebView = FlexWebView(frame: self.view.frame, component: flexComponent)
 ```
-위와 같이 코드를 작성할 경우, Web상에서 FuncName으로 함수가 만들어지며, 다음과 같이 Promise 형태로 사용할 수 있습니다
 ```js
-const t1 = async () => {
-    const z = await $flex.FuncName(0); // call Native Function
-    console.log('Return by Native with t1 --- ' + z); // z = 1
-}
+// in web javascript
+...
+const res = await $flex.Normal("data1",2,false);
+// res is "HiFlexWeb"
 ```
-# `$flex` Object
-`$flex` Object는 FlexHybrid 라이브러리의 Web안에서 Web <-> Native간 인터페이스를 담당합니다.   
-`$flex`안에는 FlexComponent에서 `addInterface(name, action)`으로 등록한 함수들이 생성되어 있으며, 이 함수들은 Promise를 반환 합니다.  
+`setInterface`의 첫 인자로 웹에서의 함수 이름을 지정하고 이어지는 Clouser는 함수가 동작하는 코드 블럭이 됩니다.  
+Clouser로 전달되는 arguments는 Array 객체로서 web에서 함수 호출시 전달된 값들이 담겨 있습니다.  
+Clouser에서 web으로 값을 전달할 때(return할 때)는 [전달 가능한 데이터 타입](#전달-가능한-데이터-타입)만 사용 가능합니다.
+
+### ***Action Interface***
+Action Interface는 Normal Interface와 거의 비슷하나, Web으로의 값 리턴을 action객체의 `PromiseReturn` 메소드를 호출하는 시점에 전달합니다.
 ```swift
-//in native
-component.addInterface("likeThis") { (arguments) -> Any? in
-.....
+// in Kotlin
+var mAction: FlexAction? = nil
+...
+flexComponent.setAction("Action")
+{ (action, arguments) -> Void in
+// arguments is Array<Any>, ["Who Are You?"]
+// action is FlexAction Object
+    mAction = action
 }
+flexWebView = FlexWebView(frame: self.view.frame, component: flexComponent)
+...
+// Returns to the Web when calling PromiseReturn.
+mAction?.PromiseReturn(["FlexAction!!!",100]);
+mAction = nil
 ```
 ```js
-// in js
+// in web javascript
 ....
-const NatieveValue = await $flex.likeThis();
+const res = await $flex.Action("Who Are You?"); // Pending until PromiseReturn is called...
+// res is ["FlexAction!!!", 100]
 ```
-`$flex.web`안에 함수를 생성하면, FlexWebView의 `evalFlexFunc`를 통해 해당 함수들을 Native에서 손쉽게 호출할 수 있습니다.   
-```swift
-// in native
-flexWebView.evalFlexFunc("WebFunction", "test")
-{ (value) -> Void in
-    // value is "testtest"
-}
-```
-`$flex.web`에 함수 등록시, window.onFlexLoad가 호출된 이후에 등록해야 합니다.  
+`PromiseReturn`의 파라미터는 [전달 가능한 데이터 타입](#전달-가능한-데이터-타입)만 사용 가능합니다.  
+`PromiseReturn`메소드가 호출되지 못하면, web에서 해당 함수는 계속 pending된 상태가 되기 때문에 Action Interface를 사용시 `PromiseReturn`를 반드시 호출할 수 있도록 주의가 필요합니다.  
+또한 이미 `PromiseReturn`가 호출되었던 FlexAction 객체는 `PromiseReturn` 2번 이상 호출하지 않도록 해야합니다.
+
+## NativeToWeb 인터페이스
+NativeToWeb 인터페이스는 다음의 특징을 지닙니다.
+1. Web의 $flex.web Object 안에 함수를 추가하면, Native(FlexWebView)에서 `evalFlexFunc` 메소드를 통해 해당 함수를 호출할 수 있습니다.
+2. window.onFlexLoad 호출 후($flex 생성 후) $flex.web에 함수 추가가 가능합니다.
+3. $flex.web 함수는, 일반 return 및 Promise return을 통해 Native에 값을 전달 할 수 있습니다.
+
 ```js
-// in js
-window.onFlexLoad = function() {
-    $flex.web.WebFunction = (msg) => {
-        // msg is "test"
-        return Promise.resolve(msg + msg) // return "testtest"
+window.onFlexLoad = () => {
+    $flex.web.webFunc = (data) => {
+        // data is ["data1","data2"]
+        return data[0]; // "data1"
+    }
+    $flex.web.promiseReturn = () => {
+        return Promise.resolve("this is promise")
     }
 }
 ```
-`$flex` Object는 FlexWebView에서 로드한 html 페이지에서 자동 생성됩니다.  
-
-## $flex 구성요소
-#### `window.onFlexLoad()`
-> `$flex` Object가 load되었을 때 최초 1번만 실행됩니다. 이 함수가 실행 된 후 `$flex.web` 안에 함수들을 추가하세요.
-
-#### `$flex.version`
-> 라이브러리의 버전을 가져옵니다.
-
-#### `$flex.addEventListener(event, callback)`
-> *개발중*  
-> 이벤트 청취자를 추가합니다.
-
-#### `$flex.init()`
-> `$flex` Object를 초기화합니다.  
-> 사용자가 추가한 `$flex.web` 내의 함수, eventListener가 사라집니다.  
-> FlexComponent.addInterface로 추가한 인터페이스는 유지됩니다.
-
-#### `$flex.web`
-> `$flex.web` Object 인자를 통해 함수를 추가하면, `evalFlexFunc`를 통해 해당 함수들을 Native에서 손쉽게 호출할 수 있습니다.  
-> window.onFlexLoad()가 호출된 이후에 함수를 추가하세요. 
-
-# Native 클래스
-## **FlexWebView**
-**FlexWebView는 WKWebView를 기반으로 합니다.**  
-WKWebViewConfiguration을 포함하는 FlexComponent가 필수로 요구됩니다.
-
-#### `FlexWebView(frame: CGRect, configuration: WKWebViewConfiguration)`
-> FlexWebView를 생성합니다. 다만 WKWebViewConfiguration에서 userContentController로 추가한 인터페이스는 사용할 수 없습니다.
-
-#### `FlexWebView(frame: CGRect, component: FlexComponent)`
-> FlexWebView를 생성합니다. FlexComponent의 addInterface로 추가한 인터페이스들은 web내에 `$flex` 안의 함수로 구현됩니다.
-
-#### `func evalFlexFunc(_ funcName: String)`
-> `$flex.web` 내에 선언된 함수를 호출합니다. 값을 전달하거나, 리턴을 받지 않습니다.
-
-#### `func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void))`
-> `$flex.web` 내에 선언된 함수를 호출합니다. 값을 전달하진 않으나, 리턴값을 전달받을 수 있습니다.
 ```swift
-// call $flex.web.funcName()
-mWebView.evalFlexFunc("funcName")
-{ (value) -> Void in
-    // Retrun from $flex.web.funcName
-    ... 
+...
+// call function, send data, get response
+mFlexWebView.evalFlexFunc("webFunc",["data1","data2"]) // same as $flex.web.webFunc(["data1","data2"])
+{ res -> Void in
+    // res is "data1"
 }
+mFlexWebView.evalFlexFunc("promiseReturn") // same as $flex.web.promiseReturn()
+{ res -> Void in
+    // res is "this is promise"
+}
+// just call function
+mFlexWebView.evalFlexFunc("promiseReturn")
+// call function and send data
+mFlexWebView.evalFlexFunc("webFunc",["data1","data2"])
 ```
 
-#### `func evalFlexFunc(_ funcName: String, arguments: Any)`
-> `$flex.web` 내에 선언된 함수를 호출합니다. 또한 함수에 값을 전달합니다.  
-> 전달 가능한 값은 FlexComponent.addInterface 의 Action과 동일합니다.
-#### **Int, Double, Float, Character, String, Dictionary<String,Any>, Array\<Any>**
+# Native Class 
+FlexWebView를 비롯한 프레임워크의 Native class를 설명합니다.
+## FlexWebView
+FlexWebView는 다음의 특징을 지닙니다.
+1. WKWebView 상속하여 제작되었습니다.
+2. 비동기 인터페이스를 위해선 FlexComponent를 사용해야 합니다. FlexComponent는 WKWebViewConfiguration를 포함하고 있습니다.
+3. 기존 WKWebView의 userContentController와 혼용하여 사용할 수 있습니다. (이 경우, $flex를 사용한 Promise pattern interface 사용 불가.)
+4. evalFlexFunc 메소드를 통해, $flex.web 안의 함수들을 호출할 수 있습니다.
 
-#### `func evalFlexFunc(_ funcName: String, arguments: Any, _ returnAs: @escaping (_ data: Any?) -> Void)`
-> `$flex.web` 내에 선언된 함수를 호출합니다. 함수에 값을 전달하고 리턴도 전달받을 수 있습니다.
+### FlexWebView 구성요소
+아래 구성 요소를 제외하면, WKWebView와 동일합니다.
 ```swift
-// call $flex.web.funcName(["test1","test2"])
-mWebView.evalFlexFunc("funcName", arguments: ["test1","test2"])
-{ (value) -> Void in
-    // Retrun from $flex.web.funcName
-    ... 
-}
+let component: FlexComponent // readOnly
+init (frame: CGRect, configuration: WKWebViewConfiguration) 
+init (frame: CGRect, component: FlexComponent)
+func evalFlexFunc(_ funcName: String)
+func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void)
+func evalFlexFunc(_ funcName: String, sendData: Any)
+func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: Any?) -> Void)
 ```
-> 전달 가능한 값은 FlexComponent.addInterface 의 Action과 동일합니다.
-#### **Int, Double, Float, Character, String, Dictionary<String,Any>, Array\<Any>**
+evalFlexFunc 사용법은 [NativeToWeb 인터페이스](#NativeToWeb-인터페이스)를 참조하세요.
 
-#### `func flexInitInPage()`
-> FlexWebView 내의 `$flex` Object를 초기화합니다.  
-> `$flex.init()`와 동일합니다.
+## FlexComponent
+FlexComponent는 WKWebViewConfiguration를 대체하며, 다음의 특징을 지닙니다.
+1. WKWebViewConfiguration를 포함하고 있으며, FlexComponent의 WKWebViewConfiguration는 FlexWebView에 적용됩니다.
+2. setInterface, setAction을 통해 FlexWebView에 Native 와 Web간의 비동기 인터페이스를 추가합니다.
+3. BaseUrl을 설정하여, 지정된 페이지에서만 네이티브와 인터페이스 하도록 설정할 수 있습니다.
 
-#### `component: FlexComponent`
-> FlexWebView를 생성할 때 설정한 FlexComponent를 Retrun합니다
-
-#### `parentViewController: UIViewController?`
-> FlexWebView가 포함된 ViewController를 Return합니다.
-
-#### `configration: WKWebViewConfiguration`
-> WKWebViewConfiguration을 반환합니다. 설정된 FlexComponent의 configration과 동일한 객체입니다.
-
-## **FlexComponent**
-FlexComponent는 FlexWebView의 필수 구성요소이며 WKWebViewConfiguration를 포함하고 있습니다.  
-FlexComponent의 `addInterface`를 통해 FlexWebView의 JS인터페이스를 추가할 수 있습니다.  
-`addInterface`는 FlexWebView가 생성되기 전에 미리 설정되어야 합니다.
-
-#### `func addInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?)`
-> FlexWebView의 JS인터페이스를 추가합니다. FlexWebView가 Init되기 전에만 사용 가능합니다.  
-> Web에서 전달한 Arguments는 `Array<Any?>`형태로 전달되며, 다음 자료형으로 web에 Return할 수 있습니다. 
-#### **Int, Double, Float, Character, String, Dictionary<String,Any>, Array\<Any>**
-> Int, Double, Float은 JS의 Number형으로, String, Character은 JS String으로 전달됩니다.  
-> Dictionary<String,Any>은 JS의 Object로, Array\<Any> JS의 Array로 변형되며, 각 Any값은 반드시 (Int, Double, Float, Character, String, Dictionary<String,Any>, Array\<Any>) 중 하나여야 합니다.  
-> 예를들어, 아래와 같이 동작합니다.
+### BaseUrl 설정
+설정한 BaseUrl이 포함된 Page에서만 $flex Object 사용이 가능합니다.  
+BaseUrl을 설정하지 않으면, 모든 페이지에서 $flex Object를 사용할 수 있습니다.  
+한번 설정한 BaseUrl은 다시 수정할 수 없습니다.
 ```swift
-// Example...
-// in native
-component.addInterface("FunctionName") { (arguments) -> Any? in
-    if arguments != nil {
-        var returnValue: [String:Any] = [:]
-        var dictionaryValue: [String:Any] = [:]
-        dictionaryValue["subkey1"] = ["dictionaryValue",0.12]
-        dictionaryValue["subkey2"] = 1000.100
-        returnValue["key1"] = "value1"
-        returnValue["key2"] = dictionaryValue
-        returnValue["key3"] = ["arrayValue1",arguments![0] as! Int]
-        return returnValue
-    } else {
-        return nil
-    }
-}
+func setBaseUrl(_ url: String)
+var BaseUrl: String? // readOnly
 ```
+
+### WebToNative Interface Setting
+FlexWebView에 인터페이스를 추가합니다.  
+상세한 사항은 [WebToNavite 인터페이스](#WebToNative-인터페이스) 항목을 참고하세요.
+```swift
+func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?)
+func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: Array<Any?>?) -> Void?)
+```
+
+### 기타 FlexComponent 구성요소
+```swift
+var FlexWebView: FlexWebView? // readOnly
+var configration: WKWebViewConfiguration // readOnly
+```
+
+## FlexAction
+setAction로 추가된 WebToNative 인터페이스가 호출될 시 생성됩니다.  
+사용 가능한 메소드는 PromiseReturn 하나이며, Web으로 return값을 전달하는 역할을 합니다.
+```swift
+func PromiseReturn(_ response: Any?)
+```
+PromiseReturn 한번 호출 후에는 다시 사용할 수 없습니다.  
+FlexAction Class를 직접 생성 및 사용하면 아무런 효과도 얻을 수 없으며, 오직 인터페이스상에서 생성되어 전달되는 FlexAction만이 효력을 가집니다.
+
+# $flex Object
+\$flex Object는 FlexWebView를 와 Promise 형태로 상호간 인터페이스가 구성되어있는 객체입니다.  
+$flex Object는 [Android FlexHybridApp](https://github.com/Kyun-J/FlexHybridApp-Android)에 적용될 때와 동일한 코드로 사용할 수 있습니다.  
+$flex Object의 구성 요소는 다음과 같습니다.
 ```js
-...
-const example = await $flex.FunctionName(100);
-// example is {key1: "value1", key2: {subkey2: 1000.1, subkey1: ["dictionaryValue", 0.12]}, key3: ["arrayValue1", 100]}
-...
+window.onFlexLoad // $flex is called upon completion of loading.
+$flex // Object that contains functions that can call Native area as WebToNative
+$flex.version // get Library version
+$flex.web // Object used to add and use functions to be used for NativeToWeb
 ```
-> 또한 설정한 Closure는 Background에서 동작합니다.
-
-#### `func setInterface(_ name: String, _ action: @escaping (_ argumentss: Array<Any?>?) -> Any?)`
-> addInterface로 이미 추가된 인터페이스의 Closure를 재설정합니다.  
-
-#### `func addAction(_ name: String, _ action: FlexAction)`
-> FlexAction 클래스를 추가합니다. FlexWebView가 Init되기 전에만 사용 가능합니다.  
-> FlexAction의 상세한 사용법은 [FlexAction](##FlexAction)을 참조하세요.
-
-#### `func getAction(_ name: String) -> FlexAction?`
-> addAction으로 추가된 FlexAction을 가져옵니다.
-
-#### `func setAction(_ name: String, _ action: FlexAction)`
-> addAction으로 추가된 FlexAction을 재설정합니다.
-
-#### `FlexWebView: FlexWebView?`
-> 할당된 FlexWebView를 가져옵니다. FlexWebView가 생성되기 이전에는 nil을 Return합니다.
-
-#### `configration: WKWebViewConfiguration`
-> WKWebViewConfiguration을 반환합니다. FlexWebView의 configration과 동일한 객체입니다.
-
-## **FlexAction**
-FlexAction은 `$flex`를 통해 호출되었을 때 Web에 Retrun을 주는 시점을 자유롭게 조절할 수 있는 클래스입니다.
-```swift
-component.addAction("testAction", FlexAction { (this, arguments) -> Void in
-    // do Anything....
-    var returnValue: [String:Any] = [:]
-    var dictionaryValue: [String:Any] = [:]
-    dictionaryValue["subkey1"] = ["dictionaryValue",0.12]
-    dictionaryValue["subkey2"] = 1000.100
-    returnValue["key1"] = "value1"
-    returnValue["key2"] = dictionaryValue
-    returnValue["key3"] = ["arrayValue1",100]
-    // Promise return to Web
-    // PromiseReturn can be called at any time.
-    this.PromiseReturn(returnValue)
-})
-```
-
-#### `FlexAction(_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void)`
-> FlexAction을 생성합니다. this에는 생성된 FlexAction, arguments에는 web에서 전달된 arguments가 담겨 있습니다.
-
-#### `func PromiseReturn(_ response: Any?)`
-> web에 Promise 형식으로 return 값을 전달합니다. return 할 준비가 되어있지 않으면, 아무 일도 일어나지 않습니다.  
-> `isReady: Bool` 혹은 `onReady: (() -> Void)?`을 사용하여 호출 가능한 시점에 사용하세요.  
-> 전달 가능한 값은 FlexComponent.addInterface 의 Action과 동일합니다.
-#### **Int, Double, Float, Character, String, Dictionary<String,Any>, Array\<Any>**
-
-# Todo Next
-1. $flex에 여러 이벤트 시점을 추가
+상세한 사용법은 [Flex 인터페이스 구현](#Flex-인터페이스-구현) 항목을 참고하세요.

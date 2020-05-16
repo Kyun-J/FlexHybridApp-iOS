@@ -5,227 +5,202 @@
 
 # FlexibleHybrid
 
-FlexibleHybridApp is an iOS and iPadOS framework that provides various convenience functions to develop HybridApp through WKWebView, such as implementing Web-> Native Call as a Promise.
+FlexibleHybridApp is a framework that provides various convenience functions to develop HybridApp, such as implementing interfaces between Web and Native with promises.
 
-# Add Framework
+# How to add framework
 
-add to podFile
-
+Add the following to podFile
 ```
     pod 'FlexHybridApp'
 ```
 
-***iOS Deployment Target is 11.0.***
+*** iOS Deployment Target is 11.0. ***
 
-# JSInterface Return Promise
+# Key features of Flex Framework interface
+Basically, various functions have been added to WKWebView userContentController.
+1. When the Native function is called on the Web, **Native function return is delivered to the Web as a Promise**.
+2. When calling the Web function from Native, **the return value can be delivered to Async** from Web to Native.
+3. Instead of WKWebViewConfiguration, you should use FlexComponent. FlexComponent includes WKWebViewConfiguration.
+4. Unlike userContentController, **native behavior of each interface can be designated as a separate code block (Clouser)**.
+5. Including basic data types, you can pass **JS Array to Swift Array\<Any> and JS Object to Swift Dictionary\<String, Any>**.
+6. When calling Native from the web, **Native code block operates in Background (DispatchQoS.background)**
+7. By assigning BaseUrl to FlexWebView, **it is possible to prevent interface with other sites and pages**.
 
-Unlike the existing WKWebView `userContentController`, interface patterns can be defined similar to functions in the form of closures.
+# Flex interface implementation
+## Transferable Data Type
+1. Like WKWebView userContentController, it can be transmitted in general data type, string, array, dictionary format.
+2. It is possible to transfer JS Array to Swift Array\<Any> and JS Object to Swift Dictionary\<String, Any>.
+3. When transferring data in the form of Array and Object, **the data contained in it must be one of the following data types except Nil and undefined**.
+
+| JS | Swift |
+|:--:|:--:|
+| Number | Int, Float, Double |
+| String | String, Character | 
+| Array [] | Array\<Any> |
+| Object {} | Dictionary<String,Any> |
+| undefined (Single Argument Only) | Nil (Single Property Only) |
+
+## WebToNative interface
+The WebToNative interface has the following features.
+1. Two types of normal interface, which passes values by function return, and action interface, which passes values by method call
+2. Add interface code block in Clouser form
+3. Native code blocks run on a separate Background (DispatchQoS.background)
+4. The added interface can be called in the form of $flex.function on the web.
+5. $flex Object can be used after window.onFlexLoad is called
+
+### ***Nomal Interface***
+Normal Interface is basically used as follows.
 ```swift
-component.addInterface("FuncName") { (arguments) -> Any? in
-    if arguments != nil {
-        return arguments![0] as! Int + 1
-    } else {
-        return nil
-    }
+// in Swfit
+flexComponent.setInterface("Normal") // "Normal" becomes the function name in Web JavaScript. 
+{ arguments -> Any? in
+    // arguments is Arguemnts Data from web. Type is Array<Any>
+    // ["data1", 2, false]
+    return "HiFlexWeb" // "HiFlexWeb" is passed to web in Promise pattern.
 }
+flexWebView = FlexWebView(frame: self.view.frame, component: flexComponent)
 ```
-When writing the code as above, the function is created with FuncName on the web, and can be used in the form of Promise as follows.
 ```js
-const t1 = async () => {
-    const z = await $flex.FuncName(0); // call Native Function
-    console.log('Return by Native with t1 --- ' + z); // z = 1
-}
+// in web javascript
+...
+const res = await $flex.Normal("data1",2,false);
+// res is "HiFlexWeb"
 ```
-# `$flex` Object
-`$flex` Object is responsible for the interface between Web <-> Native in the Web of FlexHybrid framework.  
-In `$flex`, functions registered as`addInterface(name, action)`in FlexComponent are created, and these functions return Promise.
+Specify the function name on the web as the first argument of `setInterface`, and the following Clouser becomes the block of code where the function operates.  
+The arguments passed to Clouser are Array objects and contain the values passed when calling the function on the web.  
+When passing a value from Clouser to web return, only [Transferable Data Type](#Transferable-Data-Type) is available.
+
+### ***Action Interface***
+The Action Interface is almost the same as the Normal Interface, but it sends the return value to the Web at the time of calling the `PromiseReturn` method of the action object.
 ```swift
-//in native
-component.addInterface("likeThis") { (arguments) -> Any? in
-.....
+// in Kotlin
+var mAction: FlexAction? = nil
+...
+flexComponent.setAction("Action")
+{ (action, arguments) -> Void in
+// arguments is Array<Any>, ["Who Are You?"]
+// action is FlexAction Object
+    mAction = action
 }
+flexWebView = FlexWebView(frame: self.view.frame, component: flexComponent)
+...
+// Returns to the Web when calling PromiseReturn.
+mAction?.PromiseReturn(["FlexAction!!!",100]);
+mAction = nil
 ```
 ```js
-// in js
+// in web javascript
 ....
-const NatieveValue = await $flex.likeThis();
+const res = await $flex.Action("Who Are You?"); // Pending until PromiseReturn is called...
+// res is ["FlexAction!!!", 100]
 ```
-If you create a function in `$flex.web`, you can easily call these functions in Native through `evalFlexFunc` of FlexWebView.
-```swift
-// in native
-flexWebView.evalFlexFunc("WebFunction", "test")
-{ (value) -> Void in
-    // value is "testtest"
-}
-```
-When registering a function in `$flex.web`, it must be registered after window.onFlexLoad is called.  
+The parameters of `PromiseReturn` are only available for [Transferable Data Type](#Transferable-Data-Type).  
+If the `PromiseReturn` method cannot be called, the function on the web will be in a pending state, so be careful to call` PromiseReturn` when using the Action Interface.  
+In addition, FlexAction objects that have already called `PromiseReturn` should not be called more than` PromiseReturn` twice.
+
+## NativeToWeb Interface
+The NativeToWeb interface has the following features.
+1. If you add a function in the web's $flex.web Object, you can call the function through the `evalFlexFunc` method in Native FlexWebView.
+2. After calling window.onFlexLoad (after creating $flex), you can add a function to $flex.web.
+3. The $flex.web function can pass values to Native through regular return and promise return.
+
 ```js
-// in js
-window.onFlexLoad = function() {
-    $flex.web.WebFunction = (msg) => {
-        // msg is "test"
-        return Promise.resolve(msg + msg) // return "testtest"
+window.onFlexLoad = () => {
+    $flex.web.webFunc = (data) => {
+        // data is ["data1","data2"]
+        return data[0]; // "data1"
+    }
+    $flex.web.promiseReturn = () => {
+        return Promise.resolve("this is promise")
     }
 }
 ```
-The `$flex` Object is automatically generated from the html page loaded by FlexWebView.  
-
-## $flex component
-#### `window.onFlexLoad()`
-> When the `$flex` Object is loaded, only the first one is executed. After this function is executed, add functions in `$flex.web`.
-
-#### `$flex.version`
-> Get the version of the framework.
-
-#### `$flex.addEventListener(event, callback)`
-> *developing*  
-> Add an event listener.
-
-#### `$flex.init()`
-> Initialize `$flex` Object.  
-> The function, eventListener in `$flex.web` added by the user disappears.  
-Interfaces added with FlexComponent.addInterface are retained.
-
-#### `$flex.web`
-> If you add a function through the `$flex.web` object argument, you can easily call those functions from Native through `evalFlexFunc`.  
-> Add the function after window.onFlexLoad() is called.
-
-# Native Class
-## **FlexWebView**
-**FlexWebView is based on WKWebView.** FlexWebView requires FlexComponent which includes WKWebViewConfiguration.
-
-#### `FlexWebView(frame: CGRect, configuration: WKWebViewConfiguration)`
-> Create FlexWebView. However, the interface added as userContentController in WKWebViewConfiguration cannot be used.
-
-#### `FlexWebView(frame: CGRect, component: FlexComponent)`
-> Create FlexWebView. Interfaces added by addInterface of FlexComponent are implemented as functions in `$flex` in the web.
-
-#### `func evalFlexFunc(_ funcName: String)`
-> Call the function declared in `$flex.web`. Pass in a value or take no return.
-
-#### `func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void))`
-> Call the function declared in `$flex.web`. It does not pass a value, but it can receive a return value.
 ```swift
-// call $flex.web.funcName()
-mWebView.evalFlexFunc("funcName")
-{ (value) -> Void in
-    // Retrun from $flex.web.funcName
-    ... 
+...
+// call function, send data, get response
+mFlexWebView.evalFlexFunc("webFunc",["data1","data2"]) // same as $flex.web.webFunc(["data1","data2"])
+{ res -> Void in
+    // res is "data1"
 }
+mFlexWebView.evalFlexFunc("promiseReturn") // same as $flex.web.promiseReturn()
+{ res -> Void in
+    // res is "this is promise"
+}
+// just call function
+mFlexWebView.evalFlexFunc("promiseReturn")
+// call function and send data
+mFlexWebView.evalFlexFunc("webFunc",["data1","data2"])
 ```
 
-#### `func evalFlexFunc(_ funcName: String, arguments: Any)`
-> Call the function declared in `$flex.web`. It also passes values ​​to functions.   
-The value that can be passed is the same as the Action of `FlexComponent.addInterface`.
-#### **Int, Double, Float, Character, String, Dictionary<String,Any>, Array\<Any>**
+# Native Class 
+Describes the native classes of the framework including FlexWebView.
+## FlexWebView
+FlexWebView has the following features.
+1. It was produced by inheriting WKWebView.
+2. For asynchronous interface, FlexComponent should be used. FlexComponent includes WKWebViewConfiguration.
+3. It can be used in combination with the existing WKWebView userContentController. (In this case, you cannot use the Promise pattern interface using $flex.)
+4. Through the evalFlexFunc method, you can call functions in $flex.web.
 
-#### `func evalFlexFunc(_ funcName: String, arguments: Any, _ returnAs: @escaping (_ data: Any?) -> Void)`
-> Call the function declared in `$flex.web`. You can pass values ​​to functions and receive returns.
+### FlexWebView component
+Same as WKWebView, except for the components below.
 ```swift
-// call $flex.web.funcName(["test1","test2"])
-mWebView.evalFlexFunc("funcName", arguments: ["test1","test2"])
-{ (value) -> Void in
-    // Retrun from $flex.web.funcName
-    ... 
-}
+let component: FlexComponent // readOnly
+init (frame: CGRect, configuration: WKWebViewConfiguration) 
+init (frame: CGRect, component: FlexComponent)
+func evalFlexFunc(_ funcName: String)
+func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void)
+func evalFlexFunc(_ funcName: String, sendData: Any)
+func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: Any?) -> Void)
 ```
-> The value that can be passed is the same as the Action of `FlexComponent.addInterface`.
-#### **Int, Double, Float, Character, String, Dictionary<String,Any>, Array\<Any>**
+For usage of evalFlexFunc, refer to [NativeToWeb interface](#NativeToWeb-interface).
 
-#### `func flexInitInPage()`
-> Initialize the `$flex` Object in FlexWebView. Same as `$flex.init()`.
+## FlexComponent
+FlexComponent replaces WKWebViewConfiguration and has the following features.
+1. It includes WKWebViewConfiguration, and WKWebViewConfiguration of FlexComponent is applied to FlexWebView.
+2. Add asynchronous interface between Native and Web to FlexWebView through setInterface, setAction.
+3. By setting the BaseUrl, you can set the interface to native only on the specified page.
 
-#### `component: FlexComponent`
-> Retrun the FlexComponent set when creating the FlexWebView
-
-#### `parentViewController: UIViewController?`
-> Return ViewController that contains FlexWebView.
-
-#### `configration: WKWebViewConfiguration`
-> Returns WKWebViewConfiguration. This is the same object as the configured FlexComponent configration.
-
-## **FlexComponent**
-FlexComponent is a required component of FlexWebView and includes WKWebViewConfiguration.
-You can add FlexWebView's JS interface through `addInterface` of FlexComponent.
-`addInterface` must be set before FlexWebView is created.
-
-#### `func addInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?)`
-> Add JS interface of FlexWebView. It is available only before FlexWebView is Init.
-> Arguments delivered from the web are delivered in the form of `Array <Any?>` And can be returned to the web with the following data types.
-#### **Int, Double, Float, Character, String, Dictionary<String, Any>, Array\<Any>**
-> Int, Double and Float are passed as JS Number, String and Character are passed as JS String.
-> Dictionary<String, Any> is an Object of JS, and Array\<Any> is transformed into an Array of JS, and each Any value must be (Int, Double, Float, Character, String, Dictionary<String, Any>, Array\< Any>).
-> For example, it works like this:
+### BaseUrl 설정
+$flex Object can be used only in the page containing the configured BaseUrl.  
+If you don't set BaseUrl, you can use $flex Object on any page.  
+Once set, the BaseUrl cannot be modified again.
 ```swift
-// Example...
-// in native
-component.addInterface("FunctionName") { (arguments) -> Any? in
-    if arguments != nil {
-        var returnValue: [String:Any] = [:]
-        var dictionaryValue: [String:Any] = [:]
-        dictionaryValue["subkey1"] = ["dictionaryValue",0.12]
-        dictionaryValue["subkey2"] = 1000.100
-        returnValue["key1"] = "value1"
-        returnValue["key2"] = dictionaryValue
-        returnValue["key3"] = ["arrayValue1",arguments![0] as! Int]
-        return returnValue
-    } else {
-        return nil
-    }
-}
+func setBaseUrl(_ url: String)
+var BaseUrl: String? // readOnly
 ```
+
+### WebToNative Interface Setting
+Add an interface to the FlexWebView.  
+For details, refer to [WebToNavite interface](#WebToNative-interface).
+```swift
+func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?)
+func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: Array<Any?>?) -> Void?)
+```
+
+### Other FlexComponent components
+```swift
+var FlexWebView: FlexWebView? // readOnly
+var configration: WKWebViewConfiguration // readOnly
+```
+
+## FlexAction
+Generated when the WebToNative interface added by setAction is called.  
+One available method is PromiseReturn, which serves to pass the return value to the Web.
+```swift
+func PromiseReturn(_ response: Any?)
+```
+PromiseReturn cannot be used again after one call.  
+If you directly create and use FlexAction Class, there is no effect.  
+Only FlexAction created and delivered on the interface is effective.
+
+# $flex Object
+\$flex Object is an object composed of interfaces between FlexWebView and Promise.  
+$flex Object can be used with the same code as applied to [Android FlexHybridApp](https://github.com/Kyun-J/FlexHybridApp-Android).  
+The components of $flex Object are as follows.  
 ```js
-...
-const example = await $flex.FunctionName(100);
-// example is {key1: "value1", key3: ["arrayValue1", 100], key2: {subkey2: 1000.1, subkey1: ["dictionaryValue", 0.12]}}
-...
+window.onFlexLoad // $flex is called upon completion of loading.
+$flex // Object that contains functions that can call Native area as WebToNative
+$flex.version // get Library version
+$flex.web // Object used to add and use functions to be used for NativeToWeb
 ```
-> Also, the set Closure operates in the Background.
-
-#### `func setInterface(_ name: String, _ action: @escaping (_ argumentss: Array<Any?>?) -> String?)`
-> Reset the Closure of an interface already added with addInterface. 
-
-#### `func addAction(_ name: String, _ action: FlexAction)`
-> Add FlexAction class. It is available only before FlexWebView is Init.
-> For detailed usage of FlexAction, refer to [FlexAction](#FlexAction).
-
-#### `func getAction(_ name: String) -> FlexAction?`
-> Get the FlexAction added by addAction.
-
-#### `func setAction(_ name: String, _ action: FlexAction)`
-> Reset the FlexAction added with addAction.
-
-#### `FlexWebView: FlexWebView?`
-> Get the assigned FlexWebView. Before FlexWebView is created, it returns nil.
-
-#### `configration: WKWebViewConfiguration`
-> Returns WKWebViewConfiguration. This is the same object as the FlexWebView's configration.
-
-## **FlexAction**
-FlexAction is a class that can freely control the point when Retrun is given to the Web when called through `$flex`.
-```swift
-component.addAction("testAction", FlexAction { (this, arguments) -> Void in
-    // do Anything....
-    var returnValue: [String:Any] = [:]
-    var dictionaryValue: [String:Any] = [:]
-    dictionaryValue["subkey1"] = ["dictionaryValue",0.12]
-    dictionaryValue["subkey2"] = 1000.100
-    returnValue["key1"] = "value1"
-    returnValue["key2"] = dictionaryValue
-    returnValue["key3"] = ["arrayValue1",100]
-    // Promise return to Web
-    // PromiseReturn can be called at any time
-    this.PromiseReturn(returnValue)
-})
-```
-#### `FlexAction(_ action: @escaping (_ this: FlexAction, _ arguments: Array<Any?>?) -> Void)`
-> Create FlexAction. The generated FlexAction and arguments contain the arguments passed from the web.
-
-#### `func PromiseReturn(_ response: Any?)`
-> Return return value in the form of Promise to web. If you are not ready to return, nothing will happen.
-> Use `isReady: Bool` or`onReady: (()-> Void)?`at a time when it can be called.
-> Passable value is the same as Action of FlexComponent.addInterface.
-#### **Int, Double, Float, Character, String, Dictionary<String, Any>, Array\<Any>**
-
-# Todo Next
-1. Add multiple event points to $flex
+For details, refer to [Flex Interface Implementation](#Flex-Interface-Implementation).
