@@ -26,7 +26,7 @@ podFile에 다음을 추가
 ## 전달 가능한 데이터 타입
 1. WKWebView userContentController와 같이 일반 자료형, 문자열, Array, Dictionary형식으로 전송 가능합니다. 
 2. JS의 Array를 Swift의 Array\<Any>로, JS의 Object를 Swift의 Dictionary\<String,Any>으로 전송 가능합니다.  
-3. Array와 Object형식의 데이터를 전송할 때 안에 포함된 데이터는 **반드시 Nil, undefined를 제외한 아래 자료형 중 하나여야 합니다**.  
+3. Array와 Object형식의 데이터를 전송할 때 안에 포함된 데이터는 **반드시 아래 자료형 중 하나여야 합니다**.  
 
 | JS | Swift |
 |:--:|:--:|
@@ -34,7 +34,7 @@ podFile에 다음을 추가
 | String | String, Character | 
 | Array [] | Array\<Any> |
 | Object {} | Dictionary<String,Any> |
-| undefined (Single Argument Only) | Nil (Single Property Only) |
+| undefined (Single Argument Only), null | nil |
 
 ## WebToNative 인터페이스
 WebToNative 인터페이스는 다음의 특징을 지닙니다.

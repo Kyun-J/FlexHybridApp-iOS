@@ -30,7 +30,7 @@ Basically, various functions have been added to WKWebView userContentController.
 ## Transferable Data Type
 1. Like WKWebView userContentController, it can be transmitted in general data type, string, array, dictionary format.
 2. It is possible to transfer JS Array to Swift Array\<Any> and JS Object to Swift Dictionary\<String, Any>.
-3. When transferring data in the form of Array and Object, **the data contained in it must be one of the following data types except Nil and undefined**.
+3. When transferring data in the form of Array and Object, **the data contained in it must be one of the following data types**.
 
 | JS | Swift |
 |:--:|:--:|
@@ -38,7 +38,7 @@ Basically, various functions have been added to WKWebView userContentController.
 | String | String, Character | 
 | Array [] | Array\<Any> |
 | Object {} | Dictionary<String,Any> |
-| undefined (Single Argument Only) | Nil (Single Property Only) |
+| undefined (Single Argument Only), null | nil |
 
 ## WebToNative interface
 The WebToNative interface has the following features.

@@ -53,7 +53,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             dictionaryValue["subkey2"] = 1000.100
             returnValue["key1"] = "value1"
             returnValue["key2"] = dictionaryValue
-            returnValue["key3"] = ["arrayValue1",100]
+            returnValue["key3"] = ["arrayValue1",nil]
             // Promise return to Web
             // PromiseReturn can be called at any time.
             action.PromiseReturn(returnValue)
