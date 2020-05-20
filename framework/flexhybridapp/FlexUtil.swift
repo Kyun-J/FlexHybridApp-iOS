@@ -69,7 +69,7 @@ struct FlexFunc {
             return "\(value!)"
         } else if value is String || value is Character {
             return "\"\(value!)\""
-        } else if value is Array<Any> {
+        } else if value is Array<Any?> {
             let _vArray = value as! Array<Any?>
             var _vString = "["
             for e in _vArray {

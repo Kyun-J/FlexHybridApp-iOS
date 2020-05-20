@@ -128,7 +128,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         flexWebView = webView
         checkDelegateChange()
         do {
-            jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.js", encoding: .utf8)
+            jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.min.js", encoding: .utf8)
             var keys = ""
             keys.append("[\"")
             keys.append(FlexString.FLEX_DEFINE.joined(separator: "\",\""))
@@ -302,7 +302,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     private func inWeb(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        if (navigationAction.request.url?.absoluteString.hasPrefix("http:"))! || (navigationAction.request.url?.absoluteString.hasPrefix("https:"))! {
+        if (navigationAction.request.url?.absoluteString.hasPrefix("http:"))! || (navigationAction.request.url?.absoluteString.hasPrefix("https:"))! || (navigationAction.request.url?.absoluteString.hasPrefix("file:"))! {
             decisionHandler(.allow)
         } else {
             if let aString = URL(string: (navigationAction.request.url?.absoluteString)!) {
@@ -325,12 +325,25 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         
     @available(iOS 13.0, *)
     private func inWeb(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, preferences: WKWebpagePreferences, decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
-        decisionHandler(.allow, preferences)
+        if (navigationAction.request.url?.absoluteString.hasPrefix("http:"))! || (navigationAction.request.url?.absoluteString.hasPrefix("https:"))! || (navigationAction.request.url?.absoluteString.hasPrefix("file:"))! {
+            decisionHandler(.allow, preferences)
+        } else {
+            if let aString = URL(string: (navigationAction.request.url?.absoluteString)!) {
+                UIApplication.shared.open(aString, options: [:], completionHandler: {success in
+                    if success {
+                        FlexMsg.log("Opend \(navigationAction.request.url?.absoluteString ?? "")")
+                    } else {
+                        FlexMsg.err("Failed \(navigationAction.request.url?.absoluteString ?? "")")
+                    }
+                })
+            }
+            decisionHandler(.cancel, preferences)
+        }
     }
     
 }
 
-open class FlexAction {
+public class FlexAction {
     
     private let funcName: String
     private let mComponent: FlexComponent
