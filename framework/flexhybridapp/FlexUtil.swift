@@ -15,7 +15,7 @@ enum FlexError: Error {
 }
 
 struct FlexString {
-    static let ERROR1 = "After the FlextWebView is initialized, BaseUrl, Interface, Action cannot be added."
+    static let ERROR1 = "After the FlextWebView is initialized, BaseUrl, Options, Interfaces cannot be added."
     static let ERROR2 = "You cannot set the interface or FlexAction name with flex";
     static let ERROR3 = "Only possible nil, Int, Double, Float, Character, String, Dictionary<String,Any>, Array<Any>"
     static let ERROR4 = "FlexWebView to run javascript is null."

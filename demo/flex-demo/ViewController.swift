@@ -21,8 +21,8 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         // add js interface
         component.setInterface("test1") { (arguments) -> Any? in
             // code works in background...
-            if arguments != nil {
-                return arguments![0] as! Int + 1
+            if arguments[0] != nil {
+                return arguments[0] as! Int + 1
             } else {
                 return nil
             }
@@ -63,6 +63,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         component.configration.userContentController.add(self, name: "userCC")
         // setBaseUrl
         component.setBaseUrl("file://")
+        component.setOption("timeout", 1000)
         
         mWebView = FlexWebView(frame: self.view.frame, component: component)
         mWebView.translatesAutoresizingMaskIntoConstraints = false

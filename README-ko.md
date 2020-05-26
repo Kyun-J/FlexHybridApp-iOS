@@ -96,7 +96,7 @@ const res = await $flex.Action("Who Are You?"); // Pending until PromiseReturn i
 
 ## NativeToWeb 인터페이스
 NativeToWeb 인터페이스는 다음의 특징을 지닙니다.
-1. Web의 $flex.web Object 안에 함수를 추가하면, Native(FlexWebView)에서 `evalFlexFunc` 메소드를 통해 해당 함수를 호출할 수 있습니다.
+1. Web의 $flex.web Object 안에 함수를 추가하면, Native(FlexWebView, FlexComponent)에서 `evalFlexFunc` 메소드를 통해 해당 함수를 호출할 수 있습니다.
 2. window.onFlexLoad 호출 후($flex 생성 후) $flex.web에 함수 추가가 가능합니다.
 3. $flex.web 함수는, 일반 return 및 Promise return을 통해 Native에 값을 전달 할 수 있습니다.
 
@@ -118,12 +118,12 @@ mFlexWebView.evalFlexFunc("webFunc",["data1","data2"]) // same as $flex.web.webF
 { res -> Void in
     // res is "data1"
 }
-mFlexWebView.evalFlexFunc("promiseReturn") // same as $flex.web.promiseReturn()
+component.evalFlexFunc("promiseReturn") // same as $flex.web.promiseReturn()
 { res -> Void in
     // res is "this is promise"
 }
 // just call function
-mFlexWebView.evalFlexFunc("promiseReturn")
+component.evalFlexFunc("promiseReturn")
 // call function and send data
 mFlexWebView.evalFlexFunc("webFunc",["data1","data2"])
 ```
@@ -141,6 +141,7 @@ FlexWebView는 다음의 특징을 지닙니다.
 아래 구성 요소를 제외하면, WKWebView와 동일합니다.
 ```swift
 let component: FlexComponent // readOnly
+var parentViewController: UIViewController? // readOnly
 init (frame: CGRect, configuration: WKWebViewConfiguration) 
 init (frame: CGRect, component: FlexComponent)
 func evalFlexFunc(_ funcName: String)
@@ -155,6 +156,7 @@ FlexComponent는 WKWebViewConfiguration를 대체하며, 다음의 특징을 지
 1. WKWebViewConfiguration를 포함하고 있으며, FlexComponent의 WKWebViewConfiguration는 FlexWebView에 적용됩니다.
 2. setInterface, setAction을 통해 FlexWebView에 Native 와 Web간의 비동기 인터페이스를 추가합니다.
 3. BaseUrl을 설정하여, 지정된 페이지에서만 네이티브와 인터페이스 하도록 설정할 수 있습니다.
+4. $flex Object에 여러 설정값을 추가 할 수 있습니다.
 
 ### BaseUrl 설정
 설정한 BaseUrl이 포함된 Page에서만 $flex Object 사용이 가능합니다.  
@@ -173,10 +175,21 @@ func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?
 func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: Array<Any?>?) -> Void?)
 ```
 
+### call NativeToWeb Interface
+NativeToWeb 인터페이스를 호출합니다.
+```swift
+func evalFlexFunc(_ funcName: String)
+func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void)
+func evalFlexFunc(_ funcName: String, sendData: Any)
+func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: Any?) -> Void)
+```
+evalFlexFunc 사용법은 [NativeToWeb 인터페이스](#NativeToWeb-인터페이스)를 참조하세요.
+
 ### 기타 FlexComponent 구성요소
 ```swift
 var FlexWebView: FlexWebView? // readOnly
 var configration: WKWebViewConfiguration // readOnly
+var parentViewController: UIViewController? // readOnly
 ```
 
 ## FlexAction

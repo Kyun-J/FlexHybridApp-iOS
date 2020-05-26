@@ -145,6 +145,7 @@ FlexWebView has the following features.
 Same as WKWebView, except for the components below.
 ```swift
 let component: FlexComponent // readOnly
+var parentViewController: UIViewController? // readOnly
 init (frame: CGRect, configuration: WKWebViewConfiguration) 
 init (frame: CGRect, component: FlexComponent)
 func evalFlexFunc(_ funcName: String)
@@ -159,6 +160,7 @@ FlexComponent replaces WKWebViewConfiguration and has the following features.
 1. It includes WKWebViewConfiguration, and WKWebViewConfiguration of FlexComponent is applied to FlexWebView.
 2. Add asynchronous interface between Native and Web to FlexWebView through setInterface, setAction.
 3. By setting the BaseUrl, you can set the interface to native only on the specified page.
+4. You can add multiple settings to the $ flex Object.
 
 ### BaseUrl Setting
 $flex Object can be used only in the page containing the configured BaseUrl.  
@@ -177,10 +179,21 @@ func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?
 func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: Array<Any?>?) -> Void?)
 ```
 
+### call NativeToWeb Interface
+Call the NativeToWeb interface.
+```swift
+func evalFlexFunc(_ funcName: String)
+func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void)
+func evalFlexFunc(_ funcName: String, sendData: Any)
+func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: Any?) -> Void)
+```
+For usage of evalFlexFunc, refer to [NativeToWeb interface](#NativeToWeb-interface).
+
 ### Other FlexComponent components
 ```swift
 var FlexWebView: FlexWebView? // readOnly
 var configration: WKWebViewConfiguration // readOnly
+var parentViewController: UIViewController? // readOnly
 ```
 
 ## FlexAction
