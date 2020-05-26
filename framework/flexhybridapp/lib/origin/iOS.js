@@ -1,7 +1,7 @@
 (function() {
+"use strict";
 const keys = keysfromios;
 const options = optionsfromios;
-const script = lib;
 const listeners = [];
 const logs = { log: console.log, debug: console.debug, error: console.error, info: console.info };
 const option = {
@@ -36,7 +36,7 @@ window.$flex = {};
 Object.defineProperties($flex,
     {
         version: { value: '0.3', writable: false, enumerable: true },
-        addEventListener: { value: function(event, callback) { listeners.push({ e: event, c: callback }) }, writable: false },
+        addEventListener: { value: function(event, callback) { listeners.push({ e: event, c: callback }) }, writable: false, enumerable: true },
         web: { value: {}, writable: false, enumerable: true },
         options: { value: option, writable: false, enumerable: true },
         flex: { value: {}, writable: false, enumerable: false }
@@ -77,11 +77,6 @@ console.log = function(...args) { $flex.flexlog(...args); logs.log(...args); };
 console.debug = function(...args) { $flex.flexdebug(...args); logs.debug(...args); };
 console.error = function(...args) { $flex.flexerror(...args); logs.error(...args); };
 console.info = function(...args) { $flex.flexinfo(...args); logs.info(...args); };
-const frames = window.frames;
-const dScript = 'var lib=' + script + ';window.Function(""use strict";return ("+lib+")")(),lib=void 0;';
-for(let i = 0 ; i < frames.length; i++) {
-    frames[i].Function('"use strict";return (' + dScript + ')')();
-}
 setTimeout(() => {
     if(typeof window.onFlexLoad === 'function') {
         window.onFlexLoad()
