@@ -35,7 +35,7 @@ setOptions();
 window.$flex = {};
 Object.defineProperties($flex,
     {
-        version: { value: '0.3', writable: false, enumerable: true },
+        version: { value: '0.3.0.1', writable: false, enumerable: true },
         addEventListener: { value: function(event, callback) { listeners.push({ e: event, c: callback }) }, writable: false, enumerable: true },
         web: { value: {}, writable: false, enumerable: true },
         options: { value: option, writable: false, enumerable: true },
