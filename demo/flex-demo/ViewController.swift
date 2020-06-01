@@ -70,6 +70,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         mWebView.scrollView.bounces = false
         mWebView.scrollView.isScrollEnabled = false
         mWebView.enableScroll = true
+        mWebView.configuration.preferences.setValue(true, forKey: "developerExtrasEnabled")
         
         view.addSubview(mWebView)
         
@@ -95,8 +96,8 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             mWebView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
             mWebView.bottomAnchor.constraint(equalTo: bottomLayoutGuide.topAnchor).isActive = true
         }
-//        mWebView.load(URLRequest(url: URL(fileURLWithPath: Bundle.main.path(forResource: "test", ofType: "html")!)))
-        mWebView.load(URLRequest(url: URL(fileURLWithPath: Bundle.main.path(forResource: "index", ofType: "html", inDirectory: "demo")!)))
+        mWebView.load(URLRequest(url: URL(fileURLWithPath: Bundle.main.path(forResource: "test", ofType: "html")!)))
+//        mWebView.load(URLRequest(url: URL(fileURLWithPath: Bundle.main.path(forResource: "index", ofType: "html", inDirectory: "demo")!)))
 
     }
 

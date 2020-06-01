@@ -148,16 +148,19 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             keys.append("\"]")
             jsString = jsString?.replacingOccurrences(of: "keysfromios", with: keys)
             jsString = jsString?.replacingOccurrences(of: "optionsfromios", with: try FlexFunc.convertValue(options))
+            jsString = jsString?.replacingOccurrences(of: "deviceinfofromios", with: try FlexFunc.convertValue(DeviceInfo.getInfo()))
         } catch {
             FlexMsg.err(error)
         }
     }
     
     fileprivate func checkDelegateChange() {
-        if !(flexWebView?.navigationDelegate?.isEqual(self) ?? true){
-            if flexWebView?.navigationDelegate != nil {
+        if flexWebView?.navigationDelegate != nil {
+            if !(flexWebView?.navigationDelegate!.isEqual(self) ?? false) {
                 userNavigation = flexWebView?.navigationDelegate
+                flexWebView?.navigationDelegate = self
             }
+        } else {
             flexWebView?.navigationDelegate = self
         }
     }
@@ -297,7 +300,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             } else if interfaces[mName] != nil {
                 queue.async {
                     let value: Any? = self.interfaces[mName]!(data["arguments"] as! Array<Any?>)
-                    if value == nil {
+                    if value == nil || value is Void {
                         self.evalJS("$flex.flex.\(fName)()")
                     } else {
                         do {
@@ -437,7 +440,7 @@ public class FlexAction {
             return
         }
         isCall = true
-        if response == nil {
+        if response == nil || response is Void {
             mComponent.evalJS("$flex.flex.\(funcName)()")
         } else {
             do {
