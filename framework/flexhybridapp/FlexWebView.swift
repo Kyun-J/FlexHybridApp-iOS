@@ -151,10 +151,12 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     fileprivate func checkDelegateChange() {
-        if !(flexWebView?.navigationDelegate?.isEqual(self) ?? true){
-            if flexWebView?.navigationDelegate != nil {
+        if flexWebView?.navigationDelegate != nil {
+            if !(flexWebView?.navigationDelegate!.isEqual(self) ?? false) {
                 userNavigation = flexWebView?.navigationDelegate
+                flexWebView?.navigationDelegate = self
             }
+        } else {
             flexWebView?.navigationDelegate = self
         }
     }
