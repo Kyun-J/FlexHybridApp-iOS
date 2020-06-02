@@ -14,10 +14,10 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     
     var mWebView: FlexWebView!
     var component = FlexComponent()
-    
+        
     override func viewDidLoad() {
         super.viewDidLoad()
-
+                
         // add js interface
         component.setInterface("test1") { (arguments) -> Any? in
             // code works in background...
@@ -68,16 +68,21 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         mWebView = FlexWebView(frame: self.view.frame, component: component)
         mWebView.translatesAutoresizingMaskIntoConstraints = false
         mWebView.scrollView.bounces = false
+        mWebView.scrollView.isScrollEnabled = false
+        mWebView.enableScroll = true
+        mWebView.configuration.preferences.setValue(true, forKey: "developerExtrasEnabled")
+        
         view.addSubview(mWebView)
-
+        
         if #available(iOS 13.0, *) {
             view.backgroundColor = UIColor.systemBackground
             let safeArea = self.view.safeAreaLayoutGuide
             mWebView.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor).isActive = true
             mWebView.topAnchor.constraint(equalTo: safeArea.topAnchor).isActive = true
             mWebView.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor).isActive = true
-            mWebView.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor).isActive = true
-        } else if #available(iOS 11.0, *) {
+            mWebView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        }
+        else if #available(iOS 11.0, *) {
             view.backgroundColor = UIColor.white
             let safeArea = self.view.safeAreaLayoutGuide
             mWebView.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor).isActive = true
@@ -92,6 +97,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             mWebView.bottomAnchor.constraint(equalTo: bottomLayoutGuide.topAnchor).isActive = true
         }
         mWebView.load(URLRequest(url: URL(fileURLWithPath: Bundle.main.path(forResource: "test", ofType: "html")!)))
+
     }
 
     override func viewWillAppear(_ animated: Bool) {

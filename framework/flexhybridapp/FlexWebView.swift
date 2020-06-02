@@ -19,7 +19,7 @@ open class FlexWebView : WKWebView {
             component.checkDelegateChange()
         }
     }
-    
+
     required public init?(coder: NSCoder) {
         component = FlexComponent()
         component.beforeWebViewInit()
@@ -41,6 +41,8 @@ open class FlexWebView : WKWebView {
         super.init(frame: frame, configuration: self.component.config)
         self.component.afterWebViewInit(self)
     }
+    
+    public var enableScroll: Bool = true
     
     public func evalFlexFunc(_ funcName: String) {
         component.evalJS("$flex.web.\(funcName)()")
@@ -87,7 +89,7 @@ open class FlexWebView : WKWebView {
     
 }
 
-open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler, UIScrollViewDelegate {
    
     private var interfaces: [String:(_ arguments: Array<Any?>) -> Any?] = [:]
     private var actions: [String: (_ action: FlexAction, _ arguments: Array<Any?>) -> Void?] = [:]
@@ -128,6 +130,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     
     fileprivate func afterWebViewInit(_ webView: FlexWebView) {
         flexWebView = webView
+        flexWebView?.scrollView.delegate = self
         checkDelegateChange()
         do {
             jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.js", encoding: .utf8)
@@ -145,6 +148,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             keys.append("\"]")
             jsString = jsString?.replacingOccurrences(of: "keysfromios", with: keys)
             jsString = jsString?.replacingOccurrences(of: "optionsfromios", with: try FlexFunc.convertValue(options))
+            jsString = jsString?.replacingOccurrences(of: "deviceinfofromios", with: try FlexFunc.convertValue(DeviceInfo.getInfo()))
         } catch {
             FlexMsg.err(error)
         }
@@ -296,7 +300,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             } else if interfaces[mName] != nil {
                 queue.async {
                     let value: Any? = self.interfaces[mName]!(data["arguments"] as! Array<Any?>)
-                    if value == nil {
+                    if value == nil || value is Void {
                         self.evalJS("$flex.flex.\(fName)()")
                     } else {
                         do {
@@ -316,6 +320,10 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             }
         }
     }
+    
+    /*
+     WKNavigationDelegate
+     */
         
     public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         userNavigation?.webView?(webView, didCommit: navigation)
@@ -410,6 +418,15 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         }
     }
     
+    /*
+    UIScrollViewDelegate
+    */
+    
+    public func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        if !flexWebView!.enableScroll {
+            scrollView.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
+        }
+    }
 }
 
 public class FlexAction {
@@ -420,10 +437,11 @@ public class FlexAction {
        
     public func PromiseReturn(_ response: Any?) {
         if isCall {
+            FlexMsg.err(FlexString.ERROR7)
             return
         }
         isCall = true
-        if response == nil {
+        if response == nil || response is Void {
             mComponent.evalJS("$flex.flex.\(funcName)()")
         } else {
             do {
