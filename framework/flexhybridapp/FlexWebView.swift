@@ -437,6 +437,7 @@ public class FlexAction {
        
     public func PromiseReturn(_ response: Any?) {
         if isCall {
+            FlexMsg.err(FlexString.ERROR7)
             return
         }
         isCall = true

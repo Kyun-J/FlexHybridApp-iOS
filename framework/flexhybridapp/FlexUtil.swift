@@ -18,10 +18,11 @@ enum FlexError: Error {
 struct FlexString {
     static let ERROR1 = "After the FlextWebView is initialized, BaseUrl, Options, Interfaces cannot be added."
     static let ERROR2 = "You cannot set the interface or FlexAction name with flex";
-    static let ERROR3 = "Only possible nil, Int, Double, Float, Character, String, Dictionary<String,Any>, Array<Any>"
+    static let ERROR3 = "Only possible nil, Int, Double, Float, Character, String, Dictionary<String,Any>, Array<Any>."
     static let ERROR4 = "FlexWebView to run javascript is null."
     static let ERROR5 = "The Interface or Action with the same name is already registered."
     static let ERROR6 = "The BaseUrl can only use file, http, https protocols."
+    static let ERROR7 = "PromiseReturn cannot be called twice in a single FlexAction."
     
     static let FLEX_DEFINE = ["flexlog","flexerror","flexdebug","flexinfo","flexreturn"]
 }
