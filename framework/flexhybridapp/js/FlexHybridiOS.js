@@ -1,1 +1,92 @@
-!function(e){var o={};function n(t){if(o[t])return o[t].exports;var r=o[t]={i:t,l:!1,exports:{}};return e[t].call(r.exports,r,r.exports,n),r.l=!0,r.exports}n.m=e,n.c=o,n.d=function(e,o,t){n.o(e,o)||Object.defineProperty(e,o,{enumerable:!0,get:t})},n.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},n.t=function(e,o){if(1&o&&(e=n(e)),8&o)return e;if(4&o&&"object"==typeof e&&e&&e.__esModule)return e;var t=Object.create(null);if(n.r(t),Object.defineProperty(t,"default",{enumerable:!0,value:e}),2&o&&"string"!=typeof e)for(var r in e)n.d(t,r,function(o){return e[o]}.bind(null,r));return t},n.n=function(e){var o=e&&e.__esModule?function(){return e.default}:function(){return e};return n.d(o,"a",o),o},n.o=function(e,o){return Object.prototype.hasOwnProperty.call(e,o)},n.p="",n(n.s=0)}([function(e,o){!function(){"use strict";const e=keysfromios,o=optionsfromios,n=deviceinfofromios,t=[],r={log:console.log,debug:console.debug,error:console.error,info:console.info},l={timeout:6e4},i=()=>{const e="f"+Math.random().toString(10).substr(2,8);return void 0===window[e]?Promise.resolve(e):Promise.resolve(i())};Object.keys(o).forEach(e=>{"timeout"===e&&"number"==typeof o[e]&&Object.defineProperty(l,e,{value:o[e],writable:!1,enumerable:!0})}),window.$flex={},Object.defineProperties($flex,{version:{value:"0.3.5",writable:!1,enumerable:!0},device:{value:n,writable:!1,enumerable:!0},addEventListener:{value:function(e,o){t.push({e:e,c:o})},writable:!1,enumerable:!0},web:{value:{},writable:!1,enumerable:!0},options:{value:l,writable:!1,enumerable:!0},flex:{value:{},writable:!1,enumerable:!1}}),e.forEach(e=>{void 0===$flex[e]&&Object.defineProperty($flex,e,{value:function(...o){return new Promise(n=>{i().then(r=>{const i=setTimeout(()=>{$flex.flex[r](),console.log("$flex timeout in function -- $flex."+e),((e,o)=>{t.forEach(n=>{n.e===e&&"function"==typeof n.c&&n.c(o)})})("timeout",{name:e})},l.timeout);$flex.flex[r]=e=>{n(e),clearTimeout(i),delete $flex.flex[r]},webkit.messageHandlers[e].postMessage({funName:r,arguments:o})})})},writable:!1,enumerable:!1})}),console.log=function(...e){$flex.flexlog(...e),r.log(...e)},console.debug=function(...e){$flex.flexdebug(...e),r.debug(...e)},console.error=function(...e){$flex.flexerror(...e),r.error(...e)},console.info=function(...e){$flex.flexinfo(...e),r.info(...e)},setTimeout(()=>{"function"==typeof window.onFlexLoad&&window.onFlexLoad()},0)}()}]);
+(function() {
+"use strict";
+const keys = keysfromios;
+const options = optionsfromios;
+const device = deviceinfofromios;
+const listeners = [];
+const logs = { log: console.log, debug: console.debug, error: console.error, info: console.info };
+const option = {
+    timeout: 60000
+};
+const genFName = () => {
+    const name = 'f' + Math.random().toString(10).substr(2,8);
+    if(window[name] === undefined) {
+        return Promise.resolve(name);
+    } else {
+        return Promise.resolve(genFName());
+    }
+}
+const triggerEventListener = (name, val) => {
+    listeners.forEach(element => {
+        if(element.e === name && typeof element.c === 'function') {
+            element.c(val);
+        }
+    });
+}
+const setOptions = () => {
+    Object.keys(options).forEach(k => {
+        if(k === 'timeout' && typeof options[k] === 'number') {
+            Object.defineProperty(option, k, {
+                value: options[k], writable: false, enumerable: true
+            });
+        }
+    });
+}
+setOptions();
+window.$flex = {};
+Object.defineProperties($flex,
+    {
+        version: { value: '0.4', writable: false, enumerable: true },
+        device: { value: device, writable: false, enumerable: true },
+        addEventListener: { value: function(event, callback) { listeners.push({ e: event, c: callback }) }, writable: false, enumerable: true },
+        web: { value: {}, writable: false, enumerable: true },
+        options: { value: option, writable: false, enumerable: true },
+        flex: { value: {}, writable: false, enumerable: false }
+    }
+);
+keys.forEach(key => {
+    if($flex[key] === undefined) {
+        Object.defineProperty($flex, key, {
+            value:
+            function(...args) {
+                return new Promise((resolve, reject) => {
+                    genFName().then(name => {
+                        const counter = setTimeout(() => {
+                            $flex.flex[name](false, "timeout error");
+                            console.log('$flex timeout in function -- $flex.' + key);
+                            triggerEventListener('timeout', { name: key });
+                        }, option.timeout);
+                        $flex.flex[name] = (j, e, r) => {
+                            if(j) {
+                                resolve(r);
+                            } else {
+                                if(typeof e === 'string') reject(Error(e));
+                                else reject(Error('$flex Error occurred in function -- $flex.' + key))
+                            }
+                            clearTimeout(counter);
+                            delete $flex.flex[name];
+                        };
+                        webkit.messageHandlers[key].postMessage(
+                            {
+                                funName: name,
+                                arguments: args
+                            }
+                        );
+                    });
+                });
+            },
+            writable: false,
+            enumerable: false
+        });
+    }
+});
+console.log = function(...args) { $flex.flexlog(...args); logs.log(...args); };
+console.debug = function(...args) { $flex.flexdebug(...args); logs.debug(...args); };
+console.error = function(...args) { $flex.flexerror(...args); logs.error(...args); };
+console.info = function(...args) { $flex.flexinfo(...args); logs.info(...args); };
+setTimeout(() => {
+    if(typeof window.onFlexLoad === 'function') {
+        window.onFlexLoad()
+    }
+},0);
+})()

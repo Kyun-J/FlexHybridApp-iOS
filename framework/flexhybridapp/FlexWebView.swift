@@ -89,6 +89,7 @@ open class FlexWebView : WKWebView {
     
 }
 
+
 open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler, UIScrollViewDelegate {
    
     private var interfaces: [String:(_ arguments: Array<Any?>) -> Any?] = [:]
@@ -238,7 +239,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     public func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void) {
         let TID = Int.random(in: 1..<10000)
         returnFromWeb[TID] = returnAs
-        evalJS("(async function() { const V = await $flex.web.\(funcName)(); $flex.flexreturn({ TID: \(TID), Value: V }); })(); void 0")
+        evalJS("!async function(){try{const e=await $flex.web.\(funcName)();$flex.flexreturn({TID:\(TID),Value:e,Error:!1})}catch(e){$flex.flexreturn({TID:\(TID),Value:e,Error:!0})}}();void 0;")
     }
     
     public func evalFlexFunc(_ funcName: String, sendData: Any) {
@@ -255,7 +256,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         do {
             let TID = Int.random(in: 1..<10000)
             returnFromWeb[TID] = returnAs
-            evalJS("(async function() { const V = await $flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData))); $flex.flexreturn({ TID: \(TID), Value: V }); })(); void 0")
+            evalJS("!async function(){try{const e=await $flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));$flex.flexreturn({TID:\(TID),Value:e,Error:!1})}catch(e){$flex.flexreturn({TID:\(TID),Value:e,Error:!0})}}();void 0;")
         } catch FlexError.UnuseableTypeCameIn {
             FlexMsg.err(FlexString.ERROR3)
         } catch {
@@ -283,7 +284,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                     // WebLogs
                     case FlexString.FLEX_DEFINE[0], FlexString.FLEX_DEFINE[1], FlexString.FLEX_DEFINE[2], FlexString.FLEX_DEFINE[3]:
                         FlexMsg.webLog(mName, data["arguments"])
-                        evalJS("$flex.flex.\(fName)()")
+                        evalJS("$flex.flex.\(fName)(true)")
                         break;
                     // $flex.web func return
                     case FlexString.FLEX_DEFINE[4]:
@@ -292,7 +293,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                             returnFromWeb[TID]?(webData[0]["Value"] as Any?)
                             returnFromWeb[TID] = nil
                         }
-                        evalJS("$flex.flex.\(fName)()")
+                        evalJS("$flex.flex.\(fName)(true)")
                         break;
                     default:
                         break;
@@ -300,11 +301,14 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             } else if interfaces[mName] != nil {
                 queue.async {
                     let value: Any? = self.interfaces[mName]!(data["arguments"] as! Array<Any?>)
-                    if value == nil || value is Void {
-                        self.evalJS("$flex.flex.\(fName)()")
+                    if value is FlexReject {
+                        let reason = (value as! FlexReject).reason == nil ? "null" : (value as! FlexReject).reason!
+                        self.evalJS("$flex.flex.\(fName)(false, \(reason)")
+                    } else if value == nil || value is Void {
+                        self.evalJS("$flex.flex.\(fName)(true)")
                     } else {
                         do {
-                            self.evalJS("$flex.flex.\(fName)(\(try FlexFunc.convertValue(value!)))")
+                            self.evalJS("$flex.flex.\(fName)(true, null, \(try FlexFunc.convertValue(value!)))")
                         } catch FlexError.UnuseableTypeCameIn {
                             FlexMsg.err(FlexString.ERROR3)
                         } catch {
@@ -429,23 +433,32 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
 }
 
+
 public class FlexAction {
     
     private let funcName: String
     private let mComponent: FlexComponent
     private var isCall = false
+    
+    fileprivate init (_ name: String, _ component: FlexComponent) {
+        funcName = name
+        mComponent = component
+    }
        
-    public func PromiseReturn(_ response: Any?) {
+    public func promiseReturn(_ response: Any?) {
         if isCall {
             FlexMsg.err(FlexString.ERROR7)
             return
         }
         isCall = true
-        if response == nil || response is Void {
-            mComponent.evalJS("$flex.flex.\(funcName)()")
+        if response is FlexReject {
+            let reason = (response as! FlexReject).reason == nil ? "null" : (response as! FlexReject).reason!
+            mComponent.evalJS("$flex.flex.\(funcName)(false, \(reason)")
+        } else if response == nil || response is Void {
+            mComponent.evalJS("$flex.flex.\(funcName)(true)")
         } else {
             do {
-                mComponent.evalJS("$flex.flex.\(funcName)(\(try FlexFunc.convertValue(response!)))")
+                mComponent.evalJS("$flex.flex.\(funcName)(true, null, \(try FlexFunc.convertValue(response!)))")
             } catch FlexError.UnuseableTypeCameIn {
                 FlexMsg.err(FlexString.ERROR3)
             } catch {
@@ -454,9 +467,52 @@ public class FlexAction {
         }
     }
     
-    fileprivate init (_ name: String, _ component: FlexComponent) {
-        funcName = name
-        mComponent = component
+    public func resolveVoid() {
+        if isCall {
+            FlexMsg.err(FlexString.ERROR7)
+            return
+        }
+        isCall = true
+        mComponent.evalJS("$flex.flex.\(funcName)(true)")
     }
     
+    public func reject(reason: FlexReject) {
+        if isCall {
+            FlexMsg.err(FlexString.ERROR7)
+            return
+        }
+        isCall = true
+        let rejectReson = reason.reason == nil ? "null" : reason.reason!
+        mComponent.evalJS("$flex.flex.\(funcName)(false, \(rejectReson)")
+    }
+    
+    public func reject(reason: String) {
+        if isCall {
+            FlexMsg.err(FlexString.ERROR7)
+            return
+        }
+        isCall = true
+        mComponent.evalJS("$flex.flex.\(funcName)(false, \"\(reason)\"")
+    }
+    
+    public func reject() {
+        if isCall {
+            FlexMsg.err(FlexString.ERROR7)
+            return
+        }
+        isCall = true
+        mComponent.evalJS("$flex.flex.\(funcName)(false)")
+    }
+    
+}
+
+
+public class FlexReject {
+    let reason: String?
+    init(Reason: String) {
+        reason = Reason
+    }
+    init() {
+        reason = nil
+    }
 }
