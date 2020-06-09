@@ -28,22 +28,33 @@ struct FlexString {
 }
 
 struct FlexMsg {
+    static let date = DateFormatter()
     static func log(_ msg: String) {
+        date.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
         print("Log in FlextWebView  ——————————————")
+        print(date.string(from: Date()))
         print(msg)
-        print("———————————————————————————————————")
     }
     static func err(_ err: String) {
+        date.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
         print("Error in FlextWebView  ————————————")
+        print(date.string(from: Date()))
         print(err)
-        print("———————————————————————————————————")
     }
     static func err(_ err: Error) {
+        date.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
         print("Error in FlextWebView  ————————————")
+        print(date.string(from: Date()))
         print(err.localizedDescription)
-        print("———————————————————————————————————")
+    }
+    static func debug(_ msg: String) {
+        date.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
+        print("Debug FlexHybrid ————————————")
+        print(date.string(from: Date()))
+        print(msg)
     }
     static func webLog(_ type: String, _ msg: Any?) {
+        date.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
         var t = ""
         switch type {
         case FlexString.FLEX_DEFINE[0]:
@@ -57,8 +68,6 @@ struct FlexMsg {
         default:
             t = type
         }
-        let date = DateFormatter()
-        date.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
         print("\(date.string(from: Date())) : \(t) on FlexWebView\n\(msg ?? "nil")")
     }
 }

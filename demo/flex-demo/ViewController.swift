@@ -14,7 +14,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     
     var mWebView: FlexWebView!
     var component = FlexComponent()
-        
+            
     override func viewDidLoad() {
         super.viewDidLoad()
                 
@@ -56,7 +56,18 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             returnValue["key3"] = ["arrayValue1",nil]
             // Promise return to Web
             // PromiseReturn can be called at any time.
-            action.PromiseReturn(returnValue)
+            action.promiseReturn(returnValue)
+        }
+        
+        // test JS Reject
+        component.setInterface("testReject1")
+        { arguemnts -> Any? in
+            return FlexReject("test TestRject1")
+        }
+        
+        component.setAction("testReject2")
+        { (action, arguemnts) -> Void? in
+            action.reject()
         }
         
         // add user-custom contentController
@@ -68,7 +79,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         mWebView = FlexWebView(frame: self.view.frame, component: component)
         mWebView.translatesAutoresizingMaskIntoConstraints = false
         mWebView.scrollView.bounces = false
-        mWebView.scrollView.isScrollEnabled = false
+        mWebView.scrollView.isScrollEnabled = true
         mWebView.enableScroll = true
         mWebView.configuration.preferences.setValue(true, forKey: "developerExtrasEnabled")
         
@@ -97,7 +108,6 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             mWebView.bottomAnchor.constraint(equalTo: bottomLayoutGuide.topAnchor).isActive = true
         }
         mWebView.load(URLRequest(url: URL(fileURLWithPath: Bundle.main.path(forResource: "test", ofType: "html")!)))
-
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -110,7 +120,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     }
     
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        print("user contentController")
+        print("user CC")
     }
 
 }

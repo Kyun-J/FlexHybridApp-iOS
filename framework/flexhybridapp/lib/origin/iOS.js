@@ -32,11 +32,18 @@ const setOptions = () => {
         }
     });
 }
+const argsToStringArray = (...args) => {
+    const result = [];
+    args.forEach(arg => {
+        result.push(String(arg));
+    });
+    return result
+}
 setOptions();
-window.$flex = {};
+Object.defineProperty(window, "$flex", { value: {}, writable: false, enumerable: true });
 Object.defineProperties($flex,
     {
-        version: { value: '0.3.5', writable: false, enumerable: true },
+        version: { value: '0.3.7', writable: false, enumerable: true },
         device: { value: device, writable: false, enumerable: true },
         addEventListener: { value: function(event, callback) { listeners.push({ e: event, c: callback }) }, writable: false, enumerable: true },
         web: { value: {}, writable: false, enumerable: true },
@@ -49,24 +56,41 @@ keys.forEach(key => {
         Object.defineProperty($flex, key, {
             value:
             function(...args) {
-                return new Promise(resolve => {
+                return new Promise((resolve, reject) => {
                     genFName().then(name => {
                         const counter = setTimeout(() => {
-                            $flex.flex[name]();
-                            console.log('$flex timeout in function -- $flex.' + key);
+                            $flex.flex[name](false, "timeout error");
                             triggerEventListener('timeout', { name: key });
                         }, option.timeout);
-                        $flex.flex[name] = (r) => {
-                            resolve(r);
+                        $flex.flex[name] = (j, e, r) => {
                             clearTimeout(counter);
                             delete $flex.flex[name];
-                        };
-                        webkit.messageHandlers[key].postMessage(
-                            {
-                                funName: name,
-                                arguments: args
+                            if(j) {
+                                resolve(r);
+                            } else {
+                                if(typeof e === 'string') reject(Error(e));
+                                else reject(Error('$flex Error occurred in function -- $flex.' + key))
                             }
-                        );
+                        };
+                        try {
+                            webkit.messageHandlers[key].postMessage(
+                                {
+                                    funName: name,
+                                    arguments: args
+                                }
+                            );
+                        } catch (e) {
+                            if((e.name === "DataCloneError") && (key === "flexlog" || key === "flexdebug" || key === "flexerror" || key === "flexinfo")) {
+                                webkit.messageHandlers[key].postMessage(
+                                    {
+                                        funName: name,
+                                        arguments: argsToStringArray(...args)
+                                    }
+                                );
+                            } else {
+                                $flex.flex[name](false, e.toString());
+                            }
+                        }
                     });
                 });
             },

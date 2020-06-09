@@ -19,6 +19,22 @@
         console.log(z); // {key1: "value1", key2: {subkey2: 1000.1, subkey1: ["dictionaryValue", 0.12]}, key3: ["arrayValue1", 100]}
         console.log(typeof z) // Object
     }
+    const t4 = async () => {
+        try {
+            const z = await $flex.testReject1();
+        } catch (e) {
+            console.log("testReject1");
+            console.log(e);
+        }
+    }
+    const t5 = async () => {
+        try {
+            const z = await $flex.testReject2();
+        } catch (e) {
+            console.log("testReject2");
+            console.log(e);
+        }
+    }
     // when $flex on ready.....
     window.onFlexLoad = function() {
         console.log('Flex Load Success!!');
@@ -32,6 +48,8 @@
 <button onclick='t1()' style="width: 100%; height: 150px;">test1</button>
 <button onclick='t2()' style="width: 100%; height: 150px;">test2</button>
 <button onclick='t3()' style="width: 100%; height: 150px;">testAction</button>
+<button onclick='t4()' style="width: 100%; height: 150px;">testReject1</button>
+<button onclick='t5()' style="width: 100%; height: 150px;">testReject2</button>
 </body>
 </html>
 

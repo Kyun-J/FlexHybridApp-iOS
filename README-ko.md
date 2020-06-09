@@ -11,6 +11,7 @@ podFile에 다음을 추가
 ```
 
 ***iOS Deployment Target은 11.0 입니다.***
+***가장 최신 버전은 0.3.7 입니다.***
 
 # Flex Framework 인터페이스 주요 특징
 기본적으로 WKWebView userContentController에 여러가지 기능이 추가되었습니다.
@@ -18,9 +19,8 @@ podFile에 다음을 추가
 2. Native에서 Web함수 호출시, **Web에서 Native로 Async**하게 반환값을 전달 할 수 있습니다.
 3. WKWebViewConfiguration 대신, FlexComponent를 사용해야 합니다. FlexComponent는 WKWebViewConfiguration를 포함하고 있습니다.
 4. userContentController와는 다르게, 각 인터페이스의 **네이티브 동작을 별도의 코드 블럭(Clouser)** 으로 지정할 수 있습니다.
-5. 기본 자료형을 포함하여 **JS의 Array를 Swift의 Array\<Any>로, JS의 Object를 Swift의 Dictionary\<String,Any>으로** 전달할 수 있습니다.
-6. Web에서 Native 호출시, **Native 코드 블럭은 Background(DispatchQoS.background)** 안에서 동작합니다
-7. FlexWebView에 BaseUrl을 지정하여, **타 사이트 및 페이지에서 Native와 Interface하는 것을 방지**할 수 있습니다.
+5. Web에서 Native 호출시, **Native 코드 블럭은 Background(DispatchQoS.background)** 안에서 동작합니다
+6. FlexWebView에 BaseUrl을 지정하여, **타 사이트 및 페이지에서 Native와 Interface하는 것을 방지**할 수 있습니다.
 
 # Flex 인터페이스 구현
 ## 전달 가능한 데이터 타입
@@ -32,15 +32,17 @@ podFile에 다음을 추가
 |:--:|:--:|
 | Number | Int, Float, Double |
 | String | String, Character | 
+| Boolean | Bool |
 | Array [] | Array\<Any> |
 | Object {} | Dictionary<String,Any> |
 | undefined (Single Argument Only), null | nil |
+| Error | FlexReject |
 
 ## WebToNative 인터페이스
 WebToNative 인터페이스는 다음의 특징을 지닙니다.
 1. 함수 return으로 값을 전달하는 Normal Interface, Method 호출로 값을 전달하는 Action Interface 2가지 종류
 2. Clouser형태로 인터페이스 코드 블럭을 추가
-3. Native 코드 블럭은 별도의 Background(DispatchQoS.background)에서 동작
+3. Clouser는 별도의 Background(DispatchQoS.background)에서 동작
 4. 추가된 인터페이스는 Web에서 $flex.함수명 형태로 호출 가능
 5. $flex Object는 window.onFlexLoad가 호출된 이후 사용 가능
 
@@ -67,7 +69,7 @@ Clouser로 전달되는 arguments는 Array 객체로서 web에서 함수 호출�
 Clouser에서 web으로 값을 전달할 때(return할 때)는 [전달 가능한 데이터 타입](#전달-가능한-데이터-타입)만 사용 가능합니다.
 
 ### ***Action Interface***
-Action Interface는 Normal Interface와 거의 비슷하나, Web으로의 값 리턴을 action객체의 `PromiseReturn` 메소드를 호출하는 시점에 전달합니다.
+Action Interface는 Normal Interface와 거의 비슷하나, Web으로의 값 리턴을 action객체의 `promiseReturn` 메소드를 호출하는 시점에 전달합니다.
 ```swift
 // in Kotlin
 var mAction: FlexAction? = nil
@@ -80,19 +82,56 @@ flexComponent.setAction("Action")
 }
 flexWebView = FlexWebView(frame: self.view.frame, component: flexComponent)
 ...
-// Returns to the Web when calling PromiseReturn.
-mAction?.PromiseReturn(["FlexAction!!!",100]);
+// Returns to the Web when calling promiseReturn.
+mAction?.promiseReturn(["FlexAction!!!",100]);
 mAction = nil
 ```
 ```js
 // in web javascript
 ....
-const res = await $flex.Action("Who Are You?"); // Pending until PromiseReturn is called...
+const res = await $flex.Action("Who Are You?"); // Pending until promiseReturn is called...
 // res is ["FlexAction!!!", 100]
 ```
-`PromiseReturn`의 파라미터는 [전달 가능한 데이터 타입](#전달-가능한-데이터-타입)만 사용 가능합니다.  
-`PromiseReturn`메소드가 호출되지 못하면, web에서 해당 함수는 계속 pending된 상태가 되기 때문에 Action Interface를 사용시 `PromiseReturn`를 반드시 호출할 수 있도록 주의가 필요합니다.  
-또한 이미 `PromiseReturn`가 호출되었던 FlexAction 객체는 `PromiseReturn` 2번 이상 호출하지 않도록 해야합니다.
+`promiseReturn`의 파라미터는 [전달 가능한 데이터 타입](#전달-가능한-데이터-타입)만 사용 가능합니다.  
+`promiseReturn`메소드가 호출되지 못하면, web에서 해당 함수는 계속 pending된 상태가 되기 때문에 Action Interface를 사용시 `promiseReturn`를 ***반드시*** 호출할 수 있도록 주의가 필요합니다.  
+전달값이 없다면, `resolveVoid()`를 대신 호출할 수 있습니다. 이는 `promiseReturn(nil)`과 동일합니다.  
+또한 이미 `promiseReturn`가 호출되었던 FlexAction 객체는 `promiseReturn`이 중복 호출되어도 Web 함수에 파라미터가 전달되지 않습니다.
+
+### ***Error Interface***
+`FlexReject`객체를 리턴한다면, Web에 오류 발생 사항을 전달할 수 있습니다.  
+```swift
+// in swift
+flexComponent.setInterface("errorTest")
+{ arguments -> Any? in
+    return FlexReject("errorTest")    
+}
+```
+```js
+// in js
+...
+try {
+    const result = await $flex.errorTest();
+} catch(e) {
+    // e is Error("errorTest")
+}
+```
+`FlexAction`에서는, `promiseReturn`대신 `reject`함수를 호출하여 손쉽게 에러사항을 전달할 수 있습니다.  
+```swift
+// in swift
+flexComponent.setAction("errorAction")
+{ (action, arguments) -> Any? in
+    action.reject("errorAction") // = action.promiseReturn(FlexReject("errorAction"))
+}
+```
+```js
+// in js
+...
+try {
+    const result = await $flex.errorAction();
+} catch(e) {
+    // e is Error("errorAction")
+}
+```
 
 ## NativeToWeb 인터페이스
 NativeToWeb 인터페이스는 다음의 특징을 지닙니다.
@@ -106,7 +145,7 @@ window.onFlexLoad = () => {
         // data is ["data1","data2"]
         return data[0]; // "data1"
     }
-    $flex.web.promiseReturn = () => {
+    $flex.web.Retrun = () => {
         return Promise.resolve("this is promise")
     }
 }
@@ -118,12 +157,12 @@ mFlexWebView.evalFlexFunc("webFunc",["data1","data2"]) // same as $flex.web.webF
 { res -> Void in
     // res is "data1"
 }
-component.evalFlexFunc("promiseReturn") // same as $flex.web.promiseReturn()
+component.evalFlexFunc("Retrun") // same as $flex.web.Retrun()
 { res -> Void in
     // res is "this is promise"
 }
 // just call function
-component.evalFlexFunc("promiseReturn")
+component.evalFlexFunc("Retrun")
 // call function and send data
 mFlexWebView.evalFlexFunc("webFunc",["data1","data2"])
 ```
@@ -194,11 +233,17 @@ var parentViewController: UIViewController? // readOnly
 
 ## FlexAction
 setAction로 추가된 WebToNative 인터페이스가 호출될 시 생성됩니다.  
-사용 가능한 메소드는 PromiseReturn 하나이며, Web으로 return값을 전달하는 역할을 합니다.
+사용 가능한 메소드는 아래와 같으며, promiseReturn 함수만 Web으로 return값을 전달하는 역할을 합니다.  
+resolveVoid는 nil 값을 전달하며(promiseReturn(nil)과 동일)  
+reject함수는 FlexReject 객체를 자동으로 생성하여 전달합니다.(promiseReturn(FlexReject)와 동일)
 ```swift
-func PromiseReturn(_ response: Any?)
+func promiseReturn(_ response: Any?)
+func resolveVoid()
+func reject(reason: FlexReject)
+func reject(reason: String)
+func reject()
 ```
-PromiseReturn 한번 호출 후에는 다시 사용할 수 없습니다.  
+위 함수중 하나라도 호출했다면, 다음에 어떤 함수를 호출하더라도 Web에 값이 전달되지 않습니다.
 FlexAction Class를 직접 생성 및 사용하면 아무런 효과도 얻을 수 없으며, 오직 인터페이스상에서 생성되어 전달되는 FlexAction만이 효력을 가집니다.
 
 # $flex Object
