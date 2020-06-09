@@ -15,6 +15,7 @@ Add the following to podFile
 ```
 
 ***iOS Deployment Target is 11.0.***
+***The latest version is 0.3.7***
 
 # Key features of Flex Framework interface
 Basically, various functions have been added to WKWebView userContentController.
@@ -22,9 +23,8 @@ Basically, various functions have been added to WKWebView userContentController.
 2. When calling the Web function from Native, **the return value can be delivered to Async** from Web to Native.
 3. Instead of WKWebViewConfiguration, you should use FlexComponent. FlexComponent includes WKWebViewConfiguration.
 4. Unlike userContentController, **native behavior of each interface can be designated as a separate code block (Clouser)**.
-5. Including basic data types, you can pass **JS Array to Swift Array\<Any> and JS Object to Swift Dictionary\<String, Any>**.
-6. When calling Native from the web, **Native code block operates in Background (DispatchQoS.background)**
-7. By assigning BaseUrl to FlexWebView, **it is possible to prevent interface with other sites and pages**.
+5. When calling Native from the web, **Native code block operates in Background (DispatchQoS.background)**
+6. By assigning BaseUrl to FlexWebView, **it is possible to prevent interface with other sites and pages**.
 
 # Flex interface implementation
 ## Transferable Data Type
@@ -36,15 +36,17 @@ Basically, various functions have been added to WKWebView userContentController.
 |:--:|:--:|
 | Number | Int, Float, Double |
 | String | String, Character | 
+| Boolean | Bool |
 | Array [] | Array\<Any> |
 | Object {} | Dictionary<String,Any> |
 | undefined (Single Argument Only), null | nil |
+| Error | FlexReject |
 
 ## WebToNative interface
 The WebToNative interface has the following features.
 1. Two types of normal interface, which passes values by function return, and action interface, which passes values by method call
 2. Add interface code block in Clouser form
-3. Native code blocks run on a separate Background (DispatchQoS.background)
+3. Clouser run on a separate Background (DispatchQoS.background)
 4. The added interface can be called in the form of $flex.function on the web.
 5. $flex Object can be used after window.onFlexLoad is called
 
@@ -71,7 +73,7 @@ The arguments passed to Clouser are Array objects and contain the values passed 
 When passing a value from Clouser to web return, only [Transferable Data Type](#Transferable-Data-Type) is available.
 
 ### ***Action Interface***
-The Action Interface is almost the same as the Normal Interface, but it sends the return value to the Web at the time of calling the `PromiseReturn` method of the action object.
+The Action Interface is almost the same as the Normal Interface, but it sends the return value to the Web at the time of calling the `promiseReturn` method of the action object.
 ```swift
 // in Kotlin
 var mAction: FlexAction? = nil
@@ -84,19 +86,56 @@ flexComponent.setAction("Action")
 }
 flexWebView = FlexWebView(frame: self.view.frame, component: flexComponent)
 ...
-// Returns to the Web when calling PromiseReturn.
-mAction?.PromiseReturn(["FlexAction!!!",100]);
+// Returns to the Web when calling promiseReturn.
+mAction?.promiseReturn(["FlexAction!!!",100]);
 mAction = nil
 ```
 ```js
 // in web javascript
 ....
-const res = await $flex.Action("Who Are You?"); // Pending until PromiseReturn is called...
+const res = await $flex.Action("Who Are You?"); // Pending until promiseReturn is called...
 // res is ["FlexAction!!!", 100]
 ```
-The parameters of `PromiseReturn` are only available for [Transferable Data Type](#Transferable-Data-Type).  
-If the `PromiseReturn` method cannot be called, the function on the web will be in a pending state, so be careful to call` PromiseReturn` when using the Action Interface.  
-In addition, FlexAction objects that have already called `PromiseReturn` should not be called more than` PromiseReturn` twice.
+The parameters of `promiseReturn` are only available for [Transferable Data Type](#Transferable-Data-Type).  
+If the `promiseReturn` method is not called, the function in the web will be in a pending state, so be careful to call `promiseReturn` ***must*** when using the Action Interface.
+If there is no passing value, you can call `resolveVoid()` instead. This is equivalent to `promiseReturn(nil)`.  
+Also, the FlexAction object that had already called `promiseReturn` does not pass parameters to the web function even if `promiseReturn` is called repeatedly.
+
+### ***Error Interface***
+If you return the `FlexReject` object, you can send an error to the web.
+```swift
+// in swift
+flexComponent.setInterface("errorTest")
+{ arguments -> Any? in
+    return FlexReject("errorTest")    
+}
+```
+```js
+// in js
+...
+try {
+    const result = await $flex.errorTest();
+} catch(e) {
+    // e is Error("errorTest")
+}
+```
+In `FlexAction`, you can easily pass an error by calling the `reject` function instead of `promiseReturn`.
+```swift
+// in swift
+flexComponent.setAction("errorAction")
+{ (action, arguments) -> Any? in
+    action.reject("errorAction") // = action.promiseReturn(FlexReject("errorAction"))
+}
+```
+```js
+// in js
+...
+try {
+    const result = await $flex.errorAction();
+} catch(e) {
+    // e is Error("errorAction")
+}
+```
 
 ## NativeToWeb Interface
 The NativeToWeb interface has the following features.
@@ -110,7 +149,7 @@ window.onFlexLoad = () => {
         // data is ["data1","data2"]
         return data[0]; // "data1"
     }
-    $flex.web.promiseReturn = () => {
+    $flex.web.Return = () => {
         return Promise.resolve("this is promise")
     }
 }
@@ -122,12 +161,12 @@ mFlexWebView.evalFlexFunc("webFunc",["data1","data2"]) // same as $flex.web.webF
 { res -> Void in
     // res is "data1"
 }
-mFlexWebView.evalFlexFunc("promiseReturn") // same as $flex.web.promiseReturn()
+mFlexWebView.evalFlexFunc("Return") // same as $flex.web.Return()
 { res -> Void in
     // res is "this is promise"
 }
 // just call function
-mFlexWebView.evalFlexFunc("promiseReturn")
+mFlexWebView.evalFlexFunc("Return")
 // call function and send data
 mFlexWebView.evalFlexFunc("webFunc",["data1","data2"])
 ```
@@ -198,13 +237,18 @@ var parentViewController: UIViewController? // readOnly
 
 ## FlexAction
 Generated when the WebToNative interface added by setAction is called.  
-One available method is PromiseReturn, which serves to pass the return value to the Web.
+The available methods are as follows, and only the promiseReturn function is responsible for passing the return value to the web.  
+resolveVoid passes a nil value (same as promiseReturn(nil))  
+The reject function automatically creates and passes a FlexReject object (same as promiseReturn(FlexReject)).
 ```swift
-func PromiseReturn(_ response: Any?)
+func promiseReturn(_ response: Any?)
+func resolveVoid()
+func reject(reason: FlexReject)
+func reject(reason: String)
+func reject()
 ```
-PromiseReturn cannot be used again after one call.  
-If you directly create and use FlexAction Class, there is no effect.  
-Only FlexAction created and delivered on the interface is effective.
+If any of the above functions is called, the next time any function is called, the value is not passed to the Web.  
+If you directly create and use FlexAction Class, there is no effect. Only FlexAction created and delivered on the interface is effective.
 
 # $flex Object
 \$flex Object is an object composed of interfaces between FlexWebView and Promise.  

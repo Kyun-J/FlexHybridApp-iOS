@@ -14,7 +14,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     
     var mWebView: FlexWebView!
     var component = FlexComponent()
-        
+            
     override func viewDidLoad() {
         super.viewDidLoad()
                 
@@ -59,10 +59,21 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             action.promiseReturn(returnValue)
         }
         
+        // test JS Reject
+        component.setInterface("testReject1")
+        { arguemnts -> Any? in
+            return FlexReject("test TestRject1")
+        }
+        
+        component.setAction("testReject2")
+        { (action, arguemnts) -> Void? in
+            action.reject()
+        }
+        
         // add user-custom contentController
         component.configration.userContentController.add(self, name: "userCC")
         // setBaseUrl
-//        component.setBaseUrl("file://")
+        component.setBaseUrl("file://")
         component.setOption("timeout", 1000)
         
         mWebView = FlexWebView(frame: self.view.frame, component: component)
@@ -97,8 +108,6 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             mWebView.bottomAnchor.constraint(equalTo: bottomLayoutGuide.topAnchor).isActive = true
         }
         mWebView.load(URLRequest(url: URL(fileURLWithPath: Bundle.main.path(forResource: "test", ofType: "html")!)))
-//        mWebView.load(URLRequest(url: URL(fileURLWithPath: Bundle.main.path(forResource: "index", ofType: "html", inDirectory: "demo")!)))
-
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -111,7 +120,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     }
     
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        print("user contentController")
+        print("user CC")
     }
 
 }

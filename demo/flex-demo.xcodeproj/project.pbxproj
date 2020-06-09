@@ -14,19 +14,18 @@
 		291A5260245C369E00558FE8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 291A525F245C369E00558FE8 /* Assets.xcassets */; };
 		291A5263245C369E00558FE8 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 291A5261245C369E00558FE8 /* LaunchScreen.storyboard */; };
 		291A5277245D598000558FE8 /* test.html in Resources */ = {isa = PBXBuildFile; fileRef = 291A5276245D598000558FE8 /* test.html */; };
-		DF103903247FC0D000B77DFC /* demo in Resources */ = {isa = PBXBuildFile; fileRef = DF103902247FC0D000B77DFC /* demo */; };
-		DFB6D96B24695E9500C76FFE /* FlexHybridApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DFB6D96A24695E9500C76FFE /* FlexHybridApp.framework */; };
-		DFB6D96C24695E9500C76FFE /* FlexHybridApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DFB6D96A24695E9500C76FFE /* FlexHybridApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		DFFBBCD4248F6E6600762A31 /* FlexHybridApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DFFBBCD3248F6E6600762A31 /* FlexHybridApp.framework */; };
+		DFFBBCD5248F6E6600762A31 /* FlexHybridApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DFFBBCD3248F6E6600762A31 /* FlexHybridApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		DF301430245E7A9A0066C5A3 /* Embed Frameworks */ = {
+		DFFBBCD6248F6E6600762A31 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				DFB6D96C24695E9500C76FFE /* FlexHybridApp.framework in Embed Frameworks */,
+				DFFBBCD5248F6E6600762A31 /* FlexHybridApp.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -43,8 +42,7 @@
 		291A5262245C369E00558FE8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		291A5264245C369E00558FE8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		291A5276245D598000558FE8 /* test.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = test.html; sourceTree = "<group>"; };
-		DF103902247FC0D000B77DFC /* demo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = demo; sourceTree = "<group>"; };
-		DFB6D96A24695E9500C76FFE /* FlexHybridApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FlexHybridApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		DFFBBCD3248F6E6600762A31 /* FlexHybridApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FlexHybridApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,7 +50,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DFB6D96B24695E9500C76FFE /* FlexHybridApp.framework in Frameworks */,
+				DFFBBCD4248F6E6600762A31 /* FlexHybridApp.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -79,7 +77,6 @@
 		291A5255245C369D00558FE8 /* flex-demo */ = {
 			isa = PBXGroup;
 			children = (
-				DF103902247FC0D000B77DFC /* demo */,
 				291A5276245D598000558FE8 /* test.html */,
 				291A5256245C369D00558FE8 /* AppDelegate.swift */,
 				291A5258245C369D00558FE8 /* SceneDelegate.swift */,
@@ -95,7 +92,7 @@
 		291A526A245C372E00558FE8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				DFB6D96A24695E9500C76FFE /* FlexHybridApp.framework */,
+				DFFBBCD3248F6E6600762A31 /* FlexHybridApp.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -110,7 +107,7 @@
 				291A524F245C369D00558FE8 /* Sources */,
 				291A5250245C369D00558FE8 /* Frameworks */,
 				291A5251245C369D00558FE8 /* Resources */,
-				DF301430245E7A9A0066C5A3 /* Embed Frameworks */,
+				DFFBBCD6248F6E6600762A31 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -159,7 +156,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				291A5277245D598000558FE8 /* test.html in Resources */,
-				DF103903247FC0D000B77DFC /* demo in Resources */,
 				291A5263245C369E00558FE8 /* LaunchScreen.storyboard in Resources */,
 				291A5260245C369E00558FE8 /* Assets.xcassets in Resources */,
 				291A525E245C369D00558FE8 /* Main.storyboard in Resources */,
@@ -338,16 +334,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 7V78M894K4;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = "flex-demo/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "app.dvkyun.flex-demo1";
+				PRODUCT_BUNDLE_IDENTIFIER = "app.dvkyun.flex-demo2";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

@@ -14,6 +14,19 @@ open class FlexWebView : WKWebView {
 
     public let component: FlexComponent
     
+    public var enableScroll: Bool = true
+    
+    public var parentViewController: UIViewController? {
+        var parentResponder: UIResponder? = self
+        while parentResponder != nil {
+            parentResponder = parentResponder?.next
+            if let viewController = parentResponder as? UIViewController {
+                return viewController
+            }
+        }
+        return nil
+    }
+    
     open override var navigationDelegate: WKNavigationDelegate? {
         didSet {
             component.checkDelegateChange()
@@ -42,7 +55,6 @@ open class FlexWebView : WKWebView {
         self.component.afterWebViewInit(self)
     }
     
-    public var enableScroll: Bool = true
     
     public func evalFlexFunc(_ funcName: String) {
         component.evalJS("$flex.web.\(funcName)()")
@@ -76,17 +88,6 @@ open class FlexWebView : WKWebView {
         }
     }
     
-    public var parentViewController: UIViewController? {
-        var parentResponder: UIResponder? = self
-        while parentResponder != nil {
-            parentResponder = parentResponder?.next
-            if let viewController = parentResponder as? UIViewController {
-                return viewController
-            }
-        }
-        return nil
-    }
-    
 }
 
 
@@ -102,6 +103,18 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     private var userNavigation: WKNavigationDelegate? = nil
     private let queue = DispatchQueue(label: "FlexibleHybridApp", qos: DispatchQoS.background)
     fileprivate var config: WKWebViewConfiguration = WKWebViewConfiguration()
+            
+    public var BaseUrl: String? {
+        baseUrl
+    }
+    
+    public var FlexWebView: FlexWebView? {
+        flexWebView
+    }
+       
+    public var configration: WKWebViewConfiguration {
+        config
+    }
     
     public func setBaseUrl(_ url: String) {
         if flexWebView != nil {
@@ -111,10 +124,6 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         } else {
             baseUrl = url
         }
-    }
-    
-    public var BaseUrl: String? {
-        baseUrl
     }
     
     fileprivate func beforeWebViewInit() {
@@ -179,16 +188,8 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             })
         }
     }
-    
-    public var FlexWebView: FlexWebView? {
-        flexWebView
-    }
-       
-    public var configration: WKWebViewConfiguration {
-        config
-    }
-        
-    public func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>) -> Any?) {
+            
+    public func setInterface(_ name: String, _ interface: @escaping (_ arguments: Array<Any?>) -> Any?) {
         if flexWebView != nil {
             FlexMsg.err(FlexString.ERROR1)
         } else if interfaces[name] != nil || actions[name] != nil {
@@ -196,7 +197,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         } else if name.contains("flex") {
             FlexMsg.err(FlexString.ERROR2)
         } else {
-            interfaces[name] = action
+            interfaces[name] = interface
         }
     }
     
@@ -302,8 +303,8 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                 queue.async {
                     let value: Any? = self.interfaces[mName]!(data["arguments"] as! Array<Any?>)
                     if value is FlexReject {
-                        let reason = (value as! FlexReject).reason == nil ? "null" : (value as! FlexReject).reason!
-                        self.evalJS("$flex.flex.\(fName)(false, \(reason)")
+                        let reason = (value as! FlexReject).reason == nil ? "null" : "\"\((value as! FlexReject).reason!)\""
+                        self.evalJS("$flex.flex.\(fName)(false, \(reason))")
                     } else if value == nil || value is Void {
                         self.evalJS("$flex.flex.\(fName)(true)")
                     } else {
@@ -452,8 +453,8 @@ public class FlexAction {
         }
         isCall = true
         if response is FlexReject {
-            let reason = (response as! FlexReject).reason == nil ? "null" : (response as! FlexReject).reason!
-            mComponent.evalJS("$flex.flex.\(funcName)(false, \(reason)")
+            let reason = (response as! FlexReject).reason == nil ? "null" : "\"\((response as! FlexReject).reason!)\""
+            mComponent.evalJS("$flex.flex.\(funcName)(false, \(reason))")
         } else if response == nil || response is Void {
             mComponent.evalJS("$flex.flex.\(funcName)(true)")
         } else {
@@ -482,8 +483,8 @@ public class FlexAction {
             return
         }
         isCall = true
-        let rejectReson = reason.reason == nil ? "null" : reason.reason!
-        mComponent.evalJS("$flex.flex.\(funcName)(false, \(rejectReson)")
+        let rejectReson = reason.reason == nil ? "null" : "\"\(reason.reason!)\""
+        mComponent.evalJS("$flex.flex.\(funcName)(false, \(rejectReson))")
     }
     
     public func reject(reason: String) {
@@ -492,7 +493,7 @@ public class FlexAction {
             return
         }
         isCall = true
-        mComponent.evalJS("$flex.flex.\(funcName)(false, \"\(reason)\"")
+        mComponent.evalJS("$flex.flex.\(funcName)(false, \"\(reason)\")")
     }
     
     public func reject() {
@@ -509,10 +510,10 @@ public class FlexAction {
 
 public class FlexReject {
     let reason: String?
-    init(Reason: String) {
+    public init(_ Reason: String) {
         reason = Reason
     }
-    init() {
+    public init() {
         reason = nil
     }
 }

@@ -9,10 +9,10 @@
 Pod::Spec.new do |spec|
 
   spec.name         = "FlexHybridApp"
-  spec.version      = "0.3.0.1"
+  spec.version      = "0.3.7"
   spec.summary      = "FlexibleHybridApp-iOS"
   spec.ios.deployment_target = '11.0'
-  spec.swift_version = '5.2.2'
+  spec.swift_version = '5.2.4'
   spec.author        = { "Kyun-J" => "dvkyun@gmail.com" }
   spec.source       = { :git => "https://github.com/Kyun-J/FlexHybridApp-iOS.git", :tag => "#{spec.version}" }
   spec.license      = { :type => "BSD", :file => "license" }
