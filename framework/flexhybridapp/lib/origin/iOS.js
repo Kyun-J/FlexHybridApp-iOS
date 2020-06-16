@@ -43,7 +43,9 @@ setOptions();
 Object.defineProperty(window, "$flex", { value: {}, writable: false, enumerable: true });
 Object.defineProperties($flex,
     {
-        version: { value: '0.3.7', writable: false, enumerable: true },
+        version: { value: '0.3.9', writable: false, enumerable: true },
+        isAndroid: { value: false, writable: false, enumerable: true },
+        isiOS: { value: true, writable: false, enumerable: true },
         device: { value: device, writable: false, enumerable: true },
         addEventListener: { value: function(event, callback) { listeners.push({ e: event, c: callback }) }, writable: false, enumerable: true },
         web: { value: {}, writable: false, enumerable: true },
@@ -60,7 +62,7 @@ keys.forEach(key => {
                     genFName().then(name => {
                         const counter = setTimeout(() => {
                             $flex.flex[name](false, "timeout error");
-                            triggerEventListener('timeout', { name: key });
+                            triggerEventListener('timeout', { "function" : key });
                         }, option.timeout);
                         $flex.flex[name] = (j, e, r) => {
                             clearTimeout(counter);
@@ -68,8 +70,14 @@ keys.forEach(key => {
                             if(j) {
                                 resolve(r);
                             } else {
-                                if(typeof e === 'string') reject(Error(e));
-                                else reject(Error('$flex Error occurred in function -- $flex.' + key))
+                                let err;
+                                if(typeof e === 'string') err = Error(e);
+                                else err = Error('$flex Error occurred in function -- $flex.' + key);
+                                reject(err);
+                                triggerEventListener('error', {
+                                    "function" : key,
+                                    "err": err
+                                });
                             }
                         };
                         try {

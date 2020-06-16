@@ -14,8 +14,8 @@ Add the following to podFile
     pod 'FlexHybridApp'
 ```
 
-***iOS Deployment Target is 11.0.***
-***The latest version is 0.3.7***
+***iOS Deployment Target is 11.0.***  
+***The latest version is 0.3.9***
 
 # Key features of Flex Framework interface
 Basically, various functions have been added to WKWebView userContentController.
@@ -23,7 +23,7 @@ Basically, various functions have been added to WKWebView userContentController.
 2. When calling the Web function from Native, **the return value can be delivered to Async** from Web to Native.
 3. Instead of WKWebViewConfiguration, you should use FlexComponent. FlexComponent includes WKWebViewConfiguration.
 4. Unlike userContentController, **native behavior of each interface can be designated as a separate code block (Clouser)**.
-5. When calling Native from the web, **Native code block operates in Background (DispatchQoS.background)**
+5. When calling Native from Web, **Native code block operates concurrently in Background(DispatchQoS.background)**
 6. By assigning BaseUrl to FlexWebView, **it is possible to prevent interface with other sites and pages**.
 
 # Flex interface implementation
@@ -210,6 +210,13 @@ func setBaseUrl(_ url: String)
 var BaseUrl: String? // readOnly
 ```
 
+### InterfaceTimeout
+Set the time to wait for return after FlexInterface is executed.
+After that time, the Promise created by the interface is forcibly rejected.
+```swift
+func setInterfaceTimeout(_ timeout: Int)
+```
+
 ### WebToNative Interface Setting
 Add an interface to the FlexWebView.  
 For details, refer to [WebToNavite interface](#WebToNative-interface).
@@ -259,5 +266,7 @@ window.onFlexLoad // $flex is called upon completion of loading.
 $flex // Object that contains functions that can call Native area as WebToNative
 $flex.version // get Library version
 $flex.web // Object used to add and use functions to be used for NativeToWeb
+$flex.isAndroid // false
+$flex.isiOS // true
 ```
 For details, refer to [Flex Interface Implementation](#Flex-Interface-Implementation).

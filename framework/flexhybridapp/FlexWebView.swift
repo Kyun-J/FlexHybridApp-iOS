@@ -96,12 +96,13 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     private var interfaces: [String:(_ arguments: Array<Any?>) -> Any?] = [:]
     private var actions: [String: (_ action: FlexAction, _ arguments: Array<Any?>) -> Void?] = [:]
     private var options: [String: Any] = [:]
+    private var dependencies: [String] = []
     fileprivate var returnFromWeb: [Int:(_ data: Any?) -> Void] = [:]
     private var flexWebView: FlexWebView? = nil
     private var jsString: String? = nil
     private var baseUrl: String? = nil
     private var userNavigation: WKNavigationDelegate? = nil
-    private let queue = DispatchQueue(label: "FlexibleHybridApp", qos: DispatchQoS.background)
+    private let queue = DispatchQueue(label: "FlexibleHybridApp", qos: DispatchQoS.background, attributes: .concurrent)
     fileprivate var config: WKWebViewConfiguration = WKWebViewConfiguration()
             
     public var BaseUrl: String? {
@@ -123,6 +124,22 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             FlexMsg.err(FlexString.ERROR6)
         } else {
             baseUrl = url
+        }
+    }
+    
+    public func setInterfaceTimeout(_ timeout: Int) {
+        if flexWebView != nil {
+            FlexMsg.err(FlexString.ERROR1)
+        } else {
+            options["timeout"] = timeout
+        }
+    }
+    
+    public func setDependency(_ js: String) {
+        if flexWebView != nil {
+            FlexMsg.err(FlexString.ERROR1)
+        } else {
+            dependencies.append(js)
         }
     }
     
@@ -188,7 +205,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             })
         }
     }
-            
+                
     public func setInterface(_ name: String, _ interface: @escaping (_ arguments: Array<Any?>) -> Any?) {
         if flexWebView != nil {
             FlexMsg.err(FlexString.ERROR1)
@@ -201,7 +218,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         }
     }
     
-    public func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: Array<Any?>) -> Void?) {
+    public func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: Array<Any?>) -> Void) {
         if flexWebView != nil {
             FlexMsg.err(FlexString.ERROR1)
         } else if interfaces[name] != nil || actions[name] != nil {
@@ -212,27 +229,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             actions[name] = action
         }
     }
-    
-    public func setOption(_ name: String, _ option: Any) {
-        if flexWebView != nil {
-            FlexMsg.err(FlexString.ERROR1)
-        } else {
-            options[name] = option
-        }
-    }
-    
-    public func setOptions(_ name: String, _ options: [String:Any]) {
-        if flexWebView != nil {
-            FlexMsg.err(FlexString.ERROR1)
-        } else {
-            self.options = options
-        }
-    }
-    
-    public var Options: [String: Any] {
-        options
-    }
-    
+        
     public func evalFlexFunc(_ funcName: String) {
         evalJS("$flex.web.\(funcName)()")
     }
@@ -281,23 +278,25 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             let mName = message.name
             let fName = data["funName"] as! String
             if FlexString.FLEX_DEFINE.contains(mName) {
-                switch(mName) {
-                    // WebLogs
-                    case FlexString.FLEX_DEFINE[0], FlexString.FLEX_DEFINE[1], FlexString.FLEX_DEFINE[2], FlexString.FLEX_DEFINE[3]:
-                        FlexMsg.webLog(mName, data["arguments"])
-                        evalJS("$flex.flex.\(fName)(true)")
-                        break;
-                    // $flex.web func return
-                    case FlexString.FLEX_DEFINE[4]:
-                        let webData = data["arguments"] as! Array<Dictionary<String, Any?>>
-                        if let TID = webData[0]["TID"] as? Int {
-                            returnFromWeb[TID]?(webData[0]["Value"] as Any?)
-                            returnFromWeb[TID] = nil
-                        }
-                        evalJS("$flex.flex.\(fName)(true)")
-                        break;
-                    default:
-                        break;
+                queue.async {
+                    switch(mName) {
+                        // WebLogs
+                        case FlexString.FLEX_DEFINE[0], FlexString.FLEX_DEFINE[1], FlexString.FLEX_DEFINE[2], FlexString.FLEX_DEFINE[3]:
+                            FlexMsg.webLog(mName, data["arguments"])
+                            self.evalJS("$flex.flex.\(fName)(true)")
+                            break;
+                        // $flex.web func return
+                        case FlexString.FLEX_DEFINE[4]:
+                            let webData = data["arguments"] as! Array<Dictionary<String, Any?>>
+                            if let TID = webData[0]["TID"] as? Int {
+                                self.returnFromWeb[TID]?(webData[0]["Value"] as Any?)
+                                self.returnFromWeb[TID] = nil
+                            }
+                            self.evalJS("$flex.flex.\(fName)(true)")
+                            break;
+                        default:
+                            break;
+                    }
                 }
             } else if interfaces[mName] != nil {
                 queue.async {
@@ -318,9 +317,8 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                     }
                 }
             } else if actions[mName] != nil {
-                let action = actions[mName]!
                 queue.async {
-                    action(FlexAction(fName, self), data["arguments"] as! Array<Any?>)
+                    self.actions[mName]!(FlexAction(fName, self), data["arguments"] as! Array<Any?>)
                 }
             }
         }
@@ -337,6 +335,9 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         if baseUrl == nil || (baseUrl != nil && webView.url != nil && webView.url!.absoluteString.contains(baseUrl!)) {
             evalJS(jsString!)
+            dependencies.forEach { (js) in
+                evalJS(js)
+            }
         }
         userNavigation?.webView?(webView, didFinish: navigation)
     }
@@ -445,8 +446,8 @@ public class FlexAction {
         funcName = name
         mComponent = component
     }
-       
-    public func promiseReturn(_ response: Any?) {
+    
+    private func pRetrun(_ response: Any?) {
         if isCall {
             FlexMsg.err(FlexString.ERROR7)
             return
@@ -466,6 +467,46 @@ public class FlexAction {
                 FlexMsg.err(error)
             }
         }
+    }
+    
+    public func promiseReturn(_ response: Void) {
+        pRetrun(response)
+    }
+       
+    public func promiseReturn(_ response: String) {
+        pRetrun(response)
+    }
+    
+    public func promiseReturn(_ response: Int) {
+        pRetrun(response)
+    }
+    
+    public func promiseReturn(_ response: Float) {
+        pRetrun(response)
+    }
+    
+    public func promiseReturn(_ response: Double) {
+        pRetrun(response)
+    }
+    
+    public func promiseReturn(_ response: Character) {
+        pRetrun(response)
+    }
+    
+    public func promiseReturn(_ response: Bool) {
+        pRetrun(response)
+    }
+    
+    public func promiseReturn(_ response: Array<Any?>) {
+        pRetrun(response)
+    }
+    
+    public func promiseReturn(_ response: Dictionary<String,Any?>) {
+        pRetrun(response)
+    }
+    
+    public func promiseReturn(_ response: FlexReject) {
+        pRetrun(response)
     }
     
     public func resolveVoid() {
@@ -506,7 +547,6 @@ public class FlexAction {
     }
     
 }
-
 
 public class FlexReject {
     let reason: String?

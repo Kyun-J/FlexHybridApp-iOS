@@ -14,21 +14,18 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     
     var mWebView: FlexWebView!
     var component = FlexComponent()
-            
+                
     override func viewDidLoad() {
         super.viewDidLoad()
                 
         // add js interface
-        component.setInterface("test1") { (arguments) -> Any? in
+        component.setInterface("test1")
+        { (arguments) -> Int in
             // code works in background...
-            if arguments[0] != nil {
-                return arguments[0] as! Int + 1
-            } else {
-                return nil
-            }
+            return arguments[0] as! Int + 1
         }
         component.setInterface("test2")
-        { (arguments) -> Any? in
+        { (arguments) -> Void in
             // code works in background...
             
             // call $flex.web function
@@ -40,7 +37,6 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
                 print(value!)
                 print("-------------------------------")
             }
-            return nil
         }
         
         // add FlexAction
@@ -61,12 +57,12 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         
         // test JS Reject
         component.setInterface("testReject1")
-        { arguemnts -> Any? in
+        { arguemnts -> Any in
             return FlexReject("test TestRject1")
         }
         
         component.setAction("testReject2")
-        { (action, arguemnts) -> Void? in
+        { (action, arguemnts) -> Void in
             action.reject()
         }
         
@@ -74,14 +70,13 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         component.configration.userContentController.add(self, name: "userCC")
         // setBaseUrl
         component.setBaseUrl("file://")
-        component.setOption("timeout", 1000)
+        component.setInterfaceTimeout(3000)
         
         mWebView = FlexWebView(frame: self.view.frame, component: component)
         mWebView.translatesAutoresizingMaskIntoConstraints = false
         mWebView.scrollView.bounces = false
         mWebView.scrollView.isScrollEnabled = true
         mWebView.enableScroll = true
-        mWebView.configuration.preferences.setValue(true, forKey: "developerExtrasEnabled")
         
         view.addSubview(mWebView)
         
@@ -118,9 +113,9 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         print("user navigationDelegate")
     }
-    
+        
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        print("user CC")
+        print("userCC")
     }
 
 }

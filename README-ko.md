@@ -10,8 +10,8 @@ podFile에 다음을 추가
     pod 'FlexHybridApp'
 ```
 
-***iOS Deployment Target은 11.0 입니다.***
-***가장 최신 버전은 0.3.7 입니다.***
+***iOS Deployment Target은 11.0 입니다.***  
+***가장 최신 버전은 0.3.9 입니다.***
 
 # Flex Framework 인터페이스 주요 특징
 기본적으로 WKWebView userContentController에 여러가지 기능이 추가되었습니다.
@@ -19,7 +19,7 @@ podFile에 다음을 추가
 2. Native에서 Web함수 호출시, **Web에서 Native로 Async**하게 반환값을 전달 할 수 있습니다.
 3. WKWebViewConfiguration 대신, FlexComponent를 사용해야 합니다. FlexComponent는 WKWebViewConfiguration를 포함하고 있습니다.
 4. userContentController와는 다르게, 각 인터페이스의 **네이티브 동작을 별도의 코드 블럭(Clouser)** 으로 지정할 수 있습니다.
-5. Web에서 Native 호출시, **Native 코드 블럭은 Background(DispatchQoS.background)** 안에서 동작합니다
+5. Web에서 Native 호출시, **Native 코드 블럭은 Background(DispatchQoS.background)** 안에서 Concurrent하게 동작합니다
 6. FlexWebView에 BaseUrl을 지정하여, **타 사이트 및 페이지에서 Native와 Interface하는 것을 방지**할 수 있습니다.
 
 # Flex 인터페이스 구현
@@ -51,7 +51,7 @@ Normal Interface는 기본적으로 다음과 같이 사용합니다.
 ```swift
 // in Swfit
 flexComponent.setInterface("Normal") // "Normal" becomes the function name in Web JavaScript. 
-{ arguments -> Any? in
+{ arguments -> String in
     // arguments is Arguemnts Data from web. Type is Array<Any>
     // ["data1", 2, false]
     return "HiFlexWeb" // "HiFlexWeb" is passed to web in Promise pattern.
@@ -206,6 +206,13 @@ func setBaseUrl(_ url: String)
 var BaseUrl: String? // readOnly
 ```
 
+### InterfaceTimeout
+FlexInterface가 실행된 후, return이 발생할 때 까지 기다리는 시간을 설정합니다.  
+해당 시간이 지나면, 인터페이스로 생성된 Promise는 강제 reject 처리됩니다.
+```swift
+func setInterfaceTimeout(_ timeout: Int)
+```
+
 ### WebToNative Interface Setting
 FlexWebView에 인터페이스를 추가합니다.  
 상세한 사항은 [WebToNavite 인터페이스](#WebToNative-인터페이스) 항목을 참고하세요.
@@ -255,5 +262,8 @@ window.onFlexLoad // $flex is called upon completion of loading.
 $flex // Object that contains functions that can call Native area as WebToNative
 $flex.version // get Library version
 $flex.web // Object used to add and use functions to be used for NativeToWeb
+$flex.device // Currnet Device Info
+$flex.isAndroid // false
+$flex.isiOS // true
 ```
 상세한 사용법은 [Flex 인터페이스 구현](#Flex-인터페이스-구현) 항목을 참고하세요.
