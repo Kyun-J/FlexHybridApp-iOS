@@ -11,7 +11,7 @@ podFile에 다음을 추가
 ```
 
 ***iOS Deployment Target은 11.0 입니다.***  
-***가장 최신 버전은 0.3.9 입니다.***
+***가장 최신 버전은 0.3.9.5 입니다.***
 
 # Flex Framework 인터페이스 주요 특징
 기본적으로 WKWebView userContentController에 여러가지 기능이 추가되었습니다.
@@ -258,7 +258,7 @@ FlexAction Class를 직접 생성 및 사용하면 아무런 효과도 얻을 �
 $flex Object는 [Android FlexHybridApp](https://github.com/Kyun-J/FlexHybridApp-Android)에 적용될 때와 동일한 코드로 사용할 수 있습니다.  
 $flex Object의 구성 요소는 다음과 같습니다.
 ```js
-window.onFlexLoad // $flex is called upon completion of loading.
+window.onFlexLoad // Called after the $flex load completes. When overriding onFlexLoad, the overridden function is called immediately.
 $flex // Object that contains functions that can call Native area as WebToNative
 $flex.version // get Library version
 $flex.web // Object used to add and use functions to be used for NativeToWeb

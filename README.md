@@ -15,7 +15,7 @@ Add the following to podFile
 ```
 
 ***iOS Deployment Target is 11.0.***  
-***The latest version is 0.3.9***
+***The latest version is 0.3.9.5***
 
 # Key features of Flex Framework interface
 Basically, various functions have been added to WKWebView userContentController.
@@ -262,7 +262,7 @@ If you directly create and use FlexAction Class, there is no effect. Only FlexAc
 $flex Object can be used with the same code as applied to [Android FlexHybridApp](https://github.com/Kyun-J/FlexHybridApp-Android).  
 The components of $flex Object are as follows.  
 ```js
-window.onFlexLoad // $flex is called upon completion of loading.
+window.onFlexLoad // Called after the $flex load completes. When overriding onFlexLoad, the overridden function is called immediately.
 $flex // Object that contains functions that can call Native area as WebToNative
 $flex.version // get Library version
 $flex.web // Object used to add and use functions to be used for NativeToWeb
