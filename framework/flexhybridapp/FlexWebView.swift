@@ -509,6 +509,10 @@ public class FlexAction {
         pRetrun(response)
     }
     
+    public func promiseReturn() {
+        pRetrun(nil)
+    }
+    
     public func resolveVoid() {
         if isCall {
             FlexMsg.err(FlexString.ERROR7)

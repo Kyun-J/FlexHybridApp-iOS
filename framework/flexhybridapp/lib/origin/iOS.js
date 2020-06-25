@@ -43,7 +43,7 @@ setOptions();
 Object.defineProperty(window, "$flex", { value: {}, writable: false, enumerable: true });
 Object.defineProperties($flex,
     {
-        version: { value: '0.3.9', writable: false, enumerable: true },
+        version: { value: '0.3.9.5', writable: false, enumerable: true },
         isAndroid: { value: false, writable: false, enumerable: true },
         isiOS: { value: true, writable: false, enumerable: true },
         device: { value: device, writable: false, enumerable: true },
@@ -112,8 +112,21 @@ console.debug = function(...args) { $flex.flexdebug(...args); logs.debug(...args
 console.error = function(...args) { $flex.flexerror(...args); logs.error(...args); };
 console.info = function(...args) { $flex.flexinfo(...args); logs.info(...args); };
 setTimeout(() => {
+    let f = () => {};
     if(typeof window.onFlexLoad === 'function') {
-        window.onFlexLoad()
+        f = window.onFlexLoad;
     }
+    Object.defineProperty(window, "onFlexLoad", {
+        set: function(val){
+            window._onFlexLoad = val;
+            if(typeof val === 'function') {
+                val();
+            }
+        },
+        get: function(){
+            return window._onFlexLoad;
+        }
+    });
+    window.onFlexLoad = f;
 },0);
 })()
