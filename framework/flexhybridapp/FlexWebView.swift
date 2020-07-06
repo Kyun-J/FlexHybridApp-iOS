@@ -90,7 +90,6 @@ open class FlexWebView : WKWebView {
     
 }
 
-
 open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler, UIScrollViewDelegate {
    
     private var interfaces: [String:(_ arguments: Array<Any?>) -> Any?] = [:]
@@ -284,7 +283,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                         case FlexString.FLEX_DEFINE[0], FlexString.FLEX_DEFINE[1], FlexString.FLEX_DEFINE[2], FlexString.FLEX_DEFINE[3]:
                             FlexMsg.webLog(mName, data["arguments"])
                             self.evalJS("$flex.flex.\(fName)(true)")
-                            break;
+                            break
                         // $flex.web func return
                         case FlexString.FLEX_DEFINE[4]:
                             let webData = data["arguments"] as! Array<Dictionary<String, Any?>>
@@ -293,9 +292,9 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                                 self.returnFromWeb[TID] = nil
                             }
                             self.evalJS("$flex.flex.\(fName)(true)")
-                            break;
+                            break
                         default:
-                            break;
+                            break
                     }
                 }
             } else if interfaces[mName] != nil {

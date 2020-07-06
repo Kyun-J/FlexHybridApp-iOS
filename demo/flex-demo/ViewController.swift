@@ -70,7 +70,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         component.configration.userContentController.add(self, name: "userCC")
         // setBaseUrl
         component.setBaseUrl("file://")
-        component.setInterfaceTimeout(3000)
+        component.setInterfaceTimeout(0)
         
         mWebView = FlexWebView(frame: self.view.frame, component: component)
         mWebView.translatesAutoresizingMaskIntoConstraints = false

@@ -15,7 +15,7 @@ Add the following to podFile
 ```
 
 ***iOS Deployment Target is 11.0.***  
-***The latest version is 0.3.9.5***
+***The latest version is 0.3.9.6***
 
 # Key features of Flex Framework interface
 Basically, various functions have been added to WKWebView userContentController.
@@ -213,6 +213,8 @@ var BaseUrl: String? // readOnly
 ### InterfaceTimeout
 Set the time to wait for return after FlexInterface is executed.
 After that time, the Promise created by the interface is forcibly rejected.
+When set to 0, no timeout occurs.  
+The default is 1 minute (6000).
 ```swift
 func setInterfaceTimeout(_ timeout: Int)
 ```
