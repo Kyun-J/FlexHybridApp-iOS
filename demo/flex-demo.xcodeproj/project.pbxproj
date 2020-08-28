@@ -14,18 +14,18 @@
 		291A5260245C369E00558FE8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 291A525F245C369E00558FE8 /* Assets.xcassets */; };
 		291A5263245C369E00558FE8 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 291A5261245C369E00558FE8 /* LaunchScreen.storyboard */; };
 		291A5277245D598000558FE8 /* test.html in Resources */ = {isa = PBXBuildFile; fileRef = 291A5276245D598000558FE8 /* test.html */; };
-		DFFBBCD4248F6E6600762A31 /* FlexHybridApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DFFBBCD3248F6E6600762A31 /* FlexHybridApp.framework */; };
-		DFFBBCD5248F6E6600762A31 /* FlexHybridApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DFFBBCD3248F6E6600762A31 /* FlexHybridApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		DFCEB8A624F8C79300C2CE3D /* FlexHybridApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DFCEB8A524F8C79300C2CE3D /* FlexHybridApp.framework */; };
+		DFCEB8A724F8C79300C2CE3D /* FlexHybridApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DFCEB8A524F8C79300C2CE3D /* FlexHybridApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		DFFBBCD6248F6E6600762A31 /* Embed Frameworks */ = {
+		DFCEB8A824F8C79300C2CE3D /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				DFFBBCD5248F6E6600762A31 /* FlexHybridApp.framework in Embed Frameworks */,
+				DFCEB8A724F8C79300C2CE3D /* FlexHybridApp.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -42,6 +42,7 @@
 		291A5262245C369E00558FE8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		291A5264245C369E00558FE8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		291A5276245D598000558FE8 /* test.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = test.html; sourceTree = "<group>"; };
+		DFCEB8A524F8C79300C2CE3D /* FlexHybridApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FlexHybridApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DFFBBCD3248F6E6600762A31 /* FlexHybridApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FlexHybridApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -50,7 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DFFBBCD4248F6E6600762A31 /* FlexHybridApp.framework in Frameworks */,
+				DFCEB8A624F8C79300C2CE3D /* FlexHybridApp.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -92,6 +93,7 @@
 		291A526A245C372E00558FE8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DFCEB8A524F8C79300C2CE3D /* FlexHybridApp.framework */,
 				DFFBBCD3248F6E6600762A31 /* FlexHybridApp.framework */,
 			);
 			name = Frameworks;
@@ -107,7 +109,7 @@
 				291A524F245C369D00558FE8 /* Sources */,
 				291A5250245C369D00558FE8 /* Frameworks */,
 				291A5251245C369D00558FE8 /* Resources */,
-				DFFBBCD6248F6E6600762A31 /* Embed Frameworks */,
+				DFCEB8A824F8C79300C2CE3D /* Embed Frameworks */,
 			);
 			buildRules = (
 			);

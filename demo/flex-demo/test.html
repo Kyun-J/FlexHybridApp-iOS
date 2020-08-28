@@ -42,6 +42,9 @@
             console.log('Received by Native ---- ' + data);
             return Promise.resolve(['Thanks Flex!', null])
         }
+        $flex.web.directTest = () => {
+            console.log('direct test!!!!');
+        }
     }
 </script>
 <body style="width: 100%; height: 450px;">

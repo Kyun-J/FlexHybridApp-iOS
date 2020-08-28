@@ -57,35 +57,19 @@ open class FlexWebView : WKWebView {
     
     
     public func evalFlexFunc(_ funcName: String) {
-        component.evalJS("$flex.web.\(funcName)()")
+        component.evalFlexFunc(funcName)
     }
     
     public func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void) {
-        let TID = Int.random(in: 1..<10000)
-        component.returnFromWeb[TID] = returnAs
-        component.evalJS("(async function() { const V = await $flex.web.\(funcName)(); $flex.flexreturn({ TID: \(TID), Value: V }); })(); void 0")
+        component.evalFlexFunc(funcName, returnAs)
     }
     
     public func evalFlexFunc(_ funcName: String, sendData: Any) {
-        do {
-            component.evalJS("$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)))")
-        } catch FlexError.UnuseableTypeCameIn {
-            FlexMsg.err(FlexString.ERROR3)
-        } catch {
-            FlexMsg.err(error)
-        }
+        component.evalFlexFunc(funcName, sendData: sendData)
     }
     
     public func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: Any?) -> Void) {
-        do {
-            let TID = Int.random(in: 1..<10000)
-            component.returnFromWeb[TID] = returnAs
-            component.evalJS("(async function() { const V = await $flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData))); $flex.flexreturn({ TID: \(TID), Value: V }); })(); void 0")
-        } catch FlexError.UnuseableTypeCameIn {
-            FlexMsg.err(FlexString.ERROR3)
-        } catch {
-            FlexMsg.err(error)
-        }
+        component.evalFlexFunc(funcName, sendData: sendData, returnAs)
     }
     
 }
@@ -103,6 +87,8 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     private var userNavigation: WKNavigationDelegate? = nil
     private let queue = DispatchQueue(label: "FlexibleHybridApp", qos: DispatchQoS.background, attributes: .concurrent)
     fileprivate var config: WKWebViewConfiguration = WKWebViewConfiguration()
+    private var beforeFlexLoadEvalList : Array<BeforeFlexEval> = []
+    private var isFlexLoad = false
             
     public var BaseUrl: String? {
         baseUrl
@@ -131,6 +117,14 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             FlexMsg.err(FlexString.ERROR1)
         } else {
             options["timeout"] = timeout
+        }
+    }
+    
+    public func setFlexOnloadWait(_ time: Int) {
+        if flexWebView != nil {
+            FlexMsg.err(FlexString.ERROR1)
+        } else {
+            options["flexLoadWait"] = time
         }
     }
     
@@ -230,34 +224,50 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
         
     public func evalFlexFunc(_ funcName: String) {
-        evalJS("$flex.web.\(funcName)()")
+        if(!isFlexLoad) {
+            beforeFlexLoadEvalList.append(BeforeFlexEval(funcName))
+        } else {
+            evalJS("$flex.web.\(funcName)()")
+        }
     }
     
     public func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void) {
-        let TID = Int.random(in: 1..<10000)
-        returnFromWeb[TID] = returnAs
-        evalJS("!async function(){try{const e=await $flex.web.\(funcName)();$flex.flexreturn({TID:\(TID),Value:e,Error:!1})}catch(e){$flex.flexreturn({TID:\(TID),Value:e,Error:!0})}}();void 0;")
+        if(!isFlexLoad) {
+            beforeFlexLoadEvalList.append(BeforeFlexEval(funcName, returnAs))
+        } else {
+            let TID = Int.random(in: 1..<10000)
+            returnFromWeb[TID] = returnAs
+            evalJS("!async function(){try{const e=await $flex.web.\(funcName)();$flex.flexreturn({TID:\(TID),Value:e,Error:!1})}catch(e){$flex.flexreturn({TID:\(TID),Value:e,Error:!0})}}();void 0;")
+        }
     }
     
     public func evalFlexFunc(_ funcName: String, sendData: Any) {
-        do {
-            evalJS("$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)))")
-        } catch FlexError.UnuseableTypeCameIn {
-            FlexMsg.err(FlexString.ERROR3)
-        } catch {
-            FlexMsg.err(error)
+        if(!isFlexLoad) {
+            beforeFlexLoadEvalList.append(BeforeFlexEval(funcName, sendData))
+        } else {
+            do {
+                evalJS("$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)))")
+            } catch FlexError.UnuseableTypeCameIn {
+                FlexMsg.err(FlexString.ERROR3)
+            } catch {
+                FlexMsg.err(error)
+            }
         }
     }
     
     public func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: Any?) -> Void) {
-        do {
-            let TID = Int.random(in: 1..<10000)
-            returnFromWeb[TID] = returnAs
-            evalJS("!async function(){try{const e=await $flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));$flex.flexreturn({TID:\(TID),Value:e,Error:!1})}catch(e){$flex.flexreturn({TID:\(TID),Value:e,Error:!0})}}();void 0;")
-        } catch FlexError.UnuseableTypeCameIn {
-            FlexMsg.err(FlexString.ERROR3)
-        } catch {
-            FlexMsg.err(error)
+        if(!isFlexLoad) {
+            beforeFlexLoadEvalList.append(BeforeFlexEval(funcName, sendData, returnAs))
+        } else {
+            do {
+                let TID = Int.random(in: 1..<10000)
+                returnFromWeb[TID] = returnAs
+                evalJS("!async function(){try{const e=await $flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));$flex.flexreturn({TID:\(TID),Value:e,Error:!1})}catch(e){$flex.flexreturn({TID:\(TID),Value:e,Error:!0})}}();void 0;")
+            } catch FlexError.UnuseableTypeCameIn {
+                FlexMsg.err(FlexString.ERROR3)
+            } catch {
+                FlexMsg.err(error)
+            }
         }
     }
     
@@ -291,6 +301,22 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                                 self.returnFromWeb[TID]?(webData[0]["Value"] as Any?)
                                 self.returnFromWeb[TID] = nil
                             }
+                            self.evalJS("$flex.flex.\(fName)(true)")
+                            break
+                        case FlexString.FLEX_DEFINE[5]:
+                            self.isFlexLoad = true
+                            self.beforeFlexLoadEvalList.forEach { item in
+                                if(item.sendData != nil && item.response != nil) {
+                                    self.evalFlexFunc(item.name, sendData: item.sendData!, item.response!)
+                                } else if(item.sendData != nil && item.response == nil) {
+                                    self.evalFlexFunc(item.name, sendData: item.sendData!)
+                                } else if(item.sendData == nil && item.response != nil) {
+                                    self.evalFlexFunc(item.name, item.response!)
+                                } else {
+                                    self.evalFlexFunc(item.name)
+                                }
+                            }
+                            self.beforeFlexLoadEvalList.removeAll()
                             self.evalJS("$flex.flex.\(fName)(true)")
                             break
                         default:
@@ -558,5 +584,32 @@ public class FlexReject {
     }
     public init() {
         reason = nil
+    }
+}
+
+fileprivate class BeforeFlexEval {
+    let name: String
+    let sendData: Any?
+    let response: ((_ data: Any?) -> Void)?
+    
+    init(_ name: String) {
+        self.name = name
+        sendData = nil
+        response = nil
+    }
+    init(_ name: String, _ sendData: Any) {
+        self.name = name
+        self.sendData = sendData
+        response = nil
+    }
+    init(_ name: String,_ response:@escaping (Any?) -> Void) {
+        self.name = name
+        self.response = response
+        sendData = nil
+    }
+    init(_ name: String, _ sendData: Any, _ response: @escaping (_ data: Any?) -> Void) {
+        self.name = name
+        self.sendData = sendData
+        self.response = response
     }
 }

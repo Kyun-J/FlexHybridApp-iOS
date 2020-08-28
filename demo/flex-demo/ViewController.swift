@@ -66,6 +66,10 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             action.reject()
         }
         
+        component.evalFlexFunc("directTest") { value -> Void in
+            print("dirct test suc!!")
+        }
+                
         // add user-custom contentController
         component.configration.userContentController.add(self, name: "userCC")
         // setBaseUrl
@@ -73,6 +77,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         component.setInterfaceTimeout(0)
         
         mWebView = FlexWebView(frame: self.view.frame, component: component)
+        
         mWebView.translatesAutoresizingMaskIntoConstraints = false
         mWebView.scrollView.bounces = false
         mWebView.scrollView.isScrollEnabled = true

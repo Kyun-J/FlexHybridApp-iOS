@@ -24,7 +24,7 @@ struct FlexString {
     static let ERROR6 = "The BaseUrl can only use file, http, https protocols."
     static let ERROR7 = "PromiseReturn cannot be called twice in a single FlexAction."
     
-    static let FLEX_DEFINE = ["flexlog","flexerror","flexdebug","flexinfo","flexreturn"]
+    static let FLEX_DEFINE = ["flexlog","flexerror","flexdebug","flexinfo","flexreturn","flexload"]
 }
 
 struct FlexMsg {
