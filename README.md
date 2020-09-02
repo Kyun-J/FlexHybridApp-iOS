@@ -37,7 +37,7 @@ When transferring data in the form of Array and Object, **the data contained in 
 | Array [] | Array |
 | Object {} | Dictionary |
 | undefined (Single Argument Only), null | nil |
-| Error | FlexReject |
+| Error | BrowserException |
 
 ## FlexData
 All data transferred from Web to Native is converted to `FlexData` class and transferred.  
@@ -299,11 +299,11 @@ var parentViewController: UIViewController? // readOnly
 Generated when the WebToNative interface added by setAction is called.  
 The available methods are as follows, and only the promiseReturn function is responsible for passing the return value to the web.  
 resolveVoid passes a nil value (same as promiseReturn(nil))  
-The reject function automatically creates and passes a FlexReject object (same as promiseReturn(FlexReject)).
+The reject function automatically creates and passes a BrowserException object (same as promiseReturn(BrowserException)).
 ```swift
 func promiseReturn(_ response: [Transferable Data Type])
 func resolveVoid()
-func reject(reason: FlexReject)
+func reject(reason: BrowserException)
 func reject(reason: String)
 func reject()
 ```
