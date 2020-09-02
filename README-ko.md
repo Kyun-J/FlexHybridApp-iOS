@@ -23,19 +23,54 @@ podFile에 다음을 추가
 
 # Flex 인터페이스 구현
 ## 전달 가능한 데이터 타입
-1. WKWebView userContentController와 같이 일반 자료형, 문자열, Array, Dictionary형식으로 전송 가능합니다. 
-2. JS의 Array를 Swift의 Array\<Any>로, JS의 Object를 Swift의 Dictionary\<String,Any>으로 전송 가능합니다.  
-3. Array와 Object형식의 데이터를 전송할 때 안에 포함된 데이터는 **반드시 아래 자료형 중 하나여야 합니다**.  
+Array와 Object형식의 데이터를 전송할 때 안에 포함된 데이터는 **반드시 아래 자료형 중 하나여야 합니다**.  
 
 | JS | Swift |
 |:--:|:--:|
 | Number | Int, Float, Double |
 | String | String, Character | 
 | Boolean | Bool |
-| Array [] | Array\<Any> |
-| Object {} | Dictionary<String,Any> |
+| Array [] | Array |
+| Object {} | Dictionary |
 | undefined (Single Argument Only), null | nil |
-| Error | FlexReject |
+| Error | BrowserException |
+
+## FlexData
+Web에서 Native로 전달되는 모든 데이터는, `FlexData` 클래스로 변환되어 전달됩니다.  
+`FlexData` 클래스는 Web의 데이터를 Type-Safe하게 사용하도록 도와줍니다.
+```js
+// in web javascript
+...
+const res = await $flex.CallNative("Hi Android", 100.2,[false, true]]);
+// res is "HiFlexWeb"
+```
+```swift
+flexComponent.stringInterface("CallNative") // "CallNative" becomes the function name in Web JavaScript. 
+{ arguments -> String in
+    // arguments is Arguemnts Data from web. Type is Array<FlexData>
+    let hello = arguments[0].asString() // hello = "Hi Android"
+    let number: Double = arguments[1].reified() // number = 100.2
+    let array: [FlexData] = arguments[2].reified() // array = [FlexData(false), FlexData(true)]
+    return "HiFlexWeb" // "HiFlexWeb" is passed to web in Promise pattern.
+}
+```
+`FlexData`는 기본적으로 아래의 타입 변환 함수를 제공합니다.
+```swift
+func asString() -> String?
+func asInt() -> Int?
+func asDouble() -> Double?
+func asFloat() -> Float?
+func asBoolean() -> Bool?
+func asArray() -> Array<FlexData>?
+func asDictionary() -> Dictionary<String, FlexData>?
+func asErr() -> BrowserException?
+func toString() -> String?
+```
+또한, `reified` 함수를 통해 명시된 Type으로 자동 형변환하여 데이터를 가져올 수 있습니다.
+```swift
+func reified<T>() -> T?
+```
+이때 사용 가능한 데이터 타입은 `String, Int, Float, Double, Bool, Array<FlexData>, Dictionary<String,FlexData>, BrowserException` 입니다.  
 
 ## WebToNative 인터페이스
 WebToNative 인터페이스는 다음의 특징을 지닙니다.
@@ -49,9 +84,9 @@ WebToNative 인터페이스는 다음의 특징을 지닙니다.
 Normal Interface는 기본적으로 다음과 같이 사용합니다.
 ```swift
 // in Swfit
-flexComponent.setInterface("Normal") // "Normal" becomes the function name in Web JavaScript. 
+flexComponent.stringInterface("Normal") // "Normal" becomes the function name in Web JavaScript. 
 { arguments -> String in
-    // arguments is Arguemnts Data from web. Type is Array<Any>
+    // arguments is Arguemnts Data from web. Type is Array<FlexData>
     // ["data1", 2, false]
     return "HiFlexWeb" // "HiFlexWeb" is passed to web in Promise pattern.
 }
@@ -63,9 +98,19 @@ flexWebView = FlexWebView(frame: self.view.frame, component: flexComponent)
 const res = await $flex.Normal("data1",2,false);
 // res is "HiFlexWeb"
 ```
-`setInterface`의 첫 인자로 웹에서의 함수 이름을 지정하고 이어지는 Clouser는 함수가 동작하는 코드 블럭이 됩니다.  
+`stringInterface`의 첫 인자로 웹에서의 함수 이름을 지정하고 이어지는 Clouser는 함수가 동작하는 코드 블럭이 됩니다.  
 Clouser로 전달되는 arguments는 Array 객체로서 web에서 함수 호출시 전달된 값들이 담겨 있습니다.  
-Clouser에서 web으로 값을 전달할 때(return할 때)는 [전달 가능한 데이터 타입](#전달-가능한-데이터-타입)만 사용 가능합니다.
+Normal Interface의 종류는 web에 리턴하는 타입에 따라 나뉘어져 있으며, 그 종류는 다음과 같습니다.  
+```swift
+public func voidInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Void)
+public func intInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Int)
+public func doubleInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Double)
+public func floatInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Float)
+public func boolInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Bool)
+public func stringInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> String)
+public func arrayInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Array<Any?>) 
+public func dictionaryInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Dictionary<String,Any?>)
+```
 
 ### ***Action Interface***
 Action Interface는 Normal Interface와 거의 비슷하나, Web으로의 값 리턴을 action객체의 `promiseReturn` 메소드를 호출하는 시점에 전달합니다.
@@ -75,7 +120,7 @@ var mAction: FlexAction? = nil
 ...
 flexComponent.setAction("Action")
 { (action, arguments) -> Void in
-// arguments is Array<Any>, ["Who Are You?"]
+// arguments is Array<FlexData>, ["Who Are You?"]
 // action is FlexAction Object
     mAction = action
 }
@@ -97,12 +142,12 @@ const res = await $flex.Action("Who Are You?"); // Pending until promiseReturn i
 또한 이미 `promiseReturn`가 호출되었던 FlexAction 객체는 `promiseReturn`이 중복 호출되어도 Web 함수에 파라미터가 전달되지 않습니다.
 
 ### ***Error Interface***
-`FlexReject`객체를 리턴한다면, Web에 오류 발생 사항을 전달할 수 있습니다.  
+Normal Interface의 경우 Clouser 내에서 Exception을 발생시키면 Web에 에러사항을 전달할 수 있습니다.
 ```swift
 // in swift
-flexComponent.setInterface("errorTest")
-{ arguments -> Any? in
-    return FlexReject("errorTest")    
+flexComponent.voidInterface("errorTest")
+{ arguments -> Void in
+    throw Error //some Error    
 }
 ```
 ```js
@@ -111,15 +156,15 @@ flexComponent.setInterface("errorTest")
 try {
     const result = await $flex.errorTest();
 } catch(e) {
-    // e is Error("errorTest")
+    // error occurred
 }
 ```
-`FlexAction`에서는, `promiseReturn`대신 `reject`함수를 호출하여 손쉽게 에러사항을 전달할 수 있습니다.  
+`FlexAction`에서는, `promiseReturn`에 `BrowserException`객체를 전달하거나, `reject`함수를 호출하여 손쉽게 에러사항을 전달할 수 있습니다.  
 ```swift
 // in swift
 flexComponent.setAction("errorAction")
-{ (action, arguments) -> Any? in
-    action.reject("errorAction") // = action.promiseReturn(FlexReject("errorAction"))
+{ (action, arguments) -> Void in
+    action.reject("errorAction") // = action.promiseReturn(BrowserException("errorAction"))
 }
 ```
 ```js
@@ -183,16 +228,16 @@ var parentViewController: UIViewController? // readOnly
 init (frame: CGRect, configuration: WKWebViewConfiguration) 
 init (frame: CGRect, component: FlexComponent)
 func evalFlexFunc(_ funcName: String)
-func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void)
+func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: FlexData) -> Void)
 func evalFlexFunc(_ funcName: String, sendData: Any)
-func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: Any?) -> Void)
+func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: FlexData) -> Void)
 ```
 evalFlexFunc 사용법은 [NativeToWeb 인터페이스](#NativeToWeb-인터페이스)를 참조하세요.
 
 ## FlexComponent
 FlexComponent는 WKWebViewConfiguration를 대체하며, 다음의 특징을 지닙니다.
 1. WKWebViewConfiguration를 포함하고 있으며, FlexComponent의 WKWebViewConfiguration는 FlexWebView에 적용됩니다.
-2. setInterface, setAction을 통해 FlexWebView에 Native 와 Web간의 비동기 인터페이스를 추가합니다.
+2. Normal Interface, setAction을 통해 FlexWebView에 Native 와 Web간의 비동기 인터페이스를 추가합니다.
 3. BaseUrl을 설정하여, 지정된 페이지에서만 네이티브와 인터페이스 하도록 설정할 수 있습니다.
 4. $flex Object에 여러 설정값을 추가 할 수 있습니다.
 
@@ -218,17 +263,24 @@ func setInterfaceTimeout(_ timeout: Int)
 FlexWebView에 인터페이스를 추가합니다.  
 상세한 사항은 [WebToNavite 인터페이스](#WebToNative-인터페이스) 항목을 참고하세요.
 ```swift
-func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?)
-func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: Array<Any?>?) -> Void?)
+public func voidInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Void)
+public func intInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Int)
+public func doubleInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Double)
+public func floatInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Float)
+public func boolInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Bool)
+public func stringInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> String)
+public func arrayInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Array<Any?>) 
+public func dictionaryInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Dictionary<String,Any?>)
+func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: Array<Any?>?) -> Void)
 ```
 
 ### call NativeToWeb Interface
 NativeToWeb 인터페이스를 호출합니다.
 ```swift
 func evalFlexFunc(_ funcName: String)
-func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void)
+func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: FlexData) -> Void)
 func evalFlexFunc(_ funcName: String, sendData: Any)
-func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: Any?) -> Void)
+func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: FlexData) -> Void)
 ```
 evalFlexFunc 사용법은 [NativeToWeb 인터페이스](#NativeToWeb-인터페이스)를 참조하세요.
 
@@ -243,11 +295,11 @@ var parentViewController: UIViewController? // readOnly
 setAction로 추가된 WebToNative 인터페이스가 호출될 시 생성됩니다.  
 사용 가능한 메소드는 아래와 같으며, promiseReturn 함수만 Web으로 return값을 전달하는 역할을 합니다.  
 resolveVoid는 nil 값을 전달하며(promiseReturn(nil)과 동일)  
-reject함수는 FlexReject 객체를 자동으로 생성하여 전달합니다.(promiseReturn(FlexReject)와 동일)
+reject함수는 BrowserException 객체를 자동으로 생성하여 전달합니다.(promiseReturn(BrowserException)와 동일)
 ```swift
-func promiseReturn(_ response: Any?)
+func promiseReturn(_ response: [Transferable Data Type])
 func resolveVoid()
-func reject(reason: FlexReject)
+func reject(reason: BrowserException)
 func reject(reason: String)
 func reject()
 ```

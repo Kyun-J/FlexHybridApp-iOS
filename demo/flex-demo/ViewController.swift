@@ -14,17 +14,21 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     
     var mWebView: FlexWebView!
     var component = FlexComponent()
+    
+    enum TestError: Error {
+        case test
+    }
                 
     override func viewDidLoad() {
         super.viewDidLoad()
                 
         // add js interface
-        component.setInterface("test1")
+        component.intInterface("test1")
         { (arguments) -> Int in
             // code works in background...
-            return arguments[0] as! Int + 1
+            return arguments[0].asInt()! + 1
         }
-        component.setInterface("test2")
+        component.voidInterface("test2")
         { (arguments) -> Void in
             // code works in background...
             
@@ -33,10 +37,27 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             self.mWebView.evalFlexFunc("help", sendData: "Help me Flex!")
             { (value) -> Void in
                 // Retrun from $flex.web.help func
+                let arr = value.asArray()!
+                let data1: String = arr[0].reified()!
+                let data2: String? = arr[1].reified()
                 print("Web Func Retrun ---------------")
-                print(value!)
+                print("\(data1) \(data2 ?? "this is null")")
                 print("-------------------------------")
             }
+        }
+        
+        component.arrayInterface("testReceive")
+        { (arguments) -> Array<Any?> in
+            let data = arguments[0].asDictionary()!
+            let dicData: [String:FlexData] = data["d2"]!.reified()!
+            print("\(data["d1"]!.asInt()!) \(dicData)")
+            var returnValue: [Any?] = []
+            returnValue.append(10)
+            returnValue.append(24123.54235234)
+            returnValue.append([])
+            returnValue.append(false)
+            returnValue.append("test value")
+            return returnValue
         }
         
         // add FlexAction
@@ -56,9 +77,9 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         }
         
         // test JS Reject
-        component.setInterface("testReject1")
-        { arguemnts -> Any in
-            return FlexReject("test TestRject1")
+        component.dictionaryInterface("testReject1")
+        { arguemnts -> Dictionary<String,Any?> in
+            throw TestError.test
         }
         
         component.setAction("testReject2")
@@ -75,6 +96,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         // setBaseUrl
         component.setBaseUrl("file://")
         component.setInterfaceTimeout(0)
+        component.setFlexOnloadWait(0)
         
         mWebView = FlexWebView(frame: self.view.frame, component: component)
         

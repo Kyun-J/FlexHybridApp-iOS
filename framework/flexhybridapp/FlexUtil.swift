@@ -17,12 +17,13 @@ enum FlexError: Error {
 
 struct FlexString {
     static let ERROR1 = "After the FlextWebView is initialized, BaseUrl, Options, Interfaces cannot be added."
-    static let ERROR2 = "You cannot set the interface or FlexAction name with flex";
+    static let ERROR2 = "You cannot set the interface or FlexAction name with flex"
     static let ERROR3 = "Only possible nil, Int, Double, Float, Character, String, Dictionary<String,Any>, Array<Any>, FlexReject."
     static let ERROR4 = "FlexWebView to run javascript is null."
     static let ERROR5 = "The Interface or Action with the same name is already registered."
     static let ERROR6 = "The BaseUrl can only use file, http, https protocols."
     static let ERROR7 = "PromiseReturn cannot be called twice in a single FlexAction."
+    static let ERROR8 = "The type of data stored in FlexData and the type called are not identical."
     
     static let FLEX_DEFINE = ["flexlog","flexerror","flexdebug","flexinfo","flexreturn","flexload"]
 }
@@ -118,6 +119,80 @@ struct FlexFunc {
             return _vString
         } else {
             throw FlexError.UnuseableTypeCameIn
+        }
+    }
+    
+    static func arrayToFlexData(_ value: Array<Any?>?) -> Array<FlexData> {
+        var res: Array<FlexData> = []
+        value?.forEach({ (ele) in
+            if(ele == nil) {
+                res.append(FlexData())
+            } else if(ele is Int) {
+                res.append(FlexData(ele as! Int))
+            } else if(ele is Float) {
+                res.append(FlexData(ele as! Float))
+            } else if(ele is Double) {
+                res.append(FlexData(ele as! Double))
+            } else if(ele is String) {
+                res.append(FlexData(ele as! String))
+            } else if(ele is Bool) {
+                res.append(FlexData(ele as! Bool))
+            } else if(ele is Array<Any?>) {
+                res.append(FlexData(arrayToFlexData(ele as? Array<Any?>)))
+            } else if(ele is Dictionary<String, Any?>) {
+                res.append(FlexData(dictionaryToFlexData(ele as? Dictionary<String, Any?>)))
+            }
+        })
+        return res
+    }
+    
+    static func dictionaryToFlexData(_ value: Dictionary<String, Any?>?) -> Dictionary<String,FlexData> {
+        var res: Dictionary<String,FlexData> = [:]
+        value?.keys.forEach({ (key) in
+            let ele = value![key]
+            if(ele == nil) {
+                res[key] = FlexData()
+            } else if(ele is Int) {
+                res[key] = FlexData(ele as! Int)
+            } else if(ele is Float) {
+                res[key] = FlexData(ele as! Float)
+            } else if(ele is Double) {
+                res[key] = FlexData(ele as! Double)
+            } else if(ele is String) {
+                res[key] = FlexData(ele as! String)
+            } else if(ele is Bool) {
+                res[key] = FlexData(ele as! Bool)
+            } else if(ele is Array<Any?>) {
+                res[key] = FlexData(arrayToFlexData(ele as? Array<Any?>))
+            } else if(ele is Dictionary<String, Any?>) {
+                res[key] = FlexData(dictionaryToFlexData(ele as? Dictionary<String, Any?>))
+            }
+        })
+        return res
+    }
+    
+    static func anyToFlexData(_ value: Any?) -> FlexData {
+        if(value == nil) {
+            return FlexData()
+        } else if(value is Int) {
+            return FlexData(value as! Int)
+        } else if(value is Float) {
+            return FlexData(value as! Float)
+        } else if(value is Double) {
+            return FlexData(value as! Double)
+        } else if(value is String) {
+            return FlexData(value as! String)
+        } else if(value is Bool) {
+            return FlexData(value as! Bool)
+        } else if(value is Array<Any?>) {
+            return FlexData(arrayToFlexData(value as? Array<Any?>))
+        } else if(value is Dictionary<String, Any?>) {
+            return FlexData(dictionaryToFlexData(value as? Dictionary<String, Any?>))
+        } else if(value is BrowserException) {
+            return FlexData(value as! BrowserException)
+        } else {
+            FlexMsg.err(FlexString.ERROR8)
+            return FlexData()
         }
     }
 }

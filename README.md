@@ -27,19 +27,54 @@ Basically, various functions have been added to WKWebView userContentController.
 
 # Flex interface implementation
 ## Transferable Data Type
-1. Like WKWebView userContentController, it can be transmitted in general data type, string, array, dictionary format.
-2. It is possible to transfer JS Array to Swift Array\<Any> and JS Object to Swift Dictionary\<String, Any>.
-3. When transferring data in the form of Array and Object, **the data contained in it must be one of the following data types**.
+When transferring data in the form of Array and Object, **the data contained in it must be one of the following data types**.
 
 | JS | Swift |
 |:--:|:--:|
 | Number | Int, Float, Double |
 | String | String, Character | 
 | Boolean | Bool |
-| Array [] | Array\<Any> |
-| Object {} | Dictionary<String,Any> |
+| Array [] | Array |
+| Object {} | Dictionary |
 | undefined (Single Argument Only), null | nil |
 | Error | FlexReject |
+
+## FlexData
+All data transferred from Web to Native is converted to `FlexData` class and transferred.  
+The `FlexData` class helps you use Web data in a type-safe way.
+```js
+// in web javascript
+...
+const res = await $flex.CallNative("Hi Android", 100.2,[false, true]]);
+// res is "HiFlexWeb"
+```
+```swift
+flexComponent.stringInterface("CallNative") // "CallNative" becomes the function name in Web JavaScript. 
+{ arguments -> String in
+    // arguments is Arguemnts Data from web. Type is Array<FlexData>
+    let hello = arguments[0].asString() // hello = "Hi Android"
+    let number: Double = arguments[1].reified() // number = 100.2
+    let array: [FlexData] = arguments[2].reified() // array = [FlexData(false), FlexData(true)]
+    return "HiFlexWeb" // "HiFlexWeb" is passed to web in Promise pattern.
+}
+```
+`FlexData` basically provides the following type conversion functions.
+```swift
+func asString() -> String?
+func asInt() -> Int?
+func asDouble() -> Double?
+func asFloat() -> Float?
+func asBoolean() -> Bool?
+func asArray() -> Array<FlexData>?
+func asDictionary() -> Dictionary<String, FlexData>?
+func asErr() -> BrowserException?
+func toString() -> String?
+```
+You can also use the data by automatically casting it to an advanced type through the `reified` function.
+```swift
+func reified<T>() -> T?
+```
+The available data types are `String, Int, Float, Double, Bool, Array<FlexData>, Dictionary<String,FlexData>, BrowserException`.
 
 ## WebToNative interface
 The WebToNative interface has the following features.
@@ -53,9 +88,9 @@ The WebToNative interface has the following features.
 Normal Interface is basically used as follows.
 ```swift
 // in Swfit
-flexComponent.setInterface("Normal") // "Normal" becomes the function name in Web JavaScript. 
-{ arguments -> Any? in
-    // arguments is Arguemnts Data from web. Type is Array<Any>
+flexComponent.stringInterface("Normal") // "Normal" becomes the function name in Web JavaScript. 
+{ arguments -> String in
+    // arguments is Arguemnts Data from web. Type is Array<FlexData>
     // ["data1", 2, false]
     return "HiFlexWeb" // "HiFlexWeb" is passed to web in Promise pattern.
 }
@@ -67,9 +102,19 @@ flexWebView = FlexWebView(frame: self.view.frame, component: flexComponent)
 const res = await $flex.Normal("data1",2,false);
 // res is "HiFlexWeb"
 ```
-Specify the function name on the web as the first argument of `setInterface`, and the following Clouser becomes the block of code where the function operates.  
+Specify the function name on the web as the first argument of `stringInterface`, and the following Clouser becomes the block of code where the function operates.  
 The arguments passed to Clouser are Array objects and contain the values passed when calling the function on the web.  
-When passing a value from Clouser to web return, only [Transferable Data Type](#Transferable-Data-Type) is available.
+The types of Normal Interface are divided according to the type returned to the web, and the types are as follows.
+```swift
+public func voidInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Void)
+public func intInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Int)
+public func doubleInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Double)
+public func floatInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Float)
+public func boolInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Bool)
+public func stringInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> String)
+public func arrayInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Array<Any?>) 
+public func dictionaryInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Dictionary<String,Any?>)
+```
 
 ### ***Action Interface***
 The Action Interface is almost the same as the Normal Interface, but it sends the return value to the Web at the time of calling the `promiseReturn` method of the action object.
@@ -79,7 +124,7 @@ var mAction: FlexAction? = nil
 ...
 flexComponent.setAction("Action")
 { (action, arguments) -> Void in
-// arguments is Array<Any>, ["Who Are You?"]
+// arguments is Array<FlexData>, ["Who Are You?"]
 // action is FlexAction Object
     mAction = action
 }
@@ -101,12 +146,12 @@ If there is no passing value, you can call `resolveVoid()` instead. This is equi
 Also, the FlexAction object that had already called `promiseReturn` does not pass parameters to the web function even if `promiseReturn` is called repeatedly.
 
 ### ***Error Interface***
-If you return the `FlexReject` object, you can send an error to the web.
+In the case of Normal Interface, if an exception occurs within the Clouser, error information can be delivered to the Web.
 ```swift
 // in swift
-flexComponent.setInterface("errorTest")
-{ arguments -> Any? in
-    return FlexReject("errorTest")    
+flexComponent.voidInterface("errorTest")
+{ arguments -> Void in
+    throw Error //some Error    
 }
 ```
 ```js
@@ -115,15 +160,15 @@ flexComponent.setInterface("errorTest")
 try {
     const result = await $flex.errorTest();
 } catch(e) {
-    // e is Error("errorTest")
+    // error occurred
 }
 ```
-In `FlexAction`, you can easily pass an error by calling the `reject` function instead of `promiseReturn`.
+In `FlexAction`, you can easily deliver an error by passing a `BrowserException` object to `promiseReturn` or calling the `reject` function.
 ```swift
 // in swift
 flexComponent.setAction("errorAction")
-{ (action, arguments) -> Any? in
-    action.reject("errorAction") // = action.promiseReturn(FlexReject("errorAction"))
+{ (action, arguments) -> Void in
+    action.reject("errorAction") // = action.promiseReturn(BrowserException("errorAction"))
 }
 ```
 ```js
@@ -187,16 +232,16 @@ var parentViewController: UIViewController? // readOnly
 init (frame: CGRect, configuration: WKWebViewConfiguration) 
 init (frame: CGRect, component: FlexComponent)
 func evalFlexFunc(_ funcName: String)
-func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void)
+func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: FlexData) -> Void)
 func evalFlexFunc(_ funcName: String, sendData: Any)
-func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: Any?) -> Void)
+func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: FlexData) -> Void)
 ```
 For usage of evalFlexFunc, refer to [NativeToWeb interface](#NativeToWeb-interface).
 
 ## FlexComponent
 FlexComponent replaces WKWebViewConfiguration and has the following features.
 1. It includes WKWebViewConfiguration, and WKWebViewConfiguration of FlexComponent is applied to FlexWebView.
-2. Add asynchronous interface between Native and Web to FlexWebView through setInterface, setAction.
+2. Add asynchronous interface between Native and Web to FlexWebView through Normal Interface, setAction.
 3. By setting the BaseUrl, you can set the interface to native only on the specified page.
 4. You can add multiple settings to the $ flex Object.
 
@@ -222,7 +267,14 @@ func setInterfaceTimeout(_ timeout: Int)
 Add an interface to the FlexWebView.  
 For details, refer to [WebToNavite interface](#WebToNative-interface).
 ```swift
-func setInterface(_ name: String, _ action: @escaping (_ arguments: Array<Any?>?) -> Any?)
+public func voidInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Void)
+public func intInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Int)
+public func doubleInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Double)
+public func floatInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Float)
+public func boolInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Bool)
+public func stringInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> String)
+public func arrayInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Array<Any?>) 
+public func dictionaryInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Dictionary<String,Any?>)
 func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: Array<Any?>?) -> Void?)
 ```
 
@@ -230,9 +282,9 @@ func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ argu
 Call the NativeToWeb interface.
 ```swift
 func evalFlexFunc(_ funcName: String)
-func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: Any?) -> Void)
+func evalFlexFunc(_ funcName: String, _ returnAs: @escaping (_ data: FlexData) -> Void)
 func evalFlexFunc(_ funcName: String, sendData: Any)
-func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: Any?) -> Void)
+func evalFlexFunc(_ funcName: String, sendData: Any, _ returnAs: @escaping (_ data: FlexData) -> Void)
 ```
 For usage of evalFlexFunc, refer to [NativeToWeb interface](#NativeToWeb-interface).
 
@@ -249,7 +301,7 @@ The available methods are as follows, and only the promiseReturn function is res
 resolveVoid passes a nil value (same as promiseReturn(nil))  
 The reject function automatically creates and passes a FlexReject object (same as promiseReturn(FlexReject)).
 ```swift
-func promiseReturn(_ response: Any?)
+func promiseReturn(_ response: [Transferable Data Type])
 func resolveVoid()
 func reject(reason: FlexReject)
 func reject(reason: String)

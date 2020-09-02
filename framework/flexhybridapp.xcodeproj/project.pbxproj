@@ -12,6 +12,10 @@
 		DF103901247D2F9800B77DFC /* lib in Resources */ = {isa = PBXBuildFile; fileRef = DF103900247D2F9800B77DFC /* lib */; };
 		DF5F181D2444737D00BE44F4 /* flexhybridapp.h in Headers */ = {isa = PBXBuildFile; fileRef = DF5F181B2444737D00BE44F4 /* flexhybridapp.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		DF5F1824244473A700BE44F4 /* FlexWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF5F1823244473A700BE44F4 /* FlexWebView.swift */; };
+		DFA5032924FE4461002DDFBE /* FlexAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5032824FE4461002DDFBE /* FlexAction.swift */; };
+		DFA5032B24FE4521002DDFBE /* BrowserException.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5032A24FE4521002DDFBE /* BrowserException.swift */; };
+		DFA5032D24FE4576002DDFBE /* BeforeFlexEval.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5032C24FE4576002DDFBE /* BeforeFlexEval.swift */; };
+		DFA5032F24FE4646002DDFBE /* FlexData.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5032E24FE4646002DDFBE /* FlexData.swift */; };
 		DFB73CFE24526E39002B4C4C /* FlexHybridiOS.js in Resources */ = {isa = PBXBuildFile; fileRef = DFB73CFD24526E39002B4C4C /* FlexHybridiOS.js */; };
 /* End PBXBuildFile section */
 
@@ -23,6 +27,10 @@
 		DF5F181B2444737D00BE44F4 /* flexhybridapp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = flexhybridapp.h; sourceTree = "<group>"; };
 		DF5F181C2444737D00BE44F4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DF5F1823244473A700BE44F4 /* FlexWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlexWebView.swift; sourceTree = "<group>"; };
+		DFA5032824FE4461002DDFBE /* FlexAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlexAction.swift; sourceTree = "<group>"; };
+		DFA5032A24FE4521002DDFBE /* BrowserException.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserException.swift; sourceTree = "<group>"; };
+		DFA5032C24FE4576002DDFBE /* BeforeFlexEval.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFlexEval.swift; sourceTree = "<group>"; };
+		DFA5032E24FE4646002DDFBE /* FlexData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlexData.swift; sourceTree = "<group>"; };
 		DFB73CFD24526E39002B4C4C /* FlexHybridiOS.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = FlexHybridiOS.js; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -63,6 +71,10 @@
 				DF5F1823244473A700BE44F4 /* FlexWebView.swift */,
 				DF01D6012452AD8200C7D8BD /* FlexUtil.swift */,
 				DF01D6042452B71800C7D8BD /* FlexWebView.xib */,
+				DFA5032824FE4461002DDFBE /* FlexAction.swift */,
+				DFA5032A24FE4521002DDFBE /* BrowserException.swift */,
+				DFA5032C24FE4576002DDFBE /* BeforeFlexEval.swift */,
+				DFA5032E24FE4646002DDFBE /* FlexData.swift */,
 			);
 			path = flexhybridapp;
 			sourceTree = "<group>";
@@ -158,8 +170,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DFA5032F24FE4646002DDFBE /* FlexData.swift in Sources */,
+				DFA5032B24FE4521002DDFBE /* BrowserException.swift in Sources */,
 				DF5F1824244473A700BE44F4 /* FlexWebView.swift in Sources */,
 				DF01D6022452AD8200C7D8BD /* FlexUtil.swift in Sources */,
+				DFA5032D24FE4576002DDFBE /* BeforeFlexEval.swift in Sources */,
+				DFA5032924FE4461002DDFBE /* FlexAction.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -293,7 +309,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 17;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = 7V78M894K4;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -307,7 +323,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.3.9.6;
+				MARKETING_VERSION = 0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = app.dvkyun.flexhybridapp;
 				PRODUCT_NAME = FlexHybridApp;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -325,7 +341,7 @@
 				BUILD_LIBRARY_FOR_DISTRIBUTION = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 15;
+				CURRENT_PROJECT_VERSION = 17;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -339,7 +355,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.3.9.6;
+				MARKETING_VERSION = 0.5;
 				PRODUCT_BUNDLE_IDENTIFIER = app.dvkyun.flexhybridapp;
 				PRODUCT_NAME = FlexHybridApp;
 				PROVISIONING_PROFILE_SPECIFIER = "";
