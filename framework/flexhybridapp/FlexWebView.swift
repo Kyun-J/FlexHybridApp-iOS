@@ -459,13 +459,11 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             decisionHandler(.allow)
         } else {
             if let aString = URL(string: (navigationAction.request.url?.absoluteString)!) {
-                UIApplication.shared.open(aString, options: [:], completionHandler: {success in
-                    if success {
-                        FlexMsg.log("Opend \(navigationAction.request.url?.absoluteString ?? "")")
-                    } else {
-                        FlexMsg.err("Failed \(navigationAction.request.url?.absoluteString ?? "")")
-                    }
-                })
+                if UIApplication.shared.openURL(aString) {
+                    FlexMsg.log("Opend \(navigationAction.request.url?.absoluteString ?? "")")
+                } else {
+                    FlexMsg.err("Failed \(navigationAction.request.url?.absoluteString ?? "")")
+                }
             }
             decisionHandler(.cancel)
         }

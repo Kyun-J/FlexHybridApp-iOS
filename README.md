@@ -14,7 +14,7 @@ Add the following to podFile
     pod 'FlexHybridApp'
 ```
 
-***iOS Deployment Target is 11.0.***  
+***iOS Deployment Target is 9.0.***  
 
 # Key features of Flex Framework interface
 Basically, various functions have been added to WKWebView userContentController.
