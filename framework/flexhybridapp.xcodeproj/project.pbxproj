@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		DF01D6022452AD8200C7D8BD /* FlexUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF01D6012452AD8200C7D8BD /* FlexUtil.swift */; };
-		DF01D6052452B71800C7D8BD /* FlexWebView.xib in Resources */ = {isa = PBXBuildFile; fileRef = DF01D6042452B71800C7D8BD /* FlexWebView.xib */; };
 		DF103901247D2F9800B77DFC /* lib in Resources */ = {isa = PBXBuildFile; fileRef = DF103900247D2F9800B77DFC /* lib */; };
 		DF5F181D2444737D00BE44F4 /* flexhybridapp.h in Headers */ = {isa = PBXBuildFile; fileRef = DF5F181B2444737D00BE44F4 /* flexhybridapp.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		DF5F1824244473A700BE44F4 /* FlexWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF5F1823244473A700BE44F4 /* FlexWebView.swift */; };
@@ -21,7 +20,6 @@
 
 /* Begin PBXFileReference section */
 		DF01D6012452AD8200C7D8BD /* FlexUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlexUtil.swift; sourceTree = "<group>"; };
-		DF01D6042452B71800C7D8BD /* FlexWebView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = FlexWebView.xib; sourceTree = "<group>"; };
 		DF103900247D2F9800B77DFC /* lib */ = {isa = PBXFileReference; lastKnownFileType = folder; path = lib; sourceTree = "<group>"; };
 		DF5F18182444737D00BE44F4 /* FlexHybridApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FlexHybridApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DF5F181B2444737D00BE44F4 /* flexhybridapp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = flexhybridapp.h; sourceTree = "<group>"; };
@@ -70,7 +68,6 @@
 				DF5F181C2444737D00BE44F4 /* Info.plist */,
 				DF5F1823244473A700BE44F4 /* FlexWebView.swift */,
 				DF01D6012452AD8200C7D8BD /* FlexUtil.swift */,
-				DF01D6042452B71800C7D8BD /* FlexWebView.xib */,
 				DFA5032824FE4461002DDFBE /* FlexAction.swift */,
 				DFA5032A24FE4521002DDFBE /* BrowserException.swift */,
 				DFA5032C24FE4576002DDFBE /* BeforeFlexEval.swift */,
@@ -159,7 +156,6 @@
 			files = (
 				DF103901247D2F9800B77DFC /* lib in Resources */,
 				DFB73CFE24526E39002B4C4C /* FlexHybridiOS.js in Resources */,
-				DF01D6052452B71800C7D8BD /* FlexWebView.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
