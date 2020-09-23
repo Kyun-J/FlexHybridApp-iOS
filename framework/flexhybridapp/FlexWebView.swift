@@ -399,14 +399,21 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
      */
         
     public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        if baseUrl == nil || (baseUrl != nil && webView.url != nil && webView.url!.absoluteString.contains(baseUrl!)) {
+            evalJS(jsString!)
+            dependencies.forEach { (js) in
+                evalJS(js)
+            }
+            evalJS("window.$FCheck = true;")
+        }
         userNavigation?.webView?(webView, didCommit: navigation)
     }
     
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         if baseUrl == nil || (baseUrl != nil && webView.url != nil && webView.url!.absoluteString.contains(baseUrl!)) {
-            evalJS(jsString!)
+            evalJS("if(typeof window.$flex === 'undefined') { \(jsString!) }")
             dependencies.forEach { (js) in
-                evalJS(js)
+                evalJS("if(typeof window.$FCheck === 'undefined') { \(js) }")
             }
         }
         userNavigation?.webView?(webView, didFinish: navigation)

@@ -48,7 +48,7 @@
     Object.defineProperty(window, "$flex", { value: {}, writable: false, enumerable: true });
     Object.defineProperties($flex,
         {
-            version: { value: '0.5.1', writable: false, enumerable: true },
+            version: { value: '0.5.1.5', writable: false, enumerable: true },
             isAndroid: { value: false, writable: false, enumerable: true },
             isiOS: { value: true, writable: false, enumerable: true },
             device: { value: device, writable: false, enumerable: true },
