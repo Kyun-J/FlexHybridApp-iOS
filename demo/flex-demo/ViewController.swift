@@ -59,7 +59,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             returnValue.append("test value")
             return returnValue
         }
-        
+                
         // add FlexAction
         component.setAction("testAction")
         { (action, arguments) -> Void in

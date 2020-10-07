@@ -84,7 +84,7 @@ public class FlexAction {
     }
     
     public func promiseReturn() {
-        pRetrun(nil)
+        resolveVoid()
     }
     
     public func resolveVoid() {

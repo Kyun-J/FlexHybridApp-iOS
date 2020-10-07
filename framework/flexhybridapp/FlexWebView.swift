@@ -90,6 +90,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     internal var config: WKWebViewConfiguration = WKWebViewConfiguration()
     private var beforeFlexLoadEvalList : Array<BeforeFlexEval> = []
     private var isFlexLoad = false
+    private var isFistPageLoad = true
             
     public var BaseUrl: String? {
         baseUrl
@@ -153,25 +154,31 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         flexWebView = webView
         flexWebView?.scrollView.delegate = self
         checkDelegateChange()
-        do {
-            jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.js", encoding: .utf8)
-            var keys = ""
-            keys.append("[\"")
-            keys.append(FlexString.FLEX_DEFINE.joined(separator: "\",\""))
-            if(interfaces.count > 0) {
-                keys.append("\",\"")
-                keys.append(interfaces.keys.joined(separator: "\",\""))
+    }
+    
+    private func flexInitInPage() {
+        if isFistPageLoad {
+            do {
+                jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.js", encoding: .utf8)
+                var keys = ""
+                keys.append("[\"")
+                keys.append(FlexString.FLEX_DEFINE.joined(separator: "\",\""))
+                if(interfaces.count > 0) {
+                    keys.append("\",\"")
+                    keys.append(interfaces.keys.joined(separator: "\",\""))
+                }
+                if(actions.count > 0) {
+                    keys.append("\",\"")
+                    keys.append(actions.keys.joined(separator: "\",\""))
+                }
+                keys.append("\"]")
+                jsString = jsString?.replacingOccurrences(of: "keysfromios", with: keys)
+                jsString = jsString?.replacingOccurrences(of: "optionsfromios", with: try FlexFunc.convertValue(options))
+                jsString = jsString?.replacingOccurrences(of: "deviceinfofromios", with: try FlexFunc.convertValue(DeviceInfo.getInfo()))
+                isFistPageLoad = false
+            } catch {
+                FlexMsg.err(error)
             }
-            if(actions.count > 0) {
-                keys.append("\",\"")
-                keys.append(actions.keys.joined(separator: "\",\""))
-            }
-            keys.append("\"]")
-            jsString = jsString?.replacingOccurrences(of: "keysfromios", with: keys)
-            jsString = jsString?.replacingOccurrences(of: "optionsfromios", with: try FlexFunc.convertValue(options))
-            jsString = jsString?.replacingOccurrences(of: "deviceinfofromios", with: try FlexFunc.convertValue(DeviceInfo.getInfo()))
-        } catch {
-            FlexMsg.err(error)
         }
     }
     
@@ -400,6 +407,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         
     public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         if baseUrl == nil || (baseUrl != nil && webView.url != nil && webView.url!.absoluteString.contains(baseUrl!)) {
+            flexInitInPage()
             evalJS(jsString!)
             dependencies.forEach { (js) in
                 evalJS(js)

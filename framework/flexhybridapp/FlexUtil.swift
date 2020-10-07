@@ -317,6 +317,8 @@ struct DeviceInfo {
             return "iPad_6th_Generation"
         case "iPad7,11", "iPad7,12" :
             return "iPad_7th_Generation"
+        case "iPad11,6", "iPad11,7" :
+            return "iPad_8th_Generation"
         
         case "iPad2,5", "iPad2,6", "iPad2,7" :
             return "iPad mini"
@@ -335,6 +337,8 @@ struct DeviceInfo {
             return "iPad_Air2"
         case "iPad11,3", "iPad11,4" :
             return "iPad_Air3"
+        case "iPad13,1", "iPad13,2" :
+            return "iPad_Air4"
             
         case "iPad6,7", "iPad6,8" :
             return "iPad_Pro_12.9"
