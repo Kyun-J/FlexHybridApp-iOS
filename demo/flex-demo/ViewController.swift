@@ -63,6 +63,9 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         // add FlexAction
         component.setAction("testAction")
         { (action, arguments) -> Void in
+            action.onFinished = {
+                print("action finished!")
+            }
             // code works in background...
             var returnValue: [String:Any] = [:]
             var dictionaryValue: [String:Any] = [:]
@@ -90,13 +93,12 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         component.evalFlexFunc("directTest") { value -> Void in
             print("dirct test suc!!")
         }
-                
-        // add user-custom contentController
-        component.configration.userContentController.add(self, name: "userCC")
+        
         // setBaseUrl
         component.setBaseUrl("file://")
         component.setInterfaceTimeout(0)
         component.setFlexOnloadWait(0)
+        component.setAllowsUrlAccessInFile(true)
         
         mWebView = FlexWebView(frame: self.view.frame, component: component)
         
@@ -130,6 +132,9 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             mWebView.bottomAnchor.constraint(equalTo: bottomLayoutGuide.topAnchor).isActive = true
         }
         mWebView.load(URLRequest(url: URL(fileURLWithPath: Bundle.main.path(forResource: "test", ofType: "html")!)))
+        
+        // add user-custom contentController
+        component.configration.userContentController.add(self, name: "userCC")
     }
 
     override func viewWillAppear(_ animated: Bool) {

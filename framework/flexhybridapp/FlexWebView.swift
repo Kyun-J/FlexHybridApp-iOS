@@ -35,22 +35,20 @@ open class FlexWebView : WKWebView {
 
     required public init?(coder: NSCoder) {
         component = FlexComponent()
-        component.beforeWebViewInit()
         super.init(coder: coder)
+        component.config = configuration
         component.afterWebViewInit(self)
     }
         
     public override init(frame: CGRect, configuration: WKWebViewConfiguration) {
         component = FlexComponent()
         component.config = configuration
-        component.beforeWebViewInit()
         super.init(frame: frame, configuration: component.config)
         component.afterWebViewInit(self)
     }
             
     public init (frame: CGRect, component: FlexComponent) {
         self.component = component
-        self.component.beforeWebViewInit()
         super.init(frame: frame, configuration: self.component.config)
         self.component.afterWebViewInit(self)
     }
@@ -90,7 +88,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     internal var config: WKWebViewConfiguration = WKWebViewConfiguration()
     private var beforeFlexLoadEvalList : Array<BeforeFlexEval> = []
     private var isFlexLoad = false
-    private var isFistPageLoad = true
+    private var isFirstPageLoad = false
             
     public var BaseUrl: String? {
         baseUrl
@@ -105,7 +103,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     public func setBaseUrl(_ url: String) {
-        if flexWebView != nil {
+        if isFirstPageLoad {
             FlexMsg.err(FlexString.ERROR1)
         } else if url.prefix(7) != "file://" && url.prefix(7) != "http://" && url.prefix(8) != "https://" {
             FlexMsg.err(FlexString.ERROR6)
@@ -115,7 +113,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     public func setInterfaceTimeout(_ timeout: Int) {
-        if flexWebView != nil {
+        if isFirstPageLoad {
             FlexMsg.err(FlexString.ERROR1)
         } else {
             options["timeout"] = timeout
@@ -123,7 +121,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     public func setFlexOnloadWait(_ time: Int) {
-        if flexWebView != nil {
+        if isFirstPageLoad {
             FlexMsg.err(FlexString.ERROR1)
         } else {
             options["flexLoadWait"] = time
@@ -131,33 +129,20 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     public func setDependency(_ js: String) {
-        if flexWebView != nil {
+        if isFirstPageLoad {
             FlexMsg.err(FlexString.ERROR1)
         } else {
             dependencies.append(js)
         }
     }
     
-    internal func beforeWebViewInit() {
-        for n in FlexString.FLEX_DEFINE {
-            config.userContentController.add(self, name: n)
-        }
-        for (n, _) in interfaces {
-            config.userContentController.add(self, name: n)
-        }
-        for (n, _) in actions {
-            config.userContentController.add(self, name: n)
-        }
+    public func setAllowsUrlAccessInFile(_ allow: Bool) {
+        config.preferences.setValue(allow, forKey: "allowFileAccessFromFileURLs")
+        config.setValue(allow, forKey: "allowUniversalAccessFromFileURLs")
     }
     
-    internal func afterWebViewInit(_ webView: FlexWebView) {
-        flexWebView = webView
-        flexWebView?.scrollView.delegate = self
-        checkDelegateChange()
-    }
-    
-    private func flexInitInPage() {
-        if isFistPageLoad {
+    private func flexInterfaceInit() {
+        if !isFirstPageLoad {
             do {
                 jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.js", encoding: .utf8)
                 var keys = ""
@@ -175,11 +160,26 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                 jsString = jsString?.replacingOccurrences(of: "keysfromios", with: keys)
                 jsString = jsString?.replacingOccurrences(of: "optionsfromios", with: try FlexFunc.convertValue(options))
                 jsString = jsString?.replacingOccurrences(of: "deviceinfofromios", with: try FlexFunc.convertValue(DeviceInfo.getInfo()))
-                isFistPageLoad = false
+                for n in FlexString.FLEX_DEFINE {
+                    config.userContentController.add(self, name: n)
+                }
+                for (n, _) in interfaces {
+                    config.userContentController.add(self, name: n)
+                }
+                for (n, _) in actions {
+                    config.userContentController.add(self, name: n)
+                }
+                isFirstPageLoad = true
             } catch {
                 FlexMsg.err(error)
             }
         }
+    }
+    
+    internal func afterWebViewInit(_ webView: FlexWebView) {
+        flexWebView = webView
+        flexWebView?.scrollView.delegate = self
+        checkDelegateChange()
     }
     
     internal func checkDelegateChange() {
@@ -199,7 +199,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                 FlexMsg.err(FlexString.ERROR4)
                 return
             }
-            self.flexWebView?.evaluateJavaScript(js, completionHandler: { (result, error) in
+            self.flexWebView?.evaluateJavaScript(js + ";void 0;", completionHandler: { (result, error) in
                 if error != nil {
                     FlexMsg.err(error!.localizedDescription)
                 }
@@ -208,7 +208,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
                 
     private func setInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Any?) {
-        if flexWebView != nil {
+        if isFirstPageLoad {
             FlexMsg.err(FlexString.ERROR1)
         } else if interfaces[name] != nil || actions[name] != nil {
             FlexMsg.err(FlexString.ERROR5)
@@ -252,7 +252,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     public func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: Array<FlexData>) -> Void) {
-        if flexWebView != nil {
+        if isFirstPageLoad {
             FlexMsg.err(FlexString.ERROR1)
         } else if interfaces[name] != nil || actions[name] != nil {
             FlexMsg.err(FlexString.ERROR5)
@@ -277,7 +277,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         } else {
             let TID = Int.random(in: 1..<10000)
             returnFromWeb[TID] = returnAs
-            evalJS("!async function(){try{const e=await $flex.web.\(funcName)();$flex.flexreturn({TID:\(TID),Value:e,Error:!1})}catch(e){$flex.flexreturn({TID:\(TID),Value:e,Error:!0})}}();void 0;")
+            evalJS("!async function(){try{const e=await $flex.web.\(funcName)();$flex.flexreturn({TID:\(TID),Value:e,Error:!1})}catch(e){$flex.flexreturn({TID:\(TID),Value:e,Error:!0})}}();")
         }
     }
     
@@ -302,7 +302,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             do {
                 let TID = Int.random(in: 1..<10000)
                 returnFromWeb[TID] = returnAs
-                evalJS("!async function(){try{const e=await $flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));$flex.flexreturn({TID:\(TID),Value:e,Error:!1})}catch(e){$flex.flexreturn({TID:\(TID),Value:e,Error:!0})}}();void 0;")
+                evalJS("!async function(){try{const e=await $flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));$flex.flexreturn({TID:\(TID),Value:e,Error:!1})}catch(e){$flex.flexreturn({TID:\(TID),Value:e,Error:!0})}}();")
             } catch FlexError.UnuseableTypeCameIn {
                 FlexMsg.err(FlexString.ERROR3)
             } catch {
@@ -352,6 +352,10 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                             self.returnFromWeb[TID] = nil
                             self.evalJS("$flex.flex.\(fName)(true)")
                         case FlexString.FLEX_DEFINE[5]:
+                            if self.isFlexLoad {
+                                self.evalJS("$flex.flex.\(fName)(true)")
+                                break
+                            }
                             self.isFlexLoad = true
                             self.beforeFlexLoadEvalList.forEach { item in
                                 if(item.sendData != nil && item.response != nil) {
@@ -407,7 +411,8 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         
     public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         if baseUrl == nil || (baseUrl != nil && webView.url != nil && webView.url!.absoluteString.contains(baseUrl!)) {
-            flexInitInPage()
+            isFlexLoad = false
+            flexInterfaceInit()
             evalJS(jsString!)
             dependencies.forEach { (js) in
                 evalJS(js)
@@ -420,6 +425,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         if baseUrl == nil || (baseUrl != nil && webView.url != nil && webView.url!.absoluteString.contains(baseUrl!)) {
             evalJS("if(typeof window.$flex === 'undefined') { \(jsString!) }")
+            evalJS("const evalFrames=e=>{for(let o=0;o<e.frames.length;o++){if(void 0===e.frames[o].$flex){Object.defineProperty(e.frames[o],\"$flex\",{value:window.$flex,writable:!1,enumerable:!0});let n=void 0;\"function\"==typeof e.frames[o].onFlexLoad&&(n=e.frames[o].onFlexLoad),Object.defineProperty(e.frames[o],\"onFlexLoad\",{set:function(e){window.onFlexLoad=e},get:function(){return window._onFlexLoad}}),\"function\"==typeof n&&(e.frames[o].onFlexLoad=n)}evalFrames(e.frames[o])}};evalFrames(window);")
             dependencies.forEach { (js) in
                 evalJS("if(typeof window.$FCheck === 'undefined') { \(js) }")
             }

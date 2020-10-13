@@ -14,6 +14,11 @@ public class FlexAction {
     private let mComponent: FlexComponent
     private var isCall = false
     
+    public var isFinished: Bool {
+        isCall
+    }
+    public var onFinished: (() -> Void)? = nil
+    
     internal init (_ name: String, _ component: FlexComponent) {
         funcName = name
         mComponent = component
@@ -24,7 +29,6 @@ public class FlexAction {
             FlexMsg.err(FlexString.ERROR7)
             return
         }
-        isCall = true
         if response is BrowserException {
             let reason = (response as! BrowserException).reason == nil ? "null" : "\"\((response as! BrowserException).reason!)\""
             mComponent.evalJS("$flex.flex.\(funcName)(false, \(reason))")
@@ -41,6 +45,7 @@ public class FlexAction {
                 mComponent.evalJS("$flex.flex.\(funcName)(false, \"\(error.localizedDescription)\")")
             }
         }
+        finish()
     }
     
     public func promiseReturn(_ response: Void) {
@@ -92,8 +97,8 @@ public class FlexAction {
             FlexMsg.err(FlexString.ERROR7)
             return
         }
-        isCall = true
         mComponent.evalJS("$flex.flex.\(funcName)(true)")
+        finish()
     }
     
     public func reject(reason: BrowserException) {
@@ -111,8 +116,8 @@ public class FlexAction {
             FlexMsg.err(FlexString.ERROR7)
             return
         }
-        isCall = true
         mComponent.evalJS("$flex.flex.\(funcName)(false, \"\(reason)\")")
+        finish()
     }
     
     public func reject() {
@@ -120,8 +125,13 @@ public class FlexAction {
             FlexMsg.err(FlexString.ERROR7)
             return
         }
-        isCall = true
         mComponent.evalJS("$flex.flex.\(funcName)(false)")
+        finish()
+    }
+    
+    private func finish() {
+        isCall = true
+        onFinished?()
     }
     
 }
