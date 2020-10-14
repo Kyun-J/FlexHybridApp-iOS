@@ -254,6 +254,13 @@ func setBaseUrl(_ url: String)
 var BaseUrl: String? // readOnly
 ```
 
+### Url Access in File
+This is a function to allow UrlAccess when using url such as file://.  
+Set allowFileAccessFromFileURLs and allowUniversalAccessFromFileURLs at once.
+```swift
+public func setAllowsUrlAccessInFile(_ allow: Bool)
+```
+
 ### InterfaceTimeout
 Set the time to wait for return after FlexInterface is executed.
 After that time, the Promise created by the interface is forcibly rejected.
@@ -313,6 +320,7 @@ If you directly create and use FlexAction Class, there is no effect. Only FlexAc
 # $flex Object
 \$flex Object is an object composed of interfaces between FlexWebView and Promise.  
 $flex Object can be used with the same code as applied to [Android FlexHybridApp](https://github.com/Kyun-J/FlexHybridApp-Android).  
+$flex can also be used in any accessible frames. (Ex) iframe that does not violate Cross-Origin)  
 The components of $flex Object are as follows.  
 ```js
 window.onFlexLoad // Called after the $flex load completes. When overriding onFlexLoad, the overridden function is called immediately.
