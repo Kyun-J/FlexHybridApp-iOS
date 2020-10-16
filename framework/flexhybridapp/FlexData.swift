@@ -18,7 +18,6 @@ public class FlexData {
         case INT
         case DOUBLE
         case FLOAT
-        case BOOL
         case ARRAY
         case DICTIONARY
         case ERR
@@ -47,11 +46,6 @@ public class FlexData {
     internal init(_ data: Float) {
         self.data = data
         type = DataType.FLOAT
-    }
-    
-    internal init(_ data: Bool) {
-        self.data = data
-        type = DataType.BOOL
     }
     
     internal init(_ data: Array<FlexData>) {
@@ -129,11 +123,19 @@ public class FlexData {
     
     public func asBool() -> Bool? {
         if isNil() { return nil }
-        if(type != DataType.BOOL) {
+        if(type != DataType.INT) {
             FlexMsg.err(FlexString.ERROR8)
             return nil
         }
-        return (data as! Bool)
+        let temp = data as! Int
+        switch(temp) {
+        case 1: return true
+        case 0: return false
+        default: do {
+            FlexMsg.err(FlexString.ERROR8)
+            return nil
+        }
+        }
     }
     
     public func asArray() -> Array<FlexData>? {
@@ -170,7 +172,6 @@ public class FlexData {
         case DataType.INT: return String(asInt()!)
         case DataType.DOUBLE: return String(asDouble()!)
         case DataType.FLOAT: return String(asFloat()!)
-        case DataType.BOOL: return String(asBool()!)
         case DataType.ERR: return asErr()!.reason
         default:
             FlexMsg.err(FlexString.ERROR8)

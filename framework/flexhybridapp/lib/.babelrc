@@ -2,7 +2,7 @@
   "presets": [
     ["@babel/preset-env", {
       "targets": {
-        "browsers": ["iOS >= 11"]
+        "browsers": ["iOS >= 9"]
       }
     }]
   ]

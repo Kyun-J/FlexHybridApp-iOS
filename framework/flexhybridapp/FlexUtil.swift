@@ -135,8 +135,6 @@ struct FlexFunc {
                 res.append(FlexData(ele as! Double))
             } else if(ele is String) {
                 res.append(FlexData(ele as! String))
-            } else if(ele is Bool) {
-                res.append(FlexData(ele as! Bool))
             } else if(ele is Array<Any?>) {
                 res.append(FlexData(arrayToFlexData(ele as? Array<Any?>)))
             } else if(ele is Dictionary<String, Any?>) {
@@ -160,8 +158,6 @@ struct FlexFunc {
                 res[key] = FlexData(ele as! Double)
             } else if(ele is String) {
                 res[key] = FlexData(ele as! String)
-            } else if(ele is Bool) {
-                res[key] = FlexData(ele as! Bool)
             } else if(ele is Array<Any?>) {
                 res[key] = FlexData(arrayToFlexData(ele as? Array<Any?>))
             } else if(ele is Dictionary<String, Any?>) {
@@ -182,8 +178,6 @@ struct FlexFunc {
             return FlexData(value as! Double)
         } else if(value is String) {
             return FlexData(value as! String)
-        } else if(value is Bool) {
-            return FlexData(value as! Bool)
         } else if(value is Array<Any?>) {
             return FlexData(arrayToFlexData(value as? Array<Any?>))
         } else if(value is Dictionary<String, Any?>) {
