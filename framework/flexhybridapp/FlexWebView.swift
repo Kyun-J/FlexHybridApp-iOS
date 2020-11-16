@@ -223,31 +223,31 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         setInterface(name, interface)
     }
     
-    public func intInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Int) {
+    public func intInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Int?) {
         setInterface(name, interface)
     }
     
-    public func doubleInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Double) {
+    public func doubleInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Double?) {
         setInterface(name, interface)
     }
     
-    public func floatInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Float) {
+    public func floatInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Float?) {
         setInterface(name, interface)
     }
     
-    public func boolInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Bool) {
+    public func boolInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Bool?) {
         setInterface(name, interface)
     }
     
-    public func stringInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> String) {
+    public func stringInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> String?) {
         setInterface(name, interface)
     }
     
-    public func arrayInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Array<Any?>) {
+    public func arrayInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Array<Any?>?) {
         setInterface(name, interface)
     }
     
-    public func dictionaryInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Dictionary<String,Any?>) {
+    public func dictionaryInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Dictionary<String,Any?>?) {
         setInterface(name, interface)
     }
     
