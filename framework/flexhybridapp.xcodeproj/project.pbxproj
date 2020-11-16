@@ -327,7 +327,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.6.3;
+				MARKETING_VERSION = 0.6.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = app.dvkyun.flexhybridapp;
 				PRODUCT_NAME = FlexHybridApp;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -359,7 +359,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.6.3;
+				MARKETING_VERSION = 0.6.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = app.dvkyun.flexhybridapp;
 				PRODUCT_NAME = FlexHybridApp;
 				PROVISIONING_PROFILE_SPECIFIER = "";

@@ -286,6 +286,14 @@ struct DeviceInfo {
             return "iPhone11_Pro_Max"
         case "iPhone12,8" :
             return "iPhone_SE_2nd_Generation"
+        case "iPhone13,1":
+            return "iPhone_12_Mini"
+        case "iPhone13,2":
+            return "iPhone_12"
+        case "iPhone13,3":
+            return "iPhone_12_Pro"
+        case "iPhone13,4":
+            return "iPhone_12_Pro_Max"
         default:
             return "Unknown_iPhone_\(identifier)"
         }

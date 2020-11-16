@@ -145,6 +145,13 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         print("user navigationDelegate")
     }
+    
+    @available(iOS 13.0, *)
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, preferences: WKWebpagePreferences, decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
+        print("user decidePolicyFor")
+        decisionHandler(.allow, preferences)
+    }
+    
         
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         print("userCC")
