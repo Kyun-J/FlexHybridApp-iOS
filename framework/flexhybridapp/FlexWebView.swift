@@ -98,7 +98,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         flexWebView
     }
        
-    public var configration: WKWebViewConfiguration {
+    public var configuration: WKWebViewConfiguration {
         config
     }
     
