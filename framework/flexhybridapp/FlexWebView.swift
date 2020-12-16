@@ -277,7 +277,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         } else {
             let TID = Int.random(in: 1..<10000)
             returnFromWeb[TID] = returnAs
-            evalJS("!async function(){try{const e=await $flex.web.\(funcName)();$flex.flexreturn({TID:\(TID),Value:e,Error:!1})}catch(e){$flex.flexreturn({TID:\(TID),Value:e,Error:!0})}}();")
+            evalJS("!function(){$flex.web.\(funcName)().then((e)=>{$flex.flexreturn({TID:\(TID),Value:e,Error:!1});}).catch((e)=>{$flex.flexreturn({TID:\(TID),Value:e,Error:!0});});}();")
         }
     }
     
@@ -302,7 +302,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             do {
                 let TID = Int.random(in: 1..<10000)
                 returnFromWeb[TID] = returnAs
-                evalJS("!async function(){try{const e=await $flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));$flex.flexreturn({TID:\(TID),Value:e,Error:!1})}catch(e){$flex.flexreturn({TID:\(TID),Value:e,Error:!0})}}();")
+                evalJS("!function(){$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData))).then((e)=>{$flex.flexreturn({TID:\(TID),Value:e,Error:!1});}).catch((e)=>{$flex.flexreturn({TID:\(TID),Value:e,Error:!0});});}();")
             } catch FlexError.UnuseableTypeCameIn {
                 FlexMsg.err(FlexString.ERROR3)
             } catch {

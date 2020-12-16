@@ -18,7 +18,37 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     enum TestError: Error {
         case test
     }
-                
+    
+    let testReceive = FlexClosure.array { (arguments) -> Array<Any?>? in
+        let data = arguments[0].asDictionary()!
+        let dicData: [String:FlexData] = data["d2"]!.reified()!
+        print("\(data["d1"]!.asInt()!) \(dicData)")
+        var returnValue: [Any?] = []
+        returnValue.append(10)
+        returnValue.append(24123.54235234)
+        returnValue.append([])
+        returnValue.append(false)
+        returnValue.append("test value")
+        return returnValue
+    }
+    
+    let testAction = FlexClosure.action { (action, arguments) in
+        action.onFinished = {
+            print("action finished!")
+        }
+        // code works in background...
+        var returnValue: [String:Any] = [:]
+        var dictionaryValue: [String:Any] = [:]
+        dictionaryValue["subkey1"] = ["dictionaryValue",0.12]
+        dictionaryValue["subkey2"] = 1000.100
+        returnValue["key1"] = "value1"
+        returnValue["key2"] = dictionaryValue
+        returnValue["key3"] = ["arrayValue1",nil]
+        // Promise return to Web
+        // PromiseReturn can be called at any time.
+        action.promiseReturn(returnValue)
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
                 
@@ -46,38 +76,10 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             }
         }
         
-        component.arrayInterface("testReceive")
-        { (arguments) -> Array<Any?> in
-            let data = arguments[0].asDictionary()!
-            let dicData: [String:FlexData] = data["d2"]!.reified()!
-            print("\(data["d1"]!.asInt()!) \(dicData)")
-            var returnValue: [Any?] = []
-            returnValue.append(10)
-            returnValue.append(24123.54235234)
-            returnValue.append([])
-            returnValue.append(false)
-            returnValue.append("test value")
-            return returnValue
-        }
+        component.arrayInterface("testReceive", testReceive)
                 
         // add FlexAction
-        component.setAction("testAction")
-        { (action, arguments) -> Void in
-            action.onFinished = {
-                print("action finished!")
-            }
-            // code works in background...
-            var returnValue: [String:Any] = [:]
-            var dictionaryValue: [String:Any] = [:]
-            dictionaryValue["subkey1"] = ["dictionaryValue",0.12]
-            dictionaryValue["subkey2"] = 1000.100
-            returnValue["key1"] = "value1"
-            returnValue["key2"] = dictionaryValue
-            returnValue["key3"] = ["arrayValue1",nil]
-            // Promise return to Web
-            // PromiseReturn can be called at any time.
-            action.promiseReturn(returnValue)
-        }
+        component.setAction("testAction", testAction)
         
         // test JS Reject
         component.dictionaryInterface("testReject1")
@@ -134,7 +136,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         mWebView.load(URLRequest(url: URL(fileURLWithPath: Bundle.main.path(forResource: "test", ofType: "html")!)))
         
         // add user-custom contentController
-        component.configration.userContentController.add(self, name: "userCC")
+        component.configuration.userContentController.add(self, name: "userCC")
     }
 
     override func viewWillAppear(_ animated: Bool) {

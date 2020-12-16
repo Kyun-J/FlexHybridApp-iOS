@@ -100,9 +100,9 @@ struct FlexFunc {
             _vString.append("]")
             return _vString
         } else if value is Dictionary<String,Any?> {
-            let _vArray = value as! Dictionary<String,Any?>
+            let _vDic = value as! Dictionary<String,Any?>
             var _vString = "{"
-            for (_name, e) in _vArray {
+            for (_name, e) in _vDic {
                 if e is Int || e is Double || e is Float || e is Bool {
                     _vString.append("\(_name):\(e!),")
                 } else if e is String || e is Character {
@@ -138,7 +138,19 @@ struct FlexFunc {
             } else if(ele is Array<Any?>) {
                 res.append(FlexData(arrayToFlexData(ele as? Array<Any?>)))
             } else if(ele is Dictionary<String, Any?>) {
-                res.append(FlexData(dictionaryToFlexData(ele as? Dictionary<String, Any?>)))
+                let e = ele as? Dictionary<String, Any?>
+                if(e?.count == 1 && e?["thisIsBoolean"] is Int) {
+                    let b = e?["thisIsBoolean"] as? Int
+                    if(b == 0) {
+                        res.append(FlexData(false))
+                    } else if(b == 1) {
+                        res.append(FlexData(true))
+                    } else {
+                        res.append(FlexData([:]))
+                    }
+                } else {
+                    res.append(FlexData(dictionaryToFlexData(e)))
+                }
             }
         })
         return res
@@ -161,7 +173,19 @@ struct FlexFunc {
             } else if(ele is Array<Any?>) {
                 res[key] = FlexData(arrayToFlexData(ele as? Array<Any?>))
             } else if(ele is Dictionary<String, Any?>) {
-                res[key] = FlexData(dictionaryToFlexData(ele as? Dictionary<String, Any?>))
+                let e = ele as? Dictionary<String, Any?>
+                if(e?.count == 1 && e?["thisIsBoolean"] is Int) {
+                    let b = e?["thisIsBoolean"] as? Int
+                    if(b == 0) {
+                        res[key] = FlexData(false)
+                    } else if(b == 1) {
+                        res[key] = FlexData(true)
+                    } else {
+                        res[key] = FlexData([:])
+                    }
+                } else {
+                    res[key] = FlexData(dictionaryToFlexData(e))
+                }
             }
         })
         return res
@@ -181,7 +205,19 @@ struct FlexFunc {
         } else if(value is Array<Any?>) {
             return FlexData(arrayToFlexData(value as? Array<Any?>))
         } else if(value is Dictionary<String, Any?>) {
-            return FlexData(dictionaryToFlexData(value as? Dictionary<String, Any?>))
+            let e = value as? Dictionary<String, Any?>
+            if(e?.count == 1 && e?["thisIsBoolean"] is Int) {
+                let b = e?["thisIsBoolean"] as? Int
+                if(b == 0) {
+                    return FlexData(false)
+                } else if(b == 1) {
+                    return FlexData(true)
+                } else {
+                    return FlexData([:])
+                }
+            } else {
+                return FlexData(dictionaryToFlexData(e))
+            }
         } else if(value is BrowserException) {
             return FlexData(value as! BrowserException)
         } else {

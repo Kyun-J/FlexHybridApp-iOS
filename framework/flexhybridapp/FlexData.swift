@@ -10,14 +10,15 @@ import Foundation
 
 public class FlexData {
     private let data: Any?
-    public let type: DataType
+    public let type: Type
     
-    public enum DataType {
+    public enum Type {
         case NIL
         case STRING
         case INT
         case DOUBLE
         case FLOAT
+        case BOOL
         case ARRAY
         case DICTIONARY
         case ERR
@@ -25,42 +26,47 @@ public class FlexData {
     
     internal init() {
         data = nil
-        type = DataType.NIL
+        type = Type.NIL
     }
     
     internal init(_ data: String) {
         self.data = data
-        type = DataType.STRING
+        type = Type.STRING
     }
     
     internal init(_ data: Int) {
         self.data = data
-        type = DataType.INT
+        type = Type.INT
     }
     
     internal init(_ data: Double) {
         self.data = data
-        type = DataType.DOUBLE
+        type = Type.DOUBLE
     }
     
     internal init(_ data: Float) {
         self.data = data
-        type = DataType.FLOAT
+        type = Type.FLOAT
+    }
+    
+    internal init(_ data: Bool) {
+        self.data = data
+        type = Type.BOOL
     }
     
     internal init(_ data: Array<FlexData>) {
         self.data = data
-        type = DataType.ARRAY
+        type = Type.ARRAY
     }
     
     internal init(_ data: Dictionary<String,FlexData>) {
         self.data = data
-        type = DataType.DICTIONARY
+        type = Type.DICTIONARY
     }
     
     internal init(_ data: BrowserException) {
         self.data = data
-        type = DataType.ERR
+        type = Type.ERR
     }
     
     public func isNil() -> Bool {
@@ -69,7 +75,7 @@ public class FlexData {
     
     public func asString() -> String? {
         if isNil() { return nil }
-        if(type != DataType.STRING) {
+        if(type != Type.STRING) {
             FlexMsg.err(FlexString.ERROR8)
             return nil
         }
@@ -79,11 +85,11 @@ public class FlexData {
     public func asInt() -> Int? {
         if isNil() { return nil }
         switch type {
-        case DataType.INT:
+        case Type.INT:
             return (data as! Int)
-        case DataType.DOUBLE:
+        case Type.DOUBLE:
             return Int((data as! Double))
-        case DataType.FLOAT:
+        case Type.FLOAT:
             return Int((data as! Float))
         default:
             FlexMsg.err(FlexString.ERROR8)
@@ -94,11 +100,11 @@ public class FlexData {
     public func asFloat() -> Float? {
         if isNil() { return nil }
         switch type {
-        case DataType.INT:
+        case Type.INT:
             return Float((data as! Int))
-        case DataType.DOUBLE:
+        case Type.DOUBLE:
             return Float((data as! Double))
-        case DataType.FLOAT:
+        case Type.FLOAT:
             return (data as! Float)
         default:
             FlexMsg.err(FlexString.ERROR8)
@@ -109,11 +115,11 @@ public class FlexData {
     public func asDouble() -> Double? {
         if isNil() { return nil }
         switch type {
-        case DataType.INT:
+        case Type.INT:
             return Double((data as! Int))
-        case DataType.DOUBLE:
+        case Type.DOUBLE:
             return (data as! Double)
-        case DataType.FLOAT:
+        case Type.FLOAT:
             return Double((data as! Float))
         default:
             FlexMsg.err(FlexString.ERROR8)
@@ -123,24 +129,16 @@ public class FlexData {
     
     public func asBool() -> Bool? {
         if isNil() { return nil }
-        if(type != DataType.INT) {
+        if(type != Type.BOOL) {
             FlexMsg.err(FlexString.ERROR8)
             return nil
         }
-        let temp = data as! Int
-        switch(temp) {
-        case 1: return true
-        case 0: return false
-        default: do {
-            FlexMsg.err(FlexString.ERROR8)
-            return nil
-        }
-        }
+        return (data as! Bool)
     }
     
     public func asArray() -> Array<FlexData>? {
         if isNil() { return nil }
-        if(type != DataType.ARRAY) {
+        if(type != Type.ARRAY) {
             FlexMsg.err(FlexString.ERROR8)
             return nil
         }
@@ -149,7 +147,7 @@ public class FlexData {
     
     public func asDictionary() -> Dictionary<String,FlexData>? {
         if isNil() { return nil }
-        if(type != DataType.DICTIONARY) {
+        if(type != Type.DICTIONARY) {
             FlexMsg.err(FlexString.ERROR8)
             return nil
         }
@@ -158,7 +156,7 @@ public class FlexData {
     
     public func asErr() -> BrowserException? {
         if isNil() { return nil }
-        if(type != DataType.ERR) {
+        if(type != Type.ERR) {
             FlexMsg.err(FlexString.ERROR8)
             return nil
         }
@@ -167,12 +165,12 @@ public class FlexData {
     
     public func toString() -> String? {
         switch type {
-        case DataType.NIL: return nil
-        case DataType.STRING: return asString()!
-        case DataType.INT: return String(asInt()!)
-        case DataType.DOUBLE: return String(asDouble()!)
-        case DataType.FLOAT: return String(asFloat()!)
-        case DataType.ERR: return asErr()!.reason
+        case Type.NIL: return nil
+        case Type.STRING: return asString()!
+        case Type.INT: return String(asInt()!)
+        case Type.DOUBLE: return String(asDouble()!)
+        case Type.FLOAT: return String(asFloat()!)
+        case Type.ERR: return asErr()!.reason
         default:
             FlexMsg.err(FlexString.ERROR8)
             return nil

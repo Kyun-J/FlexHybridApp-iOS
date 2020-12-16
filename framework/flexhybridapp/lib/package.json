@@ -9,10 +9,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@babel/core": "^7.12.1",
-    "@babel/preset-env": "^7.12.1",
-    "babel-loader": "^8.1.0",
-    "cross-env": "^7.0.2",
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "babel-loader": "^8.2.2",
+    "cross-env": "^7.0.3",
     "webpack": "^4.44.2",
     "webpack-cli": "^3.3.12"
   }

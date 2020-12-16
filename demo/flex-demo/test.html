@@ -43,7 +43,7 @@
     window.onFlexLoad = function() {
         console.log('Flex Load Success!!');
         $flex.web.help = function(data) {
-            console.log('Received by Native ---- ' + data);
+            console.log('Received by Native ---- ' + String(data));
             return Promise.resolve(['Thanks Flex!', null])
         }
         $flex.web.directTest = () => {
