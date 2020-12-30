@@ -41,7 +41,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         var dictionaryValue: [String:Any] = [:]
         dictionaryValue["subkey1"] = ["dictionaryValue",0.12]
         dictionaryValue["subkey2"] = 1000.100
-        returnValue["key1"] = "value1"
+        returnValue["key1"] = "value1\ntest"
         returnValue["key2"] = dictionaryValue
         returnValue["key3"] = ["arrayValue1",nil]
         // Promise return to Web

@@ -80,7 +80,7 @@ struct FlexFunc {
         } else if value is Int || value is Double || value is Float || value is Bool {
             return "\(value!)"
         } else if value is String || value is Character {
-            return "\"\(value!)\""
+            return "`\(value!)`"
         } else if value is Array<Any?> {
             let _vArray = value as! Array<Any?>
             var _vString = "["
@@ -88,7 +88,7 @@ struct FlexFunc {
                 if e is Int || e is Double || e is Float || e is Bool {
                     _vString.append("\(e!),")
                 } else if e is String || e is Character {
-                    _vString.append("\"\(e!)\",")
+                    _vString.append("`\(e!)`,")
                 } else if e is Array<Any?> || e is Dictionary<String,Any?> {
                     _vString.append("\(try convertValue(e)),")
                 } else if e == nil {
@@ -106,7 +106,7 @@ struct FlexFunc {
                 if e is Int || e is Double || e is Float || e is Bool {
                     _vString.append("\(_name):\(e!),")
                 } else if e is String || e is Character {
-                    _vString.append("\(_name):\"\(e!)\",")
+                    _vString.append("\(_name):`\(e!)`,")
                 } else if e is Array<Any?> || e is Dictionary<String,Any?> {
                     _vString.append("\(_name):\(try convertValue(e)),")
                 } else if e == nil {
