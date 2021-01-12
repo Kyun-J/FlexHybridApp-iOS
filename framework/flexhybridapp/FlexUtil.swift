@@ -26,35 +26,29 @@ struct FlexString {
     static let ERROR8 = "The type of data stored in FlexData and the type called are not identical."
     
     static let FLEX_DEFINE = ["flexlog","flexerror","flexdebug","flexinfo","flexreturn","flexload"]
+    
+    static let CHECKBOOL = UUID().uuidString
 }
 
 struct FlexMsg {
     static let date = DateFormatter()
     static func log(_ msg: String) {
         date.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
-        print("Log in FlextWebView  ——————————————")
-        print(date.string(from: Date()))
-        print(msg)
+        print("Log in FlextWebView \(date.string(from: Date())) ::: \(msg)")
     }
     static func err(_ err: String) {
         date.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
-        print("Error in FlextWebView  ————————————")
-        print(date.string(from: Date()))
-        print(err)
+        print("Error in FlextWebView \(date.string(from: Date())) ::: \(err)")
     }
     static func err(_ err: Error) {
         date.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
-        print("Error in FlextWebView  ————————————")
-        print(date.string(from: Date()))
-        print(err.localizedDescription)
+        print("Error in FlextWebView \(date.string(from: Date())) ::: \(err.localizedDescription)")
     }
     static func debug(_ msg: String) {
         date.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
-        print("Debug FlexHybrid ————————————")
-        print(date.string(from: Date()))
-        print(msg)
+        print("Debug in FlextWebView \(date.string(from: Date())) ::: \(msg)")
     }
-    static func webLog(_ type: String, _ msg: Any?) {
+    static func webLog(_ type: String, _ msg: Array<Any?>) {
         date.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
         var t = ""
         switch type {
@@ -69,7 +63,79 @@ struct FlexMsg {
         default:
             t = type
         }
-        print("\(date.string(from: Date())) : \(t) on FlexWebView\n\(msg ?? "nil")")
+        if(msg.count == 0) {
+            print("\(date.string(from: Date())) :: FlexWebView \(t) : ")
+            return
+        }
+        var data:Any? = msg;
+        if(msg.count == 1) {
+            data = msg[0];
+        }
+        print("\(date.string(from: Date())) :: FlexWebView \(t) : \(convertValueForLog(data))")
+    }
+    static func convertValueForLog(_ value: Any?) -> String {
+        if value == nil {
+            return "null"
+        } else if value is Int || value is Double || value is Float || value is Bool {
+            return "\(value!)"
+        } else if value is String || value is Character {
+            return "\(value!)"
+        } else if value is Array<Any?> {
+            let _vArray = value as! Array<Any?>
+            var _vString = "["
+            for e in _vArray {
+                if e is Int || e is Double || e is Float || e is Bool {
+                    _vString.append("\(e!),")
+                } else if e is String || e is Character {
+                    _vString.append("\(e!),")
+                } else if e is Array<Any?> || e is Dictionary<String,Any?> {
+                    _vString.append("\(convertValueForLog(e)),")
+                } else if e == nil {
+                    _vString.append("null")
+                } else {
+                    return "UnuseableTypeCameIn"
+                }
+            }
+            _vString.append("]")
+            return _vString
+        } else if value is Dictionary<String,Any?> {
+            let _vDic = value as! Dictionary<String,Any?>
+            if(_vDic.count == 1 && _vDic[FlexString.CHECKBOOL] is Int) {
+                let b = _vDic[FlexString.CHECKBOOL] as! Int
+                if(b == 0) {
+                    return "false"
+                } else if(b == 1) {
+                    return "true"
+                } else {
+                    return "UnuseableTypeCameIn"
+                }
+            } else if(_vDic.count == 1 && _vDic[FlexString.CHECKBOOL] is Bool) {
+                let b = _vDic[FlexString.CHECKBOOL] as! Bool
+                if(b) {
+                    return "true"
+                } else {
+                    return "false"
+                }
+            }
+            var _vString = "{"
+            for (_name, e) in _vDic {
+                if e is Int || e is Double || e is Float || e is Bool {
+                    _vString.append("\(_name):\(e!),")
+                } else if e is String || e is Character {
+                    _vString.append("\(_name):\(e!),")
+                } else if e is Array<Any?> || e is Dictionary<String,Any?> {
+                    _vString.append("\(_name):\(convertValueForLog(e)),")
+                } else if e == nil {
+                    _vString.append("\(_name):null,")
+                } else {
+                    return "UnuseableTypeCameIn"
+                }
+            }
+            _vString.append("}")
+            return _vString
+        } else {
+            return "UnuseableTypeCameIn"
+        }
     }
 }
 
@@ -139,14 +205,21 @@ struct FlexFunc {
                 res.append(FlexData(arrayToFlexData(ele as? Array<Any?>)))
             } else if(ele is Dictionary<String, Any?>) {
                 let e = ele as? Dictionary<String, Any?>
-                if(e?.count == 1 && e?["thisIsBoolean"] is Int) {
-                    let b = e?["thisIsBoolean"] as? Int
+                if(e?.count == 1 && e?[FlexString.CHECKBOOL] is Int) {
+                    let b = e?[FlexString.CHECKBOOL] as? Int
                     if(b == 0) {
                         res.append(FlexData(false))
                     } else if(b == 1) {
                         res.append(FlexData(true))
                     } else {
                         res.append(FlexData([:]))
+                    }
+                } else if(e?.count == 1 && e?[FlexString.CHECKBOOL] is Bool) {
+                    let b = e?[FlexString.CHECKBOOL] as? Bool
+                    if(b ?? false) {
+                        res.append(FlexData(true))
+                    } else {
+                        res.append(FlexData(false))
                     }
                 } else {
                     res.append(FlexData(dictionaryToFlexData(e)))
@@ -174,14 +247,21 @@ struct FlexFunc {
                 res[key] = FlexData(arrayToFlexData(ele as? Array<Any?>))
             } else if(ele is Dictionary<String, Any?>) {
                 let e = ele as? Dictionary<String, Any?>
-                if(e?.count == 1 && e?["thisIsBoolean"] is Int) {
-                    let b = e?["thisIsBoolean"] as? Int
+                if(e?.count == 1 && e?[FlexString.CHECKBOOL] is Int) {
+                    let b = e?[FlexString.CHECKBOOL] as? Int
                     if(b == 0) {
                         res[key] = FlexData(false)
                     } else if(b == 1) {
                         res[key] = FlexData(true)
                     } else {
                         res[key] = FlexData([:])
+                    }
+                } else if(e?.count == 1 && e?[FlexString.CHECKBOOL] is Bool) {
+                    let b = e?[FlexString.CHECKBOOL] as? Bool
+                    if(b ?? false) {
+                        res[key] = FlexData(true)
+                    } else {
+                        res[key] = FlexData(false)
                     }
                 } else {
                     res[key] = FlexData(dictionaryToFlexData(e))
@@ -206,8 +286,8 @@ struct FlexFunc {
             return FlexData(arrayToFlexData(value as? Array<Any?>))
         } else if(value is Dictionary<String, Any?>) {
             let e = value as? Dictionary<String, Any?>
-            if(e?.count == 1 && e?["thisIsBoolean"] is Int) {
-                let b = e?["thisIsBoolean"] as? Int
+            if(e?.count == 1 && e?[FlexString.CHECKBOOL] is Int) {
+                let b = e?[FlexString.CHECKBOOL] as? Int
                 if(b == 0) {
                     return FlexData(false)
                 } else if(b == 1) {
@@ -215,7 +295,14 @@ struct FlexFunc {
                 } else {
                     return FlexData([:])
                 }
-            } else {
+            } else if(e?.count == 1 && e?[FlexString.CHECKBOOL] is Bool) {
+                let b = e?[FlexString.CHECKBOOL] as? Bool
+                if(b ?? false) {
+                    return FlexData(true)
+                } else {
+                    return FlexData(false)
+                }
+            }  else {
                 return FlexData(dictionaryToFlexData(e))
             }
         } else if(value is BrowserException) {

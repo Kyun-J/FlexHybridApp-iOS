@@ -171,6 +171,7 @@ public class FlexData {
         case DataType.DOUBLE: return String(asDouble()!)
         case DataType.FLOAT: return String(asFloat()!)
         case DataType.ERR: return asErr()!.reason
+        case DataType.BOOL: return String(asBool()!)
         default:
             FlexMsg.err(FlexString.ERROR8)
             return nil
@@ -180,21 +181,21 @@ public class FlexData {
     public func reified<T>() -> T? {
         if isNil() { return nil }
         if (T.self == Int.self) {
-            return (asInt() as! T)
+            return (asInt() as? T)
         } else if(T.self == Float.self) {
-            return (asFloat() as! T)
+            return (asFloat() as? T)
         } else if(T.self == Double.self) {
-            return (asDouble() as! T)
+            return (asDouble() as? T)
         } else if(T.self == String.self) {
-            return (toString() as! T)
+            return (toString() as? T)
         } else if(T.self == Bool.self) {
-            return (asBool() as! T)
+            return (asBool() as? T)
         } else if(T.self == Array<FlexData>.self) {
-            return (asArray() as! T)
+            return (asArray() as? T)
         } else if(T.self == Dictionary<String,FlexData>.self) {
-            return (asDictionary() as! T)
+            return (asDictionary() as? T)
         } else if(T.self == BrowserException.self) {
-            return (asErr() as! T)
+            return (asErr() as? T)
         } else {
             FlexMsg.err(FlexString.ERROR8)
             return nil

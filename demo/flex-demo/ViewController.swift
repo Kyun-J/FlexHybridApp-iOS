@@ -22,7 +22,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     let testReceive = FlexClosure.array { (arguments) -> Array<Any?>? in
         let data = arguments[0].asDictionary()!
         let dicData: [String:FlexData] = data["d2"]!.reified()!
-        print("\(data["d1"]!.asInt()!) \(dicData)")
+        print("\(data["d1"]!.asInt()!) \(String(describing: dicData["data"]?.toString()))")
         var returnValue: [Any?] = []
         returnValue.append(10)
         returnValue.append(24123.54235234)

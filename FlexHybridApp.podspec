@@ -9,7 +9,7 @@
 Pod::Spec.new do |spec|
 
   spec.name         = "FlexHybridApp"
-  spec.version      = "0.6.2.9"
+  spec.version      = "0.6.3"
   spec.summary      = "FlexibleHybridApp-iOS"
   spec.ios.deployment_target = '9.0'
   spec.swift_version = '5.3.2'

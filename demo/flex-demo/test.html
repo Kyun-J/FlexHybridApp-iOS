@@ -36,7 +36,7 @@
         }
     }
     const t6 = async () => {
-        const z = await $flex.testReceive({ "d1": 10, "d2": {} });
+        const z = await $flex.testReceive({ "d1": 10, "d2": { "data": true } });
         console.log(z);
     }
     // when $flex on ready.....
@@ -44,7 +44,7 @@
         console.log('Flex Load Success!!');
         $flex.web.help = function(data) {
             console.log('Received by Native ---- ' + String(data));
-            return Promise.resolve(['Thanks Flex!', null])
+            return Promise.resolve(['Thanks Flex!', false])
         }
         $flex.web.directTest = () => {
             console.log('direct test!!!!');

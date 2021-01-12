@@ -3,6 +3,8 @@
     const keys = keysfromios;
     const options = optionsfromios;
     const device = deviceinfofromios;
+    const checkBool = checkboolfromios;
+    window.checkBool = checkBool;
     const listeners = [];
     const logs = { log: console.log, debug: console.debug, error: console.error, info: console.info };
     const option = {
@@ -37,25 +39,37 @@
             }
         });
     }
-    const argsToStringArray = (...args) => {
-        const result = [];
-        args.forEach(arg => {
-            result.push(String(arg));
-        });
-        return result
-    }
     setOptions();
+    const booleanToboolData = function(v) {
+        const o = v;
+        v = {};
+        v[checkBool] = o;
+        return v;
+    }
     Object.defineProperty(window, "$flex", { value: {}, writable: false, enumerable: true });
     Object.defineProperties($flex,
         {
-            version: { value: '0.6.2.9', writable: false, enumerable: true },
+            version: { value: '0.6.3', writable: false, enumerable: true },
             isAndroid: { value: false, writable: false, enumerable: true },
             isiOS: { value: true, writable: false, enumerable: true },
             device: { value: device, writable: false, enumerable: true },
             addEventListener: { value: function(event, callback) { listeners.push({ e: event, c: callback }) }, writable: false, enumerable: true },
             web: { value: {}, writable: false, enumerable: true },
             options: { value: option, writable: false, enumerable: true },
-            flex: { value: {}, writable: false, enumerable: false }
+            flex: { value: {}, writable: false, enumerable: false },
+            convertBoolForiOS: { value: function(v) {
+                if(typeof v == "boolean") {
+                    return booleanToboolData(v);
+                } else if(typeof v == "object") {
+                    const keys = Object.keys(v);
+                    for(let i = 0; i < keys.length; i++) {
+                        v[keys[i]] = $flex.convertBoolForiOS(v[keys[i]]);
+                    }
+                    return v;
+                } else {
+                    return v;
+                }
+            }, writable: false, enumerable: false  }
         }
     );
     keys.forEach(key => {
@@ -89,26 +103,12 @@
                                 }
                             };
                             try {
-                                if(key === "flexlog" || key === "flexdebug" || key === "flexerror" || key === "flexinfo") {
-                                    webkit.messageHandlers[key].postMessage(
-                                        {
-                                            funName: name,
-                                            arguments: argsToStringArray(...args)
-                                        }
-                                    );
-                                } else {
-                                    args.forEach((arg, i) => {
-                                        if(typeof arg === "boolean") {
-                                            args[i] = { "thisIsBoolean" : arg }
-                                        }
-                                    });
-                                    webkit.messageHandlers[key].postMessage(
-                                        {
-                                            funName: name,
-                                            arguments: args
-                                        }
-                                    );
-                                }
+                                webkit.messageHandlers[key].postMessage(
+                                    {
+                                        funName: name,
+                                        arguments: $flex.convertBoolForiOS(args)
+                                    }
+                                );
                             } catch (e) {
                                 $flex.flex[name](false, e.toString());
                             }
@@ -153,7 +153,7 @@
                     if(typeof w.frames[i].onFlexLoad === 'function') {
                         f = w.frames[i].onFlexLoad;
                     }
-                    Object.defineProperty(w.frames[i], "onFlexLoad", { 
+                    Object.defineProperty(w.frames[i], "onFlexLoad", {
                         set: function(val) {
                             window.onFlexLoad = val;
                         },

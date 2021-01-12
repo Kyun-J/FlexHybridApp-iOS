@@ -160,6 +160,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                 jsString = jsString?.replacingOccurrences(of: "keysfromios", with: keys)
                 jsString = jsString?.replacingOccurrences(of: "optionsfromios", with: try FlexFunc.convertValue(options))
                 jsString = jsString?.replacingOccurrences(of: "deviceinfofromios", with: try FlexFunc.convertValue(DeviceInfo.getInfo()))
+                jsString = jsString?.replacingOccurrences(of: "checkboolfromios", with: "'\(FlexString.CHECKBOOL)'")
                 for n in FlexString.FLEX_DEFINE {
                     config.userContentController.add(self, name: n)
                 }
@@ -277,7 +278,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         } else {
             let TID = Int.random(in: 1..<10000)
             returnFromWeb[TID] = returnAs
-            evalJS("!function(){$flex.web.\(funcName)().then((e)=>{$flex.flexreturn({TID:\(TID),Value:e,Error:!1});}).catch((e)=>{$flex.flexreturn({TID:\(TID),Value:e,Error:!0});});}();")
+            evalJS("!function(){try{const a=$flex.web.\(funcName)();a instanceof Promise&&a.then(function(a){$flex.flexreturn({TID:\(TID),Value:a,Error:0})}).catch(function(a){$flex.flexreturn({TID:\(TID),Value:a,Error:1})})}catch(a){$flex.flexreturn({TID:\(TID),Value:a,Error:1})}}();")
         }
     }
     
@@ -302,7 +303,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             do {
                 let TID = Int.random(in: 1..<10000)
                 returnFromWeb[TID] = returnAs
-                evalJS("!function(){$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData))).then((e)=>{$flex.flexreturn({TID:\(TID),Value:e,Error:!1});}).catch((e)=>{$flex.flexreturn({TID:\(TID),Value:e,Error:!0});});}();")
+                evalJS("!function(){try{const a=$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));a instanceof Promise&&a.then(function(a){$flex.flexreturn({TID:\(TID),Value:a,Error:0})}).catch(function(a){$flex.flexreturn({TID:\(TID),Value:a,Error:1})})}catch(a){$flex.flexreturn({TID:\(TID),Value:a,Error:1})}}();")
             } catch FlexError.UnuseableTypeCameIn {
                 FlexMsg.err(FlexString.ERROR3)
             } catch {
@@ -332,7 +333,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                     switch(mName) {
                         // WebLogs
                         case FlexString.FLEX_DEFINE[0], FlexString.FLEX_DEFINE[1], FlexString.FLEX_DEFINE[2], FlexString.FLEX_DEFINE[3]:
-                            FlexMsg.webLog(mName, data["arguments"])
+                            FlexMsg.webLog(mName, data["arguments"] as! Array<Any?>)
                             self.evalJS("$flex.flex.\(fName)(true)")
                         // $flex.web func return
                         case FlexString.FLEX_DEFINE[4]:
@@ -340,17 +341,20 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                             let iData = webData[0]
                             let TID = iData["TID"] as! Int
                             let value = iData["Value"] as Any?
-                            let error = iData["Error"] as! Bool
-                            if(error) {
+                            let error = iData["Error"] as! Int
+                            if(error == 1) {
                                 var errMsg: String = ""
                                 if(value == nil) { errMsg = "null" }
-                                else { errMsg = value as! String }
+                                else if(value is String) {
+                                    errMsg = value as! String
+                                } else { errMsg = "Error message is not String" }
                                 self.returnFromWeb[TID]?(FlexFunc.anyToFlexData(BrowserException(errMsg)))
                             } else {
                                 self.returnFromWeb[TID]?(FlexFunc.anyToFlexData(value))
                             }
                             self.returnFromWeb[TID] = nil
                             self.evalJS("$flex.flex.\(fName)(true)")
+                        // flexload
                         case FlexString.FLEX_DEFINE[5]:
                             if self.isFlexLoad {
                                 self.evalJS("$flex.flex.\(fName)(true)")
