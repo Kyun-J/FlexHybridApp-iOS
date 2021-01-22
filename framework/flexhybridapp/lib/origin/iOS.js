@@ -49,7 +49,7 @@
     Object.defineProperty(window, "$flex", { value: {}, writable: false, enumerable: true });
     Object.defineProperties($flex,
         {
-            version: { value: '0.6.3', writable: false, enumerable: true },
+            version: { value: '0.6.3.1', writable: false, enumerable: true },
             isAndroid: { value: false, writable: false, enumerable: true },
             isiOS: { value: true, writable: false, enumerable: true },
             device: { value: device, writable: false, enumerable: true },
@@ -60,7 +60,7 @@
             convertBoolForiOS: { value: function(v) {
                 if(typeof v == "boolean") {
                     return booleanToboolData(v);
-                } else if(typeof v == "object") {
+                } else if(typeof v == "object" && v) {
                     const keys = Object.keys(v);
                     for(let i = 0; i < keys.length; i++) {
                         v[keys[i]] = $flex.convertBoolForiOS(v[keys[i]]);
