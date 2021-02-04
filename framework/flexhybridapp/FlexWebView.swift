@@ -89,7 +89,23 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     private var beforeFlexLoadEvalList : Array<BeforeFlexEval> = []
     private var isFlexLoad = false
     private var isFirstPageLoad = false
-            
+    private var isAutoCookieManage = false;
+    private var cookieDefaultsName = "FlexCookieManage"
+    private var cookieKeys = "___cookieKeys"
+    
+    @available(iOS 11.0 , *)
+    public func setAutoCookieManage(_ isAutoManage: Bool, clearAll : Bool = false) {
+        if clearAll {
+            removeAllCookieInManage()
+        }
+        isAutoCookieManage = isAutoManage
+    }
+    
+    @available(iOS 11.0 , *)
+    public func getAutoCookieManage() -> Bool {
+        return isAutoCookieManage
+    }
+    
     public var BaseUrl: String? {
         baseUrl
     }
@@ -427,6 +443,9 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        if #available(iOS 11.0, *), isAutoCookieManage {
+            saveCookie()
+        }
         if baseUrl == nil || (baseUrl != nil && webView.url != nil && webView.url!.absoluteString.contains(baseUrl!)) {
             evalJS("if(typeof window.$flex === 'undefined') { \(jsString!) }")
             evalJS("const evalFrames=e=>{for(let o=0;o<e.frames.length;o++){if(void 0===e.frames[o].$flex){Object.defineProperty(e.frames[o],\"$flex\",{value:window.$flex,writable:!1,enumerable:!0});let n=void 0;\"function\"==typeof e.frames[o].onFlexLoad&&(n=e.frames[o].onFlexLoad),Object.defineProperty(e.frames[o],\"onFlexLoad\",{set:function(e){window.onFlexLoad=e},get:function(){return window._onFlexLoad}}),\"function\"==typeof n&&(e.frames[o].onFlexLoad=n)}evalFrames(e.frames[o])}};evalFrames(window);")
@@ -438,6 +457,9 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
     
     public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        if #available(iOS 11.0, *), isAutoCookieManage {
+            loadCookie()
+        }
         userNavigation?.webView?(webView, didStartProvisionalNavigation: navigation)
     }
     
@@ -463,6 +485,9 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     }
             
     public func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+        if #available(iOS 11.0, *), isAutoCookieManage {
+            saveCookie()
+        }
         if (navigationResponse.response is HTTPURLResponse) {
             let response = navigationResponse.response as? HTTPURLResponse
             FlexMsg.log(String(format: "response.statusCode: %ld", response?.statusCode ?? 0))
@@ -472,6 +497,9 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     
     @available(iOS 13.0, *)
     public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, preferences: WKWebpagePreferences, decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
+        if isAutoCookieManage {
+            saveCookie()
+        }
         (userNavigation?.webView ?? inWeb)(webView, navigationAction, preferences, decisionHandler)
     }
     
@@ -525,6 +553,100 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         if !flexWebView!.enableScroll {
             scrollView.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
         }
+    }
+    
+    
+    /*
+     AutoCookieManage Functions
+     */
+    @available(iOS 11.0 , *)
+    private func saveCookie() {
+        guard let cookieDefaults = UserDefaults.init(suiteName: cookieDefaultsName) else {
+            return
+        }
+        guard var keys : Array<String> = cookieDefaults.stringArray(forKey: cookieKeys) else {
+            return
+        }
+        config.websiteDataStore.httpCookieStore.getAllCookies { (cookies) in
+            cookies.forEach { (cookie) in
+                var values: Array<String> = []
+                let formatter = DateFormatter()
+                let key = "\(cookie.domain):\(cookie.name)"
+                formatter.dateFormat = "EEE',' dd' 'MMM' 'yyyy HH':'mm':'ss zzz"
+                values[0] = cookie.name
+                values[1] = cookie.value
+                values[2] = cookie.domain
+                values[3] = cookie.expiresDate != nil ? formatter.string(from: cookie.expiresDate!) : ""
+                values[4] = cookie.path
+                cookieDefaults.setValue(values, forKey: key)
+                if !keys.contains(key) {
+                    keys.append(key)
+                }
+            }
+            let keyCopy : Array<String> = Array.init(keys)
+            keyCopy.forEach { (copiedKey) in
+                var isFindDomain = false
+                var isFindKey = false
+                let domain = copiedKey.split(separator: ":")[0]
+                cookies.forEach { (cookie) in
+                    let keyInCookie = "\(cookie.domain):\(cookie.name)"
+                    if(domain == cookie.domain) {
+                        isFindDomain = true
+                    }
+                    if(keyInCookie == copiedKey) {
+                        isFindKey = true
+                    }
+                    if(isFindDomain && !isFindKey) {
+                        guard let keyIndex = keys.firstIndex(of: keyInCookie) else {
+                            return
+                        }
+                        keys.remove(at: keyIndex)
+                        cookieDefaults.removeObject(forKey: keyInCookie)
+                    }
+                }
+            }
+            cookieDefaults.setValue(keys, forKey: self.cookieKeys)
+        }
+    }
+    
+    @available(iOS 11.0, *)
+    private func loadCookie() {
+        guard let cookieDefaults = UserDefaults.init(suiteName: cookieDefaultsName) else {
+            return
+        }
+        guard let keys : Array<String> = cookieDefaults.stringArray(forKey: cookieKeys) else {
+            return
+        }
+        keys.forEach { (key) in
+            guard let values = cookieDefaults.stringArray(forKey: key) else {
+                return
+            }
+            let wkCookieStore = config.websiteDataStore.httpCookieStore
+            var properties : Dictionary<HTTPCookiePropertyKey, Any> = [:]
+            properties[HTTPCookiePropertyKey.name] = values[0]
+            properties[HTTPCookiePropertyKey.value] = values[1]
+            properties[HTTPCookiePropertyKey.domain] = values[2]
+            properties[HTTPCookiePropertyKey.expires] = values[3]
+            properties[HTTPCookiePropertyKey.path] = values[4]
+            guard let completeCookie = HTTPCookie(properties: properties) else {
+                return
+            }
+            wkCookieStore.setCookie(completeCookie, completionHandler: nil)
+        }
+    }
+    
+    @available(iOS 11.0, *)
+    private func removeAllCookieInManage() {
+        guard let cookieDefaults = UserDefaults.init(suiteName: cookieDefaultsName) else {
+            return
+        }
+        guard let keys : Array<String> = cookieDefaults.stringArray(forKey: cookieKeys) else {
+            return
+        }
+        keys.forEach { (key) in
+            cookieDefaults.removeObject(forKey: key)
+        }
+        cookieDefaults.removeObject(forKey: cookieKeys)
     }
     
 }
