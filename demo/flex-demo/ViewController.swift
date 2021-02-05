@@ -51,7 +51,12 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     
     override func viewDidLoad() {
         super.viewDidLoad()
-                
+        
+        component.addEventListener { (type, funcName, msg) in
+            print(type == FlexEvent.SUCCESS)
+            print(funcName + msg)
+        }
+                        
         // add js interface
         component.intInterface("test1")
         { (arguments) -> Int in

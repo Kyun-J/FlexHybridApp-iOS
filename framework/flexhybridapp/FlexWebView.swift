@@ -93,6 +93,41 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     private var cookieDefaultsName = "FlexCookieManage"
     private var cookieKeys = "___cookieKeys"
     
+    private var flexEventList : Array<(FlexEvent, FlexListener)> = []
+    
+    public func addEventListener(_ type: FlexEvent, _ listener: FlexListener) {
+        flexEventList.append((type, listener))
+    }
+    
+    public func addEventListener(_ type: FlexEvent, _ closure: @escaping (_ type: FlexEvent, _ funcName: String, _ msg: String) -> Void) {
+        flexEventList.append((type, FlexListener(closure)))
+    }
+    
+    public func addEventListener(_ listener: FlexListener) {
+        flexEventList.append((FlexEvent.SUCCESS, listener))
+        flexEventList.append((FlexEvent.EXCEPTION, listener))
+        flexEventList.append((FlexEvent.TIMEOUT, listener))
+        flexEventList.append((FlexEvent.UNKNOWN, listener))
+        flexEventList.append((FlexEvent.INIT, listener))
+    }
+    
+    public func addEventListener(_ closure: @escaping (_ type: FlexEvent, _ funcName: String, _ msg: String) -> Void) {
+        addEventListener(FlexListener(closure))
+    }
+    
+    public func removeEventListener(listener: FlexListener) {
+        flexEventList = flexEventList.filter { (tuple) -> Bool in
+            if tuple.1.id == listener.id {
+                return false
+            }
+            return true
+        }
+    }
+    
+    public func removeAllEventListener() {
+        flexEventList = []
+    }
+    
     @available(iOS 11.0 , *)
     public func setAutoCookieManage(_ isAutoManage: Bool, clearAll : Bool = false) {
         if clearAll {
@@ -162,8 +197,11 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             do {
                 jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.js", encoding: .utf8)
                 var keys = ""
+                var defines = ""
                 keys.append("[\"")
+                defines.append("[\"")
                 keys.append(FlexString.FLEX_DEFINE.joined(separator: "\",\""))
+                defines.append(FlexString.FLEX_DEFINE.joined(separator: "\",\""))
                 if(interfaces.count > 0) {
                     keys.append("\",\"")
                     keys.append(interfaces.keys.joined(separator: "\",\""))
@@ -173,7 +211,9 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                     keys.append(actions.keys.joined(separator: "\",\""))
                 }
                 keys.append("\"]")
+                defines.append("\"]")
                 jsString = jsString?.replacingOccurrences(of: "keysfromios", with: keys)
+                jsString = jsString?.replacingOccurrences(of: "defineflexfromios", with: defines)
                 jsString = jsString?.replacingOccurrences(of: "optionsfromios", with: try FlexFunc.convertValue(options))
                 jsString = jsString?.replacingOccurrences(of: "deviceinfofromios", with: try FlexFunc.convertValue(DeviceInfo.getInfo()))
                 jsString = jsString?.replacingOccurrences(of: "checkboolfromios", with: "'\(FlexString.CHECKBOOL)'")
@@ -347,51 +387,77 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                 // framework inner interface
                 queue.async {
                     switch(mName) {
-                        // WebLogs
-                        case FlexString.FLEX_DEFINE[0], FlexString.FLEX_DEFINE[1], FlexString.FLEX_DEFINE[2], FlexString.FLEX_DEFINE[3]:
-                            FlexMsg.webLog(mName, data["arguments"] as! Array<Any?>)
+                    // WebLogs
+                    case FlexString.FLEX_DEFINE[0], FlexString.FLEX_DEFINE[1], FlexString.FLEX_DEFINE[2], FlexString.FLEX_DEFINE[3]:
+                        FlexMsg.webLog(mName, data["arguments"] as! Array<Any?>)
+                        self.evalJS("$flex.flex.\(fName)(true)")
+                    // $flex.web func return
+                    case FlexString.FLEX_DEFINE[4]:
+                        let webData = data["arguments"] as! Array<Dictionary<String, Any?>>
+                        let iData = webData[0]
+                        let TID = iData["TID"] as! Int
+                        let value = iData["Value"] as Any?
+                        let error = iData["Error"] as! Int
+                        if(error == 1) {
+                            var errMsg: String = ""
+                            if(value == nil) { errMsg = "null" }
+                            else if(value is String) {
+                                errMsg = value as! String
+                            } else { errMsg = "Error message is not String" }
+                            self.returnFromWeb[TID]?(FlexFunc.anyToFlexData(BrowserException(errMsg)))
+                        } else {
+                            self.returnFromWeb[TID]?(FlexFunc.anyToFlexData(value))
+                        }
+                        self.returnFromWeb[TID] = nil
+                        self.evalJS("$flex.flex.\(fName)(true)")
+                    // flexload
+                    case FlexString.FLEX_DEFINE[5]:
+                        if self.isFlexLoad {
                             self.evalJS("$flex.flex.\(fName)(true)")
-                        // $flex.web func return
-                        case FlexString.FLEX_DEFINE[4]:
-                            let webData = data["arguments"] as! Array<Dictionary<String, Any?>>
-                            let iData = webData[0]
-                            let TID = iData["TID"] as! Int
-                            let value = iData["Value"] as Any?
-                            let error = iData["Error"] as! Int
-                            if(error == 1) {
-                                var errMsg: String = ""
-                                if(value == nil) { errMsg = "null" }
-                                else if(value is String) {
-                                    errMsg = value as! String
-                                } else { errMsg = "Error message is not String" }
-                                self.returnFromWeb[TID]?(FlexFunc.anyToFlexData(BrowserException(errMsg)))
-                            } else {
-                                self.returnFromWeb[TID]?(FlexFunc.anyToFlexData(value))
-                            }
-                            self.returnFromWeb[TID] = nil
-                            self.evalJS("$flex.flex.\(fName)(true)")
-                        // flexload
-                        case FlexString.FLEX_DEFINE[5]:
-                            if self.isFlexLoad {
-                                self.evalJS("$flex.flex.\(fName)(true)")
-                                break
-                            }
-                            self.isFlexLoad = true
-                            self.beforeFlexLoadEvalList.forEach { item in
-                                if(item.sendData != nil && item.response != nil) {
-                                    self.evalFlexFunc(item.name, sendData: item.sendData!, item.response!)
-                                } else if(item.sendData != nil && item.response == nil) {
-                                    self.evalFlexFunc(item.name, sendData: item.sendData!)
-                                } else if(item.sendData == nil && item.response != nil) {
-                                    self.evalFlexFunc(item.name, item.response!)
-                                } else {
-                                    self.evalFlexFunc(item.name)
-                                }
-                            }
-                            self.beforeFlexLoadEvalList.removeAll()
-                            self.evalJS("$flex.flex.\(fName)(true)")
-                        default:
                             break
+                        }
+                        self.isFlexLoad = true
+                        self.beforeFlexLoadEvalList.forEach { item in
+                            if(item.sendData != nil && item.response != nil) {
+                                self.evalFlexFunc(item.name, sendData: item.sendData!, item.response!)
+                            } else if(item.sendData != nil && item.response == nil) {
+                                self.evalFlexFunc(item.name, sendData: item.sendData!)
+                            } else if(item.sendData == nil && item.response != nil) {
+                                self.evalFlexFunc(item.name, item.response!)
+                            } else {
+                                self.evalFlexFunc(item.name)
+                            }
+                        }
+                        self.beforeFlexLoadEvalList.removeAll()
+                        self.evalJS("$flex.flex.\(fName)(true)")
+                    // events
+                    case FlexString.FLEX_DEFINE[6], FlexString.FLEX_DEFINE[7], FlexString.FLEX_DEFINE[8], FlexString.FLEX_DEFINE[9],FlexString.FLEX_DEFINE[10]:
+                        self.evalJS("$flex.flex.\(fName)(true)")
+                        let args = data["arguments"] as! Array<String>
+                        let funcName = args[0]
+                        let msg = args[1]
+                        let type : FlexEvent
+                        switch mName {
+                        case FlexString.FLEX_DEFINE[6]:
+                            type = FlexEvent.SUCCESS
+                        case FlexString.FLEX_DEFINE[7]:
+                            type = FlexEvent.EXCEPTION
+                        case FlexString.FLEX_DEFINE[8]:
+                            type = FlexEvent.TIMEOUT
+                        case FlexString.FLEX_DEFINE[9]:
+                            type = FlexEvent.UNKNOWN
+                        case FlexString.FLEX_DEFINE[10]:
+                            type = FlexEvent.INIT
+                        default:
+                            type = FlexEvent.UNKNOWN
+                        }
+                        self.flexEventList.forEach { (tuple) in
+                            if tuple.0 == type {
+                                tuple.1.closure(type, funcName, msg)
+                            }
+                        }
+                    default:
+                        break
                     }
                 }
             } else if interfaces[mName] != nil {
@@ -583,12 +649,11 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                     keys.append(key)
                 }
             }
-            let keyCopy : Array<String> = Array.init(keys)
-            keyCopy.forEach { (copiedKey) in
+            keys = keys.filter { (copiedKey) -> Bool in
                 var isFindDomain = false
                 var isFindKey = false
                 let domain = copiedKey.split(separator: ":")[0]
-                cookies.forEach { (cookie) in
+                for cookie in cookies {
                     let keyInCookie = "\(cookie.domain):\(cookie.name)"
                     if(domain == cookie.domain) {
                         isFindDomain = true
@@ -597,14 +662,34 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                         isFindKey = true
                     }
                     if(isFindDomain && !isFindKey) {
-                        guard let keyIndex = keys.firstIndex(of: keyInCookie) else {
-                            return
-                        }
-                        keys.remove(at: keyIndex)
                         cookieDefaults.removeObject(forKey: keyInCookie)
+                        return false
                     }
                 }
+                return true
             }
+//            let keyCopy : Array<String> = Array.init(keys)
+//            keyCopy.forEach { (copiedKey) in
+//                var isFindDomain = false
+//                var isFindKey = false
+//                let domain = copiedKey.split(separator: ":")[0]
+//                cookies.forEach { (cookie) in
+//                    let keyInCookie = "\(cookie.domain):\(cookie.name)"
+//                    if(domain == cookie.domain) {
+//                        isFindDomain = true
+//                    }
+//                    if(keyInCookie == copiedKey) {
+//                        isFindKey = true
+//                    }
+//                    if(isFindDomain && !isFindKey) {
+//                        guard let keyIndex = keys.firstIndex(of: keyInCookie) else {
+//                            return
+//                        }
+//                        keys.remove(at: keyIndex)
+//                        cookieDefaults.removeObject(forKey: keyInCookie)
+//                    }
+//                }
+//            }
             cookieDefaults.setValue(keys, forKey: self.cookieKeys)
         }
     }

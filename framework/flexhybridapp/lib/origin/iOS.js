@@ -4,6 +4,7 @@
     const options = optionsfromios;
     const device = deviceinfofromios;
     const checkBool = checkboolfromios;
+    const defineFlex = defineflexfromios;
     const listeners = [];
     const logs = { log: console.log, debug: console.debug, error: console.error, info: console.info };
     const option = {
@@ -48,7 +49,7 @@
     Object.defineProperty(window, "$flex", { value: {}, writable: false, enumerable: true });
     Object.defineProperties($flex,
         {
-            version: { value: '0.7', writable: false, enumerable: true },
+            version: { value: '0.6.9', writable: false, enumerable: true },
             isAndroid: { value: false, writable: false, enumerable: true },
             isiOS: { value: true, writable: false, enumerable: true },
             device: { value: device, writable: false, enumerable: true },
@@ -82,6 +83,7 @@
                             if(option.timeout > 0) {
                                 counter = setTimeout(() => {
                                     $flex.flex[name](false, "timeout error");
+                                    $flex.flexTimeout(key, "timeout error\ntimeout set - " + option.timeout);
                                     triggerEventListener('timeout', { "function" : key });
                                 }, option.timeout);
                             }
@@ -90,6 +92,9 @@
                                 delete $flex.flex[name];
                                 if(j) {
                                     resolve(r);
+                                    if(!defineFlex.contains(key)) {
+                                        $flex.flexSuccess(key, "flex interface success\nFunction - $flex." + key);
+                                    }
                                 } else {
                                     let err;
                                     if(typeof e === 'string') err = Error(e);
@@ -99,6 +104,7 @@
                                         "function" : key,
                                         "err": err
                                     });
+                                    $flex.flexException(key, err);
                                 }
                             };
                             try {
@@ -168,5 +174,6 @@
             }
         }
         evalFrames(window);
+        $flex.flexInit('flexInit', "$flex init on page - "+location.href);
     }, 0);
 })();

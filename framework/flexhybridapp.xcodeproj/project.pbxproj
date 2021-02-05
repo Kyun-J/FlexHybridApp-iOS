@@ -12,6 +12,7 @@
 		DF5F181D2444737D00BE44F4 /* flexhybridapp.h in Headers */ = {isa = PBXBuildFile; fileRef = DF5F181B2444737D00BE44F4 /* flexhybridapp.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		DF5F1824244473A700BE44F4 /* FlexWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF5F1823244473A700BE44F4 /* FlexWebView.swift */; };
 		DF8175B3251AD14700BACA91 /* FlexWebView.xib in Resources */ = {isa = PBXBuildFile; fileRef = DF8175B2251AD14700BACA91 /* FlexWebView.xib */; };
+		DF85F11A25CD22820020C9BE /* FlexEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF85F11925CD22820020C9BE /* FlexEvent.swift */; };
 		DFA5032924FE4461002DDFBE /* FlexAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5032824FE4461002DDFBE /* FlexAction.swift */; };
 		DFA5032B24FE4521002DDFBE /* BrowserException.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5032A24FE4521002DDFBE /* BrowserException.swift */; };
 		DFA5032D24FE4576002DDFBE /* BeforeFlexEval.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA5032C24FE4576002DDFBE /* BeforeFlexEval.swift */; };
@@ -28,6 +29,7 @@
 		DF5F181C2444737D00BE44F4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DF5F1823244473A700BE44F4 /* FlexWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlexWebView.swift; sourceTree = "<group>"; };
 		DF8175B2251AD14700BACA91 /* FlexWebView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = FlexWebView.xib; sourceTree = "<group>"; };
+		DF85F11925CD22820020C9BE /* FlexEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlexEvent.swift; sourceTree = "<group>"; };
 		DFA5032824FE4461002DDFBE /* FlexAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlexAction.swift; sourceTree = "<group>"; };
 		DFA5032A24FE4521002DDFBE /* BrowserException.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserException.swift; sourceTree = "<group>"; };
 		DFA5032C24FE4576002DDFBE /* BeforeFlexEval.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeforeFlexEval.swift; sourceTree = "<group>"; };
@@ -72,6 +74,7 @@
 				DF5F181C2444737D00BE44F4 /* Info.plist */,
 				DF5F1823244473A700BE44F4 /* FlexWebView.swift */,
 				DF01D6012452AD8200C7D8BD /* FlexUtil.swift */,
+				DF85F11925CD22820020C9BE /* FlexEvent.swift */,
 				DFA5032824FE4461002DDFBE /* FlexAction.swift */,
 				DFA5032A24FE4521002DDFBE /* BrowserException.swift */,
 				DFA5032C24FE4576002DDFBE /* BeforeFlexEval.swift */,
@@ -176,6 +179,7 @@
 				DFA5032F24FE4646002DDFBE /* FlexData.swift in Sources */,
 				DFA5032B24FE4521002DDFBE /* BrowserException.swift in Sources */,
 				DFBE2196252D9B3600383D75 /* FlexClosure.swift in Sources */,
+				DF85F11A25CD22820020C9BE /* FlexEvent.swift in Sources */,
 				DF5F1824244473A700BE44F4 /* FlexWebView.swift in Sources */,
 				DF01D6022452AD8200C7D8BD /* FlexUtil.swift in Sources */,
 				DFA5032D24FE4576002DDFBE /* BeforeFlexEval.swift in Sources */,
@@ -328,7 +332,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.7;
+				MARKETING_VERSION = 0.6.9;
 				PRODUCT_BUNDLE_IDENTIFIER = app.dvkyun.flexhybridapp;
 				PRODUCT_NAME = FlexHybridApp;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -361,7 +365,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.7;
+				MARKETING_VERSION = 0.6.9;
 				PRODUCT_BUNDLE_IDENTIFIER = app.dvkyun.flexhybridapp;
 				PRODUCT_NAME = FlexHybridApp;
 				PROVISIONING_PROFILE_SPECIFIER = "";

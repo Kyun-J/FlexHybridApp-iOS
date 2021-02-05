@@ -1,1 +1,183 @@
-!function(e){var o={};function n(r){if(o[r])return o[r].exports;var t=o[r]={i:r,l:!1,exports:{}};return e[r].call(t.exports,t,t.exports,n),t.l=!0,t.exports}n.m=e,n.c=o,n.d=function(e,o,r){n.o(e,o)||Object.defineProperty(e,o,{enumerable:!0,get:r})},n.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},n.t=function(e,o){if(1&o&&(e=n(e)),8&o)return e;if(4&o&&"object"==typeof e&&e&&e.__esModule)return e;var r=Object.create(null);if(n.r(r),Object.defineProperty(r,"default",{enumerable:!0,value:e}),2&o&&"string"!=typeof e)for(var t in e)n.d(r,t,function(o){return e[o]}.bind(null,t));return r},n.n=function(e){var o=e&&e.__esModule?function(){return e.default}:function(){return e};return n.d(o,"a",o),o},n.o=function(e,o){return Object.prototype.hasOwnProperty.call(e,o)},n.p="",n(n.s=0)}([function(e,o){!function(){"use strict";var e=keysfromios,o=optionsfromios,n=deviceinfofromios,r=checkboolfromios;window.checkBool=r;var t=[],i={log:console.log,debug:console.debug,error:console.error,info:console.info},l={timeout:6e4,flexLoadWait:10},f=function e(){var o="f"+Math.random().toString(10).substr(2,8);return void 0===$flex.flex[o]?Promise.resolve(o):Promise.resolve(e())},u=function(e,o){t.forEach((function(n){n.e===e&&"function"==typeof n.c&&n.c(o)}))};Object.keys(o).forEach((function(e){("timeout"===e&&"number"==typeof o[e]||"flexLoadWait"===e&&"number"==typeof o[e])&&Object.defineProperty(l,e,{value:o[e],writable:!1,enumerable:!0})}));Object.defineProperty(window,"$flex",{value:{},writable:!1,enumerable:!0}),Object.defineProperties($flex,{version:{value:"0.6.3.1",writable:!1,enumerable:!0},isAndroid:{value:!1,writable:!1,enumerable:!0},isiOS:{value:!0,writable:!1,enumerable:!0},device:{value:n,writable:!1,enumerable:!0},addEventListener:{value:function(e,o){t.push({e:e,c:o})},writable:!1,enumerable:!0},web:{value:{},writable:!1,enumerable:!0},options:{value:l,writable:!1,enumerable:!0},flex:{value:{},writable:!1,enumerable:!1},convertBoolForiOS:{value:function(e){if("boolean"==typeof e)return function(e){var o=e;return(e={})[r]=o,e}(e);if("object"==typeof e&&e){for(var o=Object.keys(e),n=0;n<o.length;n++)e[o[n]]=$flex.convertBoolForiOS(e[o[n]]);return e}return e},writable:!1,enumerable:!1}}),e.forEach((function(e){void 0===$flex[e]&&Object.defineProperty($flex,e,{value:function(){for(var o=arguments.length,n=new Array(o),r=0;r<o;r++)n[r]=arguments[r];return new Promise((function(o,r){f().then((function(t){var i;l.timeout>0&&(i=setTimeout((function(){$flex.flex[t](!1,"timeout error"),u("timeout",{function:e})}),l.timeout)),$flex.flex[t]=function(n,f,a){var c;(l.timeout>0&&clearTimeout(i),delete $flex.flex[t],n)?o(a):(c="string"==typeof f?Error(f):Error("$flex Error occurred in function -- $flex."+e),r(c),u("error",{function:e,err:c}))};try{webkit.messageHandlers[e].postMessage({funName:t,arguments:$flex.convertBoolForiOS(n)})}catch(e){$flex.flex[t](!1,e.toString())}}))}))},writable:!1,enumerable:!1})})),console.log=function(){var e;(e=$flex).flexlog.apply(e,arguments),i.log.apply(i,arguments)},console.debug=function(){var e;(e=$flex).flexdebug.apply(e,arguments),i.debug.apply(i,arguments)},console.error=function(){var e;(e=$flex).flexerror.apply(e,arguments),i.error.apply(i,arguments)},console.info=function(){var e;(e=$flex).flexinfo.apply(e,arguments),i.info.apply(i,arguments)},setTimeout((function(){var e=function(){};"function"==typeof window.onFlexLoad&&(e=window.onFlexLoad),Object.defineProperty(window,"onFlexLoad",{set:function(e){window._onFlexLoad=e,"function"==typeof e&&Promise.resolve(e()).then((function(e){setTimeout((function(){$flex.flexload()}),l.flexLoadWait)}))},get:function(){return window._onFlexLoad}}),window.onFlexLoad=e;!function e(o){for(var n=0;n<o.frames.length;n++){if(void 0===o.frames[n].$flex){Object.defineProperty(o.frames[n],"$flex",{value:window.$flex,writable:!1,enumerable:!0});var r=void 0;"function"==typeof o.frames[n].onFlexLoad&&(r=o.frames[n].onFlexLoad),Object.defineProperty(o.frames[n],"onFlexLoad",{set:function(e){window.onFlexLoad=e},get:function(){return window._onFlexLoad}}),"function"==typeof r&&(o.frames[n].onFlexLoad=r)}e(o.frames[n])}}(window)}),0)}()}]);
+// (function() {
+    "use strict";
+    const keys = keysfromios;
+    const options = optionsfromios;
+    const device = deviceinfofromios;
+    const checkBool = checkboolfromios;
+    const defineFlex = defineflexfromios;
+    const listeners = [];
+    const logs = { log: console.log, debug: console.debug, error: console.error, info: console.info };
+    const option = {
+        timeout: 60000,
+        flexLoadWait: 10
+    };
+    const genFName = () => {
+        const name = 'f' + Math.random().toString(10).substr(2,8);
+        if($flex.flex[name] === undefined) {
+            return Promise.resolve(name);
+        } else {
+            return Promise.resolve(genFName());
+        }
+    }
+    const triggerEventListener = (name, val) => {
+        listeners.forEach(element => {
+            if(element.e === name && typeof element.c === 'function') {
+                element.c(val);
+            }
+        });
+    }
+    const setOptions = () => {
+        Object.keys(options).forEach(k => {
+            if(k === 'timeout' && typeof options[k] === 'number') {
+                Object.defineProperty(option, k, {
+                    value: options[k], writable: false, enumerable: true
+                });
+            } else if(k === 'flexLoadWait' && typeof options[k] === 'number') {
+                Object.defineProperty(option, k, {
+                    value: options[k], writable: false, enumerable: true
+                });
+            }
+        });
+    }
+    setOptions();
+    const booleanToboolData = function(v) {
+        const o = v;
+        v = {};
+        v[checkBool] = o;
+        return v;
+    }
+    Object.defineProperty(window, "$flex", { value: {}, writable: false, enumerable: true });
+    Object.defineProperties($flex,
+        {
+            version: { value: '0.6.9', writable: false, enumerable: true },
+            isAndroid: { value: false, writable: false, enumerable: true },
+            isiOS: { value: true, writable: false, enumerable: true },
+            device: { value: device, writable: false, enumerable: true },
+            addEventListener: { value: function(event, callback) { listeners.push({ e: event, c: callback }) }, writable: false, enumerable: true },
+            web: { value: {}, writable: false, enumerable: true },
+            options: { value: option, writable: false, enumerable: true },
+            flex: { value: {}, writable: false, enumerable: false },
+            convertBoolForiOS: { value: function(v) {
+                if(typeof v == "boolean") {
+                    return booleanToboolData(v);
+                } else if(typeof v == "object" && v) {
+                    const keys = Object.keys(v);
+                    for(let i = 0; i < keys.length; i++) {
+                        v[keys[i]] = $flex.convertBoolForiOS(v[keys[i]]);
+                    }
+                    return v;
+                } else {
+                    return v;
+                }
+            }, writable: false, enumerable: false  }
+        }
+    );
+    keys.forEach(key => {
+        if($flex[key] === undefined) {
+            Object.defineProperty($flex, key, {
+                value:
+                function(...args) {
+                    return new Promise((resolve, reject) => {
+                        genFName().then(name => {
+                            let counter;
+                            if(option.timeout > 0) {
+                                counter = setTimeout(() => {
+                                    $flex.flex[name](false, "timeout error");
+                                    if(!defineFlex.includes(key)) {
+                                        $flex.flexTimeout(key, "timeout error\ntimeout set - " + option.timeout);
+                                    }
+                                    triggerEventListener('timeout', { "function" : key });
+                                }, option.timeout);
+                            }
+                            $flex.flex[name] = (j, e, r) => {
+                                if(option.timeout > 0) clearTimeout(counter);
+                                delete $flex.flex[name];
+                                if(j) {
+                                    resolve(r);
+                                    if(!defineFlex.includes(key)) {
+                                        $flex.flexSuccess(key, "flex interface success\nFunction - $flex." + key);
+                                    }
+                                } else {
+                                    let err;
+                                    if(typeof e === 'string') err = Error(e);
+                                    else err = Error('$flex Error occurred in function -- $flex.' + key);
+                                    reject(err);
+                                    triggerEventListener('error', {
+                                        "function" : key,
+                                        "err": err
+                                    });
+                                    if(!defineFlex.includes(key)) {
+                                        $flex.flexException(key, err);
+                                    }
+                                }
+                            };
+                            try {
+                                webkit.messageHandlers[key].postMessage(
+                                    {
+                                        funName: name,
+                                        arguments: $flex.convertBoolForiOS(args)
+                                    }
+                                );
+                            } catch (e) {
+                                $flex.flex[name](false, e.toString());
+                            }
+                        });
+                    });
+                },
+                writable: false,
+                enumerable: false
+            });
+        }
+    });
+    console.log = function(...args) { $flex.flexlog(...args); logs.log(...args); };
+    console.debug = function(...args) { $flex.flexdebug(...args); logs.debug(...args); };
+    console.error = function(...args) { $flex.flexerror(...args); logs.error(...args); };
+    console.info = function(...args) { $flex.flexinfo(...args); logs.info(...args); };
+    setTimeout(() => {
+        let f = () => {};
+        if(typeof window.onFlexLoad === 'function') {
+            f = window.onFlexLoad;
+        }
+        Object.defineProperty(window, "onFlexLoad", {
+            set: function(val){
+                window._onFlexLoad = val;
+                if(typeof val === 'function') {
+                    (function() {
+                        return Promise.resolve(val());
+                    })().then( _ => {
+                        setTimeout(() => { $flex.flexload(); }, option.flexLoadWait);
+                    });
+                }
+            },
+            get: function(){
+                return window._onFlexLoad;
+            }
+        });
+        window.onFlexLoad = f;
+        const evalFrames = (w) => {
+            for(let i = 0 ; i < w.frames.length; i++) {
+                if(typeof w.frames[i].$flex === 'undefined') {
+                    Object.defineProperty(w.frames[i], "$flex", { value: window.$flex, writable: false, enumerable: true });
+                    let f = undefined;
+                    if(typeof w.frames[i].onFlexLoad === 'function') {
+                        f = w.frames[i].onFlexLoad;
+                    }
+                    Object.defineProperty(w.frames[i], "onFlexLoad", {
+                        set: function(val) {
+                            window.onFlexLoad = val;
+                        },
+                        get: function() {
+                            return window._onFlexLoad;
+                        }
+                    });
+                    if(typeof f === 'function') {
+                        w.frames[i].onFlexLoad = f;
+                    }
+                }
+                evalFrames(w.frames[i]);
+            }
+        }
+        evalFrames(window);
+        $flex.flexInit('flexInit', "$flex init on page - "+location.href);
+    }, 0);
+// })();
