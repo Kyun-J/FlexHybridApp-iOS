@@ -12,16 +12,15 @@ public enum FlexEvent {
     case SUCCESS
     case EXCEPTION
     case TIMEOUT
-    case UNKNOWN
     case INIT
 }
 
 
 public class FlexListener {
-    internal let closure : (_ type: FlexEvent, _ funcName: String, _ msg: String) -> Void
+    internal let closure : (_ type: FlexEvent, _ funcName: String, _ url: String) -> Void
     internal let id: UUID
     
-    init(_ closure: @escaping (_ type: FlexEvent, _ funcName: String, _ msg: String) -> Void) {
+    init(_ closure: @escaping (_ type: FlexEvent, _ funcName: String, _ url: String) -> Void) {
         self.closure = closure
         id = UUID()
     }

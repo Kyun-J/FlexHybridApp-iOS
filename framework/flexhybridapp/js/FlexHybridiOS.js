@@ -1,4 +1,4 @@
-// (function() {
+(function() {
     "use strict";
     const keys = keysfromios;
     const options = optionsfromios;
@@ -84,7 +84,7 @@
                                 counter = setTimeout(() => {
                                     $flex.flex[name](false, "timeout error");
                                     if(!defineFlex.includes(key)) {
-                                        $flex.flexTimeout(key, "timeout error\ntimeout set - " + option.timeout);
+                                        $flex.flexTimeout(key, location.href);
                                     }
                                     triggerEventListener('timeout', { "function" : key });
                                 }, option.timeout);
@@ -95,7 +95,7 @@
                                 if(j) {
                                     resolve(r);
                                     if(!defineFlex.includes(key)) {
-                                        $flex.flexSuccess(key, "flex interface success\nFunction - $flex." + key);
+                                        $flex.flexSuccess(key, location.href);
                                     }
                                 } else {
                                     let err;
@@ -107,7 +107,7 @@
                                         "err": err
                                     });
                                     if(!defineFlex.includes(key)) {
-                                        $flex.flexException(key, err);
+                                        $flex.flexException(key, location.href);
                                     }
                                 }
                             };
@@ -153,7 +153,6 @@
                 return window._onFlexLoad;
             }
         });
-        window.onFlexLoad = f;
         const evalFrames = (w) => {
             for(let i = 0 ; i < w.frames.length; i++) {
                 if(typeof w.frames[i].$flex === 'undefined') {
@@ -177,7 +176,8 @@
                 evalFrames(w.frames[i]);
             }
         }
+        window.onFlexLoad = f;
         evalFrames(window);
-        $flex.flexInit('flexInit', "$flex init on page - "+location.href);
+        $flex.flexInit('flexInit', location.href);
     }, 0);
-// })();
+})();

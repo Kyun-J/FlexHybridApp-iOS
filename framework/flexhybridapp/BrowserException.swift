@@ -10,7 +10,7 @@ import Foundation
 
 public class BrowserException {
     let reason: String?
-    public init(_ Reason: String) {
+    public init(_ Reason: String?) {
         reason = Reason
     }
     public init() {

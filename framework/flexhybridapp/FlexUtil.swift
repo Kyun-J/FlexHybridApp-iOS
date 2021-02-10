@@ -25,7 +25,7 @@ struct FlexString {
     static let ERROR7 = "PromiseReturn cannot be called twice in a single FlexAction."
     static let ERROR8 = "The type of data stored in FlexData and the type called are not identical."
     
-    static let FLEX_DEFINE = ["flexlog","flexerror","flexdebug","flexinfo","flexreturn","flexload","flexSuccess","flexException","flexTimeout","flexUnknwon","flexInit"]
+    static let FLEX_DEFINE = ["flexlog","flexerror","flexdebug","flexinfo","flexreturn","flexload","flexSuccess","flexException","flexTimeout","flexInit"]
     
     static let CHECKBOOL = UUID().uuidString
 }

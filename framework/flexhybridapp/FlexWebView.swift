@@ -99,7 +99,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         flexEventList.append((type, listener))
     }
     
-    public func addEventListener(_ type: FlexEvent, _ closure: @escaping (_ type: FlexEvent, _ funcName: String, _ msg: String) -> Void) {
+    public func addEventListener(_ type: FlexEvent, _ closure: @escaping (_ type: FlexEvent, _ funcName: String, _ url: String) -> Void) {
         flexEventList.append((type, FlexListener(closure)))
     }
     
@@ -107,11 +107,10 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         flexEventList.append((FlexEvent.SUCCESS, listener))
         flexEventList.append((FlexEvent.EXCEPTION, listener))
         flexEventList.append((FlexEvent.TIMEOUT, listener))
-        flexEventList.append((FlexEvent.UNKNOWN, listener))
         flexEventList.append((FlexEvent.INIT, listener))
     }
     
-    public func addEventListener(_ closure: @escaping (_ type: FlexEvent, _ funcName: String, _ msg: String) -> Void) {
+    public func addEventListener(_ closure: @escaping (_ type: FlexEvent, _ funcName: String, _ url: String) -> Void) {
         addEventListener(FlexListener(closure))
     }
     
@@ -324,7 +323,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         if(!isFlexLoad) {
             beforeFlexLoadEvalList.append(BeforeFlexEval(funcName))
         } else {
-            evalJS("$flex.web.\(funcName)()")
+            evalJS("!function(){try{const a=$flex.web.\(funcName)();a instanceof Promise&&a.then(function(){$flex.flexreturn({Name:'\(funcName)',Url:location.href,Error:0})}).catch(function(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,Value:a.name+': '+a.message,Error:1})})}catch(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,Value:a.name+': '+a.message,Error:1})}}();")
         }
     }
     
@@ -334,7 +333,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         } else {
             let TID = Int.random(in: 1..<10000)
             returnFromWeb[TID] = returnAs
-            evalJS("!function(){try{const a=$flex.web.\(funcName)();a instanceof Promise&&a.then(function(a){$flex.flexreturn({TID:\(TID),Value:a,Error:0})}).catch(function(a){$flex.flexreturn({TID:\(TID),Value:a,Error:1})})}catch(a){$flex.flexreturn({TID:\(TID),Value:a,Error:1})}}();")
+            evalJS("!function(){try{const a=$flex.web.\(funcName)();a instanceof Promise&&a.then(function(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a,Error:0})}).catch(function(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a.name+': '+a.message,Error:1})})}catch(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a.name+': '+a.message,Error:1})}}();")
         }
     }
     
@@ -343,7 +342,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             beforeFlexLoadEvalList.append(BeforeFlexEval(funcName, sendData))
         } else {
             do {
-                evalJS("$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)))")
+                evalJS("!function(){try{const a=$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));a instanceof Promise&&a.then(function(){$flex.flexreturn({Name:'\(funcName)',Url:location.href,Error:0})}).catch(function(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,Value:a.name+': '+a.message,Error:1})})}catch(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,Value:a.name+': '+a.message,Error:1})}}();")
             } catch FlexError.UnuseableTypeCameIn {
                 FlexMsg.err(FlexString.ERROR3)
             } catch {
@@ -359,7 +358,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             do {
                 let TID = Int.random(in: 1..<10000)
                 returnFromWeb[TID] = returnAs
-                evalJS("!function(){try{const a=$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));a instanceof Promise&&a.then(function(a){$flex.flexreturn({TID:\(TID),Value:a,Error:0})}).catch(function(a){$flex.flexreturn({TID:\(TID),Value:a,Error:1})})}catch(a){$flex.flexreturn({TID:\(TID),Value:a,Error:1})}}();")
+                evalJS("!function(){try{const a=$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));a instanceof Promise&&a.then(function(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a,Error:0})}).catch(function(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a.name+': '+a.message,Error:1})})}catch(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a.name+': '+a.message,Error:1})}}();")
             } catch FlexError.UnuseableTypeCameIn {
                 FlexMsg.err(FlexString.ERROR3)
             } catch {
@@ -395,18 +394,29 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                     case FlexString.FLEX_DEFINE[4]:
                         let webData = data["arguments"] as! Array<Dictionary<String, Any?>>
                         let iData = webData[0]
-                        let TID = iData["TID"] as! Int
+                        let TID = (iData["TID"] as? Int) ?? 0
+                        let url = iData["Url"] as! String
+                        let funcName = iData["Name"] as! String
                         let value = iData["Value"] as Any?
                         let error = iData["Error"] as! Int
                         if(error == 1) {
-                            var errMsg: String = ""
-                            if(value == nil) { errMsg = "null" }
-                            else if(value is String) {
-                                errMsg = value as! String
-                            } else { errMsg = "Error message is not String" }
+                            var errMsg: String? = nil
+                            if(value is String) {
+                                errMsg = value as? String
+                            }
                             self.returnFromWeb[TID]?(FlexFunc.anyToFlexData(BrowserException(errMsg)))
+                            self.flexEventList.forEach { (tuple) in
+                                if tuple.0 == FlexEvent.EXCEPTION {
+                                    tuple.1.closure(FlexEvent.EXCEPTION, "web.\(funcName)", url)
+                                }
+                            }
                         } else {
                             self.returnFromWeb[TID]?(FlexFunc.anyToFlexData(value))
+                            self.flexEventList.forEach { (tuple) in
+                                if tuple.0 == FlexEvent.SUCCESS {
+                                    tuple.1.closure(FlexEvent.SUCCESS, "web.\(funcName)", url)
+                                }
+                            }
                         }
                         self.returnFromWeb[TID] = nil
                         self.evalJS("$flex.flex.\(fName)(true)")
@@ -431,11 +441,11 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                         self.beforeFlexLoadEvalList.removeAll()
                         self.evalJS("$flex.flex.\(fName)(true)")
                     // events
-                    case FlexString.FLEX_DEFINE[6], FlexString.FLEX_DEFINE[7], FlexString.FLEX_DEFINE[8], FlexString.FLEX_DEFINE[9],FlexString.FLEX_DEFINE[10]:
+                    case FlexString.FLEX_DEFINE[6], FlexString.FLEX_DEFINE[7], FlexString.FLEX_DEFINE[8], FlexString.FLEX_DEFINE[9]:
                         self.evalJS("$flex.flex.\(fName)(true)")
                         let args = data["arguments"] as! Array<String>
                         let funcName = args[0]
-                        let msg = args[1]
+                        let url = args[1]
                         let type : FlexEvent
                         switch mName {
                         case FlexString.FLEX_DEFINE[6]:
@@ -445,15 +455,13 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                         case FlexString.FLEX_DEFINE[8]:
                             type = FlexEvent.TIMEOUT
                         case FlexString.FLEX_DEFINE[9]:
-                            type = FlexEvent.UNKNOWN
-                        case FlexString.FLEX_DEFINE[10]:
                             type = FlexEvent.INIT
                         default:
-                            type = FlexEvent.UNKNOWN
+                            type = FlexEvent.EXCEPTION
                         }
                         self.flexEventList.forEach { (tuple) in
                             if tuple.0 == type {
-                                tuple.1.closure(type, funcName, msg)
+                                tuple.1.closure(type, funcName, url)
                             }
                         }
                     default:

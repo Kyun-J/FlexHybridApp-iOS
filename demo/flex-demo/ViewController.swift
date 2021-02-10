@@ -52,9 +52,20 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        component.addEventListener { (type, funcName, msg) in
-            print(type == FlexEvent.SUCCESS)
-            print(funcName + msg)
+        component.addEventListener { (type, funcName, url) in
+            var typeTxt = "";
+            if type == FlexEvent.SUCCESS {
+                typeTxt = "SUCCESS"
+            } else if type == FlexEvent.TIMEOUT {
+                typeTxt = "TIMEOUT"
+            } else if type == FlexEvent.EXCEPTION {
+                typeTxt = "EXCEPTION"
+            } else if type == FlexEvent.INIT {
+                typeTxt = "INIT"
+            }
+            print("EVENT --------- \(typeTxt)")
+            print("FUNCTUIN ------ $flex.\(funcName)")
+            print("URL ----------- \(url)")
         }
                         
         // add js interface
@@ -150,18 +161,18 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     }
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        print("user navigationDelegate")
+        print("--------- user navigationDelegate")
     }
     
     @available(iOS 13.0, *)
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, preferences: WKWebpagePreferences, decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
-        print("user decidePolicyFor")
+        print("--------- user decidePolicyFor")
         decisionHandler(.allow, preferences)
     }
     
         
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        print("userCC")
+        print("-------- userContentController")
     }
 
 }
