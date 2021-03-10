@@ -3,6 +3,12 @@
 
 [Android Version](https://github.com/Kyun-J/FlexHybridApp-Android)
 
+# ToDo
+
+1. Interface Event Listener (working)
+2. Interface using Model (under consideration)
+3. <u>*Flutter version of FlexHybirdApp*</u> (in progress)
+
 # FlexibleHybrid
 
 FlexibleHybridApp is a framework that provides various convenience functions to develop HybridApp, such as implementing interfaces between Web and Native with promises.
@@ -215,6 +221,23 @@ mFlexWebView.evalFlexFunc("Return")
 mFlexWebView.evalFlexFunc("webFunc",["data1","data2"])
 ```
 
+### ***FlexClosure***
+In order to code the interface operation code block at the desired location, the code block (Closure) can be specified separately as a variable type and used.
+```swift
+let myAction : FlexClosure.action = 
+{ (action, arguments) -> Void on
+    action.promiseReturn("resurt")
+}
+
+let myIntInterface : FlexClosure.int = 
+{ arguments -> int? in
+    100
+}
+....
+flexComponent.setAction("myAction", myAction)
+flexComponent.intInterface("myIntInterface", myIntInterface)
+```
+
 # Native Class 
 Describes the native classes of the framework including FlexWebView.
 ## FlexWebView
@@ -317,10 +340,13 @@ func reject()
 If any of the above functions is called, the next time any function is called, the value is not passed to the Web.  
 If you directly create and use FlexAction Class, there is no effect. Only FlexAction created and delivered on the interface is effective.
 
-# $flex Object
+# WebPage
+## $flex Object
 \$flex Object is an object composed of interfaces between FlexWebView and Promise.  
-$flex Object can be used with the same code as applied to [Android FlexHybridApp](https://github.com/Kyun-J/FlexHybridApp-Android).  
-$flex can also be used in any accessible frames. (Ex) iframe that does not violate Cross-Origin)  
+\$flex Object can be used with the same code as applied to [Android FlexHybridApp](https://github.com/Kyun-J/FlexHybridApp-Android).  
+\$flex is declared in the webpage at runtime when the webpage is loaded in the webview.  
+When \$flex is finished loading, you can check the window.onFlexLoad function.  
+\$flex can also be used in any accessible frames. (Ex) iframe that does not violate Cross-Origin)  
 The components of $flex Object are as follows.  
 ```js
 window.onFlexLoad // Called after the $flex load completes. When overriding onFlexLoad, the overridden function is called immediately.

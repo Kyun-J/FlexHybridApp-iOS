@@ -1,3 +1,10 @@
+
+# ToDo
+
+1. Interface Event Listener 적용 (작업중)
+2. Model을 사용하는 인터페이스 (고려중)
+3. <u>*Flutter 버전 FlexHybirdApp*</u> (추진중)
+
 # FlexibleHybrid
 
 FlexibleHybridApp은 Web, Native 상호간의 Interface을 Promise로 구현하는 등, HybridApp을 개발하기 위해 여러 편의 기능을 제공하는 프레임워크 입니다.
@@ -201,14 +208,31 @@ mFlexWebView.evalFlexFunc("webFunc",["data1","data2"]) // same as $flex.web.webF
 { res -> Void in
     // res is "data1"
 }
-component.evalFlexFunc("Retrun") // same as $flex.web.Retrun()
+flexComponent.evalFlexFunc("Retrun") // same as $flex.web.Retrun()
 { res -> Void in
     // res is "this is promise"
 }
 // just call function
-component.evalFlexFunc("Retrun")
+flexComponent.evalFlexFunc("Retrun")
 // call function and send data
 mFlexWebView.evalFlexFunc("webFunc",["data1","data2"])
+```
+
+### ***FlexClosure***
+인터페이스 동작 코드 블럭을 원하는 위치에 코딩하기 위해 코드 블럭(Closure)을 따로 변수형으로 지정하여 사용할 수 있습니다.
+```swift
+let myAction : FlexClosure.action = 
+{ (action, arguments) -> Void on
+    action.promiseReturn("resurt")
+}
+
+let myIntInterface : FlexClosure.int = 
+{ arguments -> int? in
+    100
+}
+....
+flexComponent.setAction("myAction", myAction)
+flexComponent.intInterface("myIntInterface", myIntInterface)
 ```
 
 # Native Class 
@@ -313,11 +337,14 @@ func reject()
 위 함수중 하나라도 호출했다면, 다음에 어떤 함수를 호출하더라도 Web에 값이 전달되지 않습니다.
 FlexAction Class를 직접 생성 및 사용하면 아무런 효과도 얻을 수 없으며, 오직 인터페이스상에서 생성되어 전달되는 FlexAction만이 효력을 가집니다.
 
-# $flex Object
+# WebPage
+## $flex Object
 \$flex Object는 FlexWebView를 와 Promise 형태로 상호간 인터페이스가 구성되어있는 객체입니다.  
-$flex Object는 [Android FlexHybridApp](https://github.com/Kyun-J/FlexHybridApp-Android)에 적용될 때와 동일한 코드로 사용할 수 있습니다.  
-$flex는 액세스 가능한 모든 하위 프레임에서도 사용 할 수 있습니다. (Ex)Cross-Origin을 위반하지 않는 iframe)  
-$flex Object의 구성 요소는 다음과 같습니다.
+\$flex Object는 [Android FlexHybridApp](https://github.com/Kyun-J/FlexHybridApp-Android)에 적용될 때와 동일한 코드로 사용할 수 있습니다.  
+\$flex는 웹뷰에 웹페이지 로드 시, 런타임으로 웹페이지에 선언됩니다.  
+\$flex가 로드 완료되는 시점은, window.onFlexLoad함수를 통해 확인할 수 있습니다.  
+\$flex는 액세스 가능한 모든 하위 프레임에서도 사용 할 수 있습니다. (Ex)Cross-Origin을 위반하지 않는 iframe)  
+\$flex Object의 구성 요소는 다음과 같습니다.
 ```js
 window.onFlexLoad // Called after the $flex load completes. When overriding onFlexLoad, the overridden function is called immediately.
 $flex // Object that contains functions that can call Native area as WebToNative
