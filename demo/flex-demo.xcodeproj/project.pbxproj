@@ -17,6 +17,7 @@
 		DF479DFD253578CB00478776 /* frame.html in Resources */ = {isa = PBXBuildFile; fileRef = DF479DFC253578CB00478776 /* frame.html */; };
 		DFCEB8A624F8C79300C2CE3D /* FlexHybridApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DFCEB8A524F8C79300C2CE3D /* FlexHybridApp.framework */; };
 		DFCEB8A724F8C79300C2CE3D /* FlexHybridApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DFCEB8A524F8C79300C2CE3D /* FlexHybridApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		DFE3C37F2766E826000DFF28 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFE3C37E2766E825000DFF28 /* Models.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -45,6 +46,7 @@
 		291A5276245D598000558FE8 /* test.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = test.html; sourceTree = "<group>"; };
 		DF479DFC253578CB00478776 /* frame.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = frame.html; sourceTree = "<group>"; };
 		DFCEB8A524F8C79300C2CE3D /* FlexHybridApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FlexHybridApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		DFE3C37E2766E825000DFF28 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		DFFBBCD3248F6E6600762A31 /* FlexHybridApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FlexHybridApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -89,6 +91,7 @@
 				291A525F245C369E00558FE8 /* Assets.xcassets */,
 				291A5261245C369E00558FE8 /* LaunchScreen.storyboard */,
 				291A5264245C369E00558FE8 /* Info.plist */,
+				DFE3C37E2766E825000DFF28 /* Models.swift */,
 			);
 			path = "flex-demo";
 			sourceTree = "<group>";
@@ -178,6 +181,7 @@
 				291A525B245C369D00558FE8 /* ViewController.swift in Sources */,
 				291A5257245C369D00558FE8 /* AppDelegate.swift in Sources */,
 				291A5259245C369D00558FE8 /* SceneDelegate.swift in Sources */,
+				DFE3C37F2766E826000DFF28 /* Models.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -253,7 +257,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -307,7 +311,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;

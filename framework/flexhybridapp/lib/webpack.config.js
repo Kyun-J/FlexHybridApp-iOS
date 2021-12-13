@@ -1,4 +1,5 @@
 const webpack = require("webpack");
+const path = require("path");
 
 const config = {
   mode: process.env.NODE_ENV,
@@ -7,8 +8,8 @@ const config = {
     "iOS": "./iOS.js",
   },
   output: {
-    path: __dirname + "/dist",
-    filename: "[name].js",
+    path:  path.resolve(__dirname, "../js"),
+    filename: "FlexHybridiOS.js",
   },
   resolve: {
     extensions: [".js"],

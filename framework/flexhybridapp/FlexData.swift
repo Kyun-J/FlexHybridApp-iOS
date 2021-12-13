@@ -54,12 +54,12 @@ public class FlexData {
         type = DataType.BOOL
     }
     
-    internal init(_ data: Array<FlexData>) {
+    internal init(_ data: [FlexData]) {
         self.data = data
         type = DataType.ARRAY
     }
     
-    internal init(_ data: Dictionary<String,FlexData>) {
+    internal init(_ data: [String:FlexData]) {
         self.data = data
         type = DataType.DICTIONARY
     }
@@ -136,22 +136,22 @@ public class FlexData {
         return (data as! Bool)
     }
     
-    public func asArray() -> Array<FlexData>? {
+    public func asArray() -> [FlexData]? {
         if isNil() { return nil }
         if(type != DataType.ARRAY) {
             FlexMsg.err(FlexString.ERROR8)
             return nil
         }
-        return (data as! Array<FlexData>)
+        return (data as! [FlexData])
     }
     
-    public func asDictionary() -> Dictionary<String,FlexData>? {
+    public func asDictionary() -> [String:FlexData]? {
         if isNil() { return nil }
         if(type != DataType.DICTIONARY) {
             FlexMsg.err(FlexString.ERROR8)
             return nil
         }
-        return (data as! Dictionary<String,FlexData>)
+        return (data as! [String:FlexData])
     }
     
     public func asErr() -> BrowserException? {
@@ -172,11 +172,30 @@ public class FlexData {
         case DataType.FLOAT: return String(asFloat()!)
         case DataType.ERR: return asErr()!.reason
         case DataType.BOOL: return String(asBool()!)
-        default:
-            FlexMsg.err(FlexString.ERROR8)
-            return nil
+        case DataType.ARRAY:
+            guard let array = asArray() else {
+                return nil
+            }
+            var result = "["
+            for value in array {
+                result += "\(value.toString() ?? "nil"),"
+            }
+            result += "]"
+            return result
+        case DataType.DICTIONARY:
+            guard let dic = asDictionary() else {
+                return nil
+            }
+            var result = "{"
+            for (name, value) in dic {
+                result += "\(name):\(value.toString() ?? "nil"),"
+            }
+            result += "}"
+            return result
         }
     }
+    
+    
     
     public func reified<T>() -> T? {
         if isNil() { return nil }
@@ -190,9 +209,9 @@ public class FlexData {
             return (toString() as? T)
         } else if(T.self == Bool.self) {
             return (asBool() as? T)
-        } else if(T.self == Array<FlexData>.self) {
+        } else if(T.self == [FlexData].self) {
             return (asArray() as? T)
-        } else if(T.self == Dictionary<String,FlexData>.self) {
+        } else if(T.self == [String:FlexData].self) {
             return (asDictionary() as? T)
         } else if(T.self == BrowserException.self) {
             return (asErr() as? T)

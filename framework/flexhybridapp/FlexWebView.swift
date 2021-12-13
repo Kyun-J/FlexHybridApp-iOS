@@ -9,6 +9,8 @@
 import Foundation
 import WebKit
 
+private let VERSION = Bundle(identifier: "app.dvkyun.flexhybridapp")?.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+
 @IBDesignable
 open class FlexWebView : WKWebView {
 
@@ -75,31 +77,46 @@ open class FlexWebView : WKWebView {
 
 open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler, UIScrollViewDelegate {
    
-    private var interfaces: [String:(_ arguments: Array<FlexData>) throws -> Any?] = [:]
-    private var actions: [String: (_ action: FlexAction, _ arguments: Array<FlexData>) -> Void] = [:]
+    private var interfaces: [String:(_ arguments: [FlexData]) throws -> Any?] = [:]
+    private var typeInterfaces: [String:(_ argument: [String: Any?]) throws -> Any?] = [:]
+    private var actions: [String: (_ action: FlexAction, _ arguments: [FlexData]) -> Void] = [:]
+    private var typeActions: [String: (_ action: FlexAction, _ argument: [String: Any?]) -> Void] = [:]
+    private var iTimeouts: [String: Int] = [:]
+    
     private var options: [String: Any] = [:]
+    
     private var dependencies: [String] = []
+    
     private var returnFromWeb: [Int:(_ data: FlexData) -> Void] = [:]
+    
     private var flexWebView: FlexWebView? = nil
+    
     private var jsString: String? = nil
     private var baseUrl: String? = nil
+    private var showWebViewConsole = true
+    
     private var userNavigation: WKNavigationDelegate? = nil
+    
     private let queue = DispatchQueue(label: "FlexibleHybridApp", qos: DispatchQoS.background, attributes: .concurrent)
+    
     internal var config: WKWebViewConfiguration = WKWebViewConfiguration()
+    
     private var beforeFlexLoadEvalList : Array<BeforeFlexEval> = []
+    
     private var isFlexLoad = false
     private var isFirstPageLoad = false
+    
     private var isAutoCookieManage = false;
     private var cookieDefaultsName = "FlexCookieManage"
-    private var cookieKeys = "___cookieKeys"
+    private var cookieKeys = UUID().uuidString
     
     private var flexEventList : Array<(FlexEvent, FlexListener)> = []
-    
+        
     public func addEventListener(_ type: FlexEvent, _ listener: FlexListener) {
         flexEventList.append((type, listener))
     }
     
-    public func addEventListener(_ type: FlexEvent, _ closure: @escaping (_ type: FlexEvent, _ funcName: String, _ url: String) -> Void) {
+    public func addEventListener(_ type: FlexEvent, _ closure: @escaping (_ type: FlexEvent, _ funcName: String, _ url: String, _ msg: String?) -> Void) {
         flexEventList.append((type, FlexListener(closure)))
     }
     
@@ -110,7 +127,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         flexEventList.append((FlexEvent.INIT, listener))
     }
     
-    public func addEventListener(_ closure: @escaping (_ type: FlexEvent, _ funcName: String, _ url: String) -> Void) {
+    public func addEventListener(_ closure: @escaping (_ type: FlexEvent, _ funcName: String, _ url: String, _ msg: String?) -> Void) {
         addEventListener(FlexListener(closure))
     }
     
@@ -152,6 +169,10 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         config
     }
     
+    public var ShowWebViewConsole: Bool {
+        showWebViewConsole
+    }
+    
     public func setBaseUrl(_ url: String) {
         if isFirstPageLoad {
             FlexMsg.err(FlexString.ERROR1)
@@ -160,6 +181,10 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         } else {
             baseUrl = url
         }
+    }
+    
+    public func setShowWebViewConsole(_ enable: Bool) {
+        showWebViewConsole = enable
     }
     
     public func setInterfaceTimeout(_ timeout: Int) {
@@ -196,23 +221,29 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             do {
                 jsString = try String(contentsOfFile: Bundle.main.privateFrameworksPath! + "/FlexHybridApp.framework/FlexHybridiOS.js", encoding: .utf8)
                 var keys = ""
-                var defines = ""
                 keys.append("[\"")
-                defines.append("[\"")
                 keys.append(FlexString.FLEX_DEFINE.joined(separator: "\",\""))
-                defines.append(FlexString.FLEX_DEFINE.joined(separator: "\",\""))
                 if(interfaces.count > 0) {
                     keys.append("\",\"")
                     keys.append(interfaces.keys.joined(separator: "\",\""))
+                }
+                if(typeInterfaces.count > 0) {
+                    keys.append("\",\"")
+                    keys.append(typeInterfaces.keys.joined(separator: "\",\""))
                 }
                 if(actions.count > 0) {
                     keys.append("\",\"")
                     keys.append(actions.keys.joined(separator: "\",\""))
                 }
+                if(typeActions.count > 0) {
+                    keys.append("\",\"")
+                    keys.append(typeActions.keys.joined(separator: "\",\""))
+                }
                 keys.append("\"]")
-                defines.append("\"]")
+                jsString = jsString?.replacingOccurrences(of: "versionFromiOS", with: "'\(VERSION)'")
                 jsString = jsString?.replacingOccurrences(of: "keysfromios", with: keys)
-                jsString = jsString?.replacingOccurrences(of: "defineflexfromios", with: defines)
+                jsString = jsString?.replacingOccurrences(of: "defineflexfromios", with: try FlexFunc.convertValue(FlexString.FLEX_DEFINE))
+                jsString = jsString?.replacingOccurrences(of: "timesfromios", with: try FlexFunc.convertValue(iTimeouts))
                 jsString = jsString?.replacingOccurrences(of: "optionsfromios", with: try FlexFunc.convertValue(options))
                 jsString = jsString?.replacingOccurrences(of: "deviceinfofromios", with: try FlexFunc.convertValue(DeviceInfo.getInfo()))
                 jsString = jsString?.replacingOccurrences(of: "checkboolfromios", with: "'\(FlexString.CHECKBOOL)'")
@@ -222,7 +253,13 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                 for (n, _) in interfaces {
                     config.userContentController.add(self, name: n)
                 }
+                for (n, _) in typeInterfaces {
+                    config.userContentController.add(self, name: n)
+                }
                 for (n, _) in actions {
+                    config.userContentController.add(self, name: n)
+                }
+                for (n, _) in typeActions {
                     config.userContentController.add(self, name: n)
                 }
                 isFirstPageLoad = true
@@ -255,15 +292,15 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                 FlexMsg.err(FlexString.ERROR4)
                 return
             }
-            self.flexWebView?.evaluateJavaScript(js + ";void 0;", completionHandler: { (result, error) in
-                if error != nil {
-                    FlexMsg.err(error!.localizedDescription)
+            self.flexWebView?.evaluateJavaScript(js + ";void 0;", completionHandler: { _, Error in
+                if Error != nil {
+                    FlexMsg.info("EvaluateJS fail - \(Error?.localizedDescription ?? "")")
                 }
             })
         }
     }
                 
-    private func setInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Any?) {
+    public func setInterface(_ name: String, _ timeout: Int? = nil, _ interface: @escaping (_ arguments: [FlexData]) throws -> Any?) {
         if isFirstPageLoad {
             FlexMsg.err(FlexString.ERROR1)
         } else if interfaces[name] != nil || actions[name] != nil {
@@ -271,43 +308,18 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         } else if name.contains("flex") {
             FlexMsg.err(FlexString.ERROR2)
         } else {
+            if timeout != nil {
+                iTimeouts[name] = timeout
+            }
             interfaces[name] = interface
         }
     }
     
-    public func voidInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Void) {
-        setInterface(name, interface)
+    public func setInterface(_ name: String, _ interface: @escaping (_ arguments: [FlexData]) throws -> Any?) {
+        setInterface(name, nil, interface)
     }
     
-    public func intInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Int?) {
-        setInterface(name, interface)
-    }
-    
-    public func doubleInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Double?) {
-        setInterface(name, interface)
-    }
-    
-    public func floatInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Float?) {
-        setInterface(name, interface)
-    }
-    
-    public func boolInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Bool?) {
-        setInterface(name, interface)
-    }
-    
-    public func stringInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> String?) {
-        setInterface(name, interface)
-    }
-    
-    public func arrayInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Array<Any?>?) {
-        setInterface(name, interface)
-    }
-    
-    public func dictionaryInterface(_ name: String, _ interface: @escaping (_ arguments: Array<FlexData>) throws -> Dictionary<String,Any?>?) {
-        setInterface(name, interface)
-    }
-    
-    public func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: Array<FlexData>) -> Void) {
+    public func setInterface<T: Decodable>(_ name: String, _ timeout: Int? = nil, _ interface: @escaping (_ model: T?) throws -> Any?) {
         if isFirstPageLoad {
             FlexMsg.err(FlexString.ERROR1)
         } else if interfaces[name] != nil || actions[name] != nil {
@@ -315,15 +327,64 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         } else if name.contains("flex") {
             FlexMsg.err(FlexString.ERROR2)
         } else {
+            if timeout != nil {
+                iTimeouts[name] = timeout
+            }
+            typeInterfaces[name] = { dic in
+                try interface(dic.toObject(T.self))
+            }
+        }
+    }
+    
+    public func setInterface<T: Decodable>(_ name: String, _ interface: @escaping (_ model: T?) throws -> Any?) {
+        setInterface(name, nil, interface)
+    }
+    
+    public func setAction(_ name: String, _ timeout: Int? = nil, _ action: @escaping (_ action: FlexAction, _ arguments: [FlexData]) -> Void) {
+        if isFirstPageLoad {
+            FlexMsg.err(FlexString.ERROR1)
+        } else if interfaces[name] != nil || actions[name] != nil {
+            FlexMsg.err(FlexString.ERROR5)
+        } else if name.contains("flex") {
+            FlexMsg.err(FlexString.ERROR2)
+        } else {
+            if timeout != nil {
+                iTimeouts[name] = timeout
+            }
             actions[name] = action
         }
+    }
+    
+    public func setAction(_ name: String, _ action: @escaping (_ action: FlexAction, _ arguments: [FlexData]) -> Void) {
+        setAction(name, nil, action)
+    }
+    
+    public func setAction<T: Decodable>(_ name: String, _ timeout: Int? = nil, _ action: @escaping (_ action: FlexAction, _ model: T?) -> Void) {
+        if isFirstPageLoad {
+            FlexMsg.err(FlexString.ERROR1)
+        } else if interfaces[name] != nil || actions[name] != nil {
+            FlexMsg.err(FlexString.ERROR5)
+        } else if name.contains("flex") {
+            FlexMsg.err(FlexString.ERROR2)
+        } else {
+            if timeout != nil {
+                iTimeouts[name] = timeout
+            }
+            typeActions[name] = { ac, dic in
+                action(ac, dic.toObject(T.self))
+            }
+        }
+    }
+    
+    public func setAction<T: Decodable>(_ name: String, _ action: @escaping (_ action: FlexAction, _ model: T?) -> Void) {
+        setAction(name, nil, action)
     }
         
     public func evalFlexFunc(_ funcName: String) {
         if(!isFlexLoad) {
             beforeFlexLoadEvalList.append(BeforeFlexEval(funcName))
         } else {
-            evalJS("!function(){try{const a=$flex.web.\(funcName)();a instanceof Promise&&a.then(function(){$flex.flexreturn({Name:'\(funcName)',Url:location.href,Error:0})}).catch(function(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,Value:a.name+': '+a.message,Error:1})})}catch(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,Value:a.name+': '+a.message,Error:1})}}();")
+            evalJS("!function() {try {const a = $flex.web.\(funcName)();if (a instanceof Promise) {a.then(function(a) {$flex.flexSuccess('web.\(funcName)', location.href, a);}).catch(function(a) {$flex.flexException('web.\(funcName)', location.href, a.toString());})} else {$flex.flexSuccess('web.\(funcName)', location.href, a);}} catch (a) {$flex.flexException('web.\(funcName)', location.href, a.toString());}}();")
         }
     }
     
@@ -333,7 +394,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         } else {
             let TID = Int.random(in: 1..<10000)
             returnFromWeb[TID] = returnAs
-            evalJS("!function(){try{const a=$flex.web.\(funcName)();a instanceof Promise&&a.then(function(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a,Error:0})}).catch(function(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a.name+': '+a.message,Error:1})})}catch(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a.name+': '+a.message,Error:1})}}();")
+            evalJS("!function() {try {const a = $flex.web.\(funcName)();if (a instanceof Promise) {a.then(function(a) {$flex.flexSuccess('web.\(funcName)', location.href, a);$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a,Error:0});}).catch(function(a) {$flex.flexException('web.\(funcName)', location.href, a.toString());$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a,Error:1});})} else {$flex.flexSuccess('web.\(funcName)', location.href, a);$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a,Error:0});}} catch (a) {$flex.flexException('web.\(funcName)', location.href, a.toString());$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a,Error:1});}}();")
         }
     }
     
@@ -342,7 +403,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             beforeFlexLoadEvalList.append(BeforeFlexEval(funcName, sendData))
         } else {
             do {
-                evalJS("!function(){try{const a=$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));a instanceof Promise&&a.then(function(){$flex.flexreturn({Name:'\(funcName)',Url:location.href,Error:0})}).catch(function(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,Value:a.name+': '+a.message,Error:1})})}catch(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,Value:a.name+': '+a.message,Error:1})}}();")
+                evalJS("!function() {try {const a = $flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));if (a instanceof Promise) {a.then(function(a) {$flex.flexSuccess('web.\(funcName)', location.href, a);}).catch(function(a) {$flex.flexException('web.\(funcName)', location.href, a.toString());})} else {$flex.flexSuccess('web.\(funcName)', location.href, a);}} catch (a) {$flex.flexException('web.\(funcName)', location.href, a.toString());}}();")
             } catch FlexError.UnuseableTypeCameIn {
                 FlexMsg.err(FlexString.ERROR3)
             } catch {
@@ -358,7 +419,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             do {
                 let TID = Int.random(in: 1..<10000)
                 returnFromWeb[TID] = returnAs
-                evalJS("!function(){try{const a=$flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));a instanceof Promise&&a.then(function(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a,Error:0})}).catch(function(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a.name+': '+a.message,Error:1})})}catch(a){$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a.name+': '+a.message,Error:1})}}();")
+                evalJS("!function() {try {const a = $flex.web.\(funcName)(\(try FlexFunc.convertValue(sendData)));if (a instanceof Promise) {a.then(function(a) {$flex.flexSuccess('web.\(funcName)', location.href, a);$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a,Error:0});}).catch(function(a) {$flex.flexException('web.\(funcName)', location.href, a.toString());$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a,Error:1});})} else {$flex.flexSuccess('web.\(funcName)', location.href, a);$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a,Error:0});}} catch (a) {$flex.flexException('web.\(funcName)', location.href, a.toString());$flex.flexreturn({Name:'\(funcName)',Url:location.href,TID:\(TID),Value:a,Error:1});}}();")
             } catch FlexError.UnuseableTypeCameIn {
                 FlexMsg.err(FlexString.ERROR3)
             } catch {
@@ -387,16 +448,18 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                 queue.async {
                     switch(mName) {
                     // WebLogs
-                    case FlexString.FLEX_DEFINE[0], FlexString.FLEX_DEFINE[1], FlexString.FLEX_DEFINE[2], FlexString.FLEX_DEFINE[3]:
-                        FlexMsg.webLog(mName, data["arguments"] as! Array<Any?>)
+                    case FlexString.FLOG_LOG, FlexString.FLOG_INFO, FlexString.FLOG_DEBUG, FlexString.FLOG_ERROR:
+                        if self.showWebViewConsole {
+                            FlexMsg.webLog(mName, data["arguments"] as! [Any?])
+                        }
                         self.evalJS("$flex.flex.\(fName)(true)")
                     // $flex.web func return
-                    case FlexString.FLEX_DEFINE[4]:
+                    case FlexString.FLEX_RETURN:
                         let webData = data["arguments"] as! Array<Dictionary<String, Any?>>
                         let iData = webData[0]
                         let TID = (iData["TID"] as? Int) ?? 0
-                        let url = iData["Url"] as! String
-                        let funcName = iData["Name"] as! String
+                        _ = iData["Url"] as! String
+                        _ = iData["Name"] as! String
                         let value = iData["Value"] as Any?
                         let error = iData["Error"] as! Int
                         if(error == 1) {
@@ -405,23 +468,13 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                                 errMsg = value as? String
                             }
                             self.returnFromWeb[TID]?(FlexFunc.anyToFlexData(BrowserException(errMsg)))
-                            self.flexEventList.forEach { (tuple) in
-                                if tuple.0 == FlexEvent.EXCEPTION {
-                                    tuple.1.closure(FlexEvent.EXCEPTION, "web.\(funcName)", url)
-                                }
-                            }
                         } else {
                             self.returnFromWeb[TID]?(FlexFunc.anyToFlexData(value))
-                            self.flexEventList.forEach { (tuple) in
-                                if tuple.0 == FlexEvent.SUCCESS {
-                                    tuple.1.closure(FlexEvent.SUCCESS, "web.\(funcName)", url)
-                                }
-                            }
                         }
                         self.returnFromWeb[TID] = nil
                         self.evalJS("$flex.flex.\(fName)(true)")
                     // flexload
-                    case FlexString.FLEX_DEFINE[5]:
+                    case FlexString.FLEX_LOAD:
                         if self.isFlexLoad {
                             self.evalJS("$flex.flex.\(fName)(true)")
                             break
@@ -441,38 +494,42 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                         self.beforeFlexLoadEvalList.removeAll()
                         self.evalJS("$flex.flex.\(fName)(true)")
                     // events
-                    case FlexString.FLEX_DEFINE[6], FlexString.FLEX_DEFINE[7], FlexString.FLEX_DEFINE[8], FlexString.FLEX_DEFINE[9]:
+                    case FlexString.EVT_EXC, FlexString.EVT_SUC, FlexString.EVT_INIT, FlexString.EVT_TINEOUT:
                         self.evalJS("$flex.flex.\(fName)(true)")
-                        let args = data["arguments"] as! Array<String>
-                        let funcName = args[0]
-                        let url = args[1]
+                        guard let args = data["arguments"] as? [Any?] else { return }
+                        guard let funcName = args[0] as? String else { return }
+                        guard let url = args[1] as? String else { return }
+                        var msg: String? = nil
+                        if args.count > 2 {
+                            msg = FlexFunc.anyToFlexData(args[2]).toString()
+                        }
                         let type : FlexEvent
                         switch mName {
-                        case FlexString.FLEX_DEFINE[6]:
+                        case FlexString.EVT_SUC:
                             type = FlexEvent.SUCCESS
-                        case FlexString.FLEX_DEFINE[7]:
+                        case FlexString.EVT_EXC:
                             type = FlexEvent.EXCEPTION
-                        case FlexString.FLEX_DEFINE[8]:
+                        case FlexString.EVT_TINEOUT:
                             type = FlexEvent.TIMEOUT
-                        case FlexString.FLEX_DEFINE[9]:
+                        case FlexString.EVT_INIT:
                             type = FlexEvent.INIT
                         default:
                             type = FlexEvent.EXCEPTION
                         }
                         self.flexEventList.forEach { (tuple) in
                             if tuple.0 == type {
-                                tuple.1.closure(type, funcName, url)
+                                tuple.1.closure(type, funcName, url, msg)
                             }
                         }
                     default:
                         break
                     }
                 }
-            } else if interfaces[mName] != nil {
+            } else if let _closure = interfaces[mName] {
                 // user interface
                 queue.async {
                     do {
-                        let value: Any? = try self.interfaces[mName]!(FlexFunc.arrayToFlexData(data["arguments"] as? Array<Any?>))
+                        let value: Any? = try _closure(FlexFunc.arrayToFlexData(data["arguments"] as? [Any?]))
                         if value is BrowserException {
                             let reason = (value as! BrowserException).reason == nil ? "null" : "\"\((value as! BrowserException).reason!)\""
                             self.evalJS("$flex.flex.\(fName)(false, \(reason))")
@@ -489,13 +546,45 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                         self.evalJS("$flex.flex.\(fName)(false, \"\(error.localizedDescription)\")")
                     }
                 }
-            } else if actions[mName] != nil {
+            } else if let _closure = typeInterfaces[mName] {
+                // user interface
+                queue.async {
+                    do {
+                        let value: Any? = try _closure(FlexFunc.singleArrayToDictionary(data["arguments"] as? [Any?]) ?? [:])
+                        if value is BrowserException {
+                            let reason = (value as! BrowserException).reason == nil ? "null" : "\"\((value as! BrowserException).reason!)\""
+                            self.evalJS("$flex.flex.\(fName)(false, \(reason))")
+                        } else if value == nil || value is Void {
+                            self.evalJS("$flex.flex.\(fName)(true)")
+                        } else {
+                            self.evalJS("$flex.flex.\(fName)(true, null, \(try FlexFunc.convertValue(value!)))")
+                        }
+                    } catch FlexError.UnuseableTypeCameIn {
+                        FlexMsg.err(FlexString.ERROR3)
+                        self.evalJS("$flex.flex.\(fName)(false, \"\(FlexString.ERROR3)\")")
+                    } catch {
+                        FlexMsg.err(error)
+                        self.evalJS("$flex.flex.\(fName)(false, \"\(error.localizedDescription)\")")
+                    }
+                }
+            } else if let _action = actions[mName] {
                 // user action interface
                 queue.async {
-                    self.actions[mName]!(FlexAction(fName, self), FlexFunc.arrayToFlexData(data["arguments"] as? Array<Any?>))
+                    _action(FlexAction(fName, self), FlexFunc.arrayToFlexData(data["arguments"] as? [Any?]))
+                }
+            } else if let _action = typeActions[mName] {
+                queue.async {
+                    do {
+                        _action(FlexAction(fName, self), try FlexFunc.singleArrayToDictionary(data["arguments"] as? [Any?]) ?? [:])
+                    } catch FlexError.UnuseableTypeCameIn {
+                        FlexMsg.err(FlexString.ERROR3)
+                        self.evalJS("$flex.flex.\(fName)(false, \"\(FlexString.ERROR3)\")")
+                    } catch {
+                        FlexMsg.err(error)
+                        self.evalJS("$flex.flex.\(fName)(false, \"\(error.localizedDescription)\")")
+                    }
                 }
             }
-            
         }
     }
     
@@ -521,7 +610,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             saveCookie()
         }
         if baseUrl == nil || (baseUrl != nil && webView.url != nil && webView.url!.absoluteString.contains(baseUrl!)) {
-            evalJS("if(typeof window.$flex === 'undefined') { \(jsString!) }")
+            evalJS("if(typeof window.$flex === 'undefined' || window.$flex.isScript) { \(jsString!) }")
             evalJS("const evalFrames=e=>{for(let o=0;o<e.frames.length;o++){if(void 0===e.frames[o].$flex){Object.defineProperty(e.frames[o],\"$flex\",{value:window.$flex,writable:!1,enumerable:!0});let n=void 0;\"function\"==typeof e.frames[o].onFlexLoad&&(n=e.frames[o].onFlexLoad),Object.defineProperty(e.frames[o],\"onFlexLoad\",{set:function(e){window.onFlexLoad=e},get:function(){return window._onFlexLoad}}),\"function\"==typeof n&&(e.frames[o].onFlexLoad=n)}evalFrames(e.frames[o])}};evalFrames(window);")
             dependencies.forEach { (js) in
                 evalJS("if(typeof window.$FCheck === 'undefined') { \(js) }")
@@ -564,7 +653,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         }
         if (navigationResponse.response is HTTPURLResponse) {
             let response = navigationResponse.response as? HTTPURLResponse
-            FlexMsg.log(String(format: "response.statusCode: %ld", response?.statusCode ?? 0))
+            FlexMsg.info(String(format: "response.statusCode: %ld", response?.statusCode ?? 0))
         }
         (userNavigation?.webView ?? inWeb)(webView, navigationResponse, decisionHandler)
     }
@@ -586,11 +675,13 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             decisionHandler(.allow)
         } else {
             if let aString = URL(string: (navigationAction.request.url?.absoluteString)!) {
-                if UIApplication.shared.openURL(aString) {
-                    FlexMsg.log("Opend \(navigationAction.request.url?.absoluteString ?? "")")
-                } else {
-                    FlexMsg.err("Failed \(navigationAction.request.url?.absoluteString ?? "")")
-                }
+                UIApplication.shared.open(aString, options: [:], completionHandler: {success in
+                    if success {
+                        FlexMsg.info("Opend \(navigationAction.request.url?.absoluteString ?? "")")
+                    } else {
+                        FlexMsg.err("Failed \(navigationAction.request.url?.absoluteString ?? "")")
+                    }
+                })
             }
             decisionHandler(.cancel)
         }
@@ -609,7 +700,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             if let aString = URL(string: (navigationAction.request.url?.absoluteString)!) {
                 UIApplication.shared.open(aString, options: [:], completionHandler: {success in
                     if success {
-                        FlexMsg.log("Opend \(navigationAction.request.url?.absoluteString ?? "")")
+                        FlexMsg.info("Opend \(navigationAction.request.url?.absoluteString ?? "")")
                     } else {
                         FlexMsg.err("Failed \(navigationAction.request.url?.absoluteString ?? "")")
                     }
