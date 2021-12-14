@@ -1,5 +1,8 @@
 (function() {
     "use strict";
+    if (window.$flex && window.$flex.isScript === false) {
+        return;
+    }
     const keys = keysfromios;
     const timeouts = timesfromios;
     const options = optionsfromios;

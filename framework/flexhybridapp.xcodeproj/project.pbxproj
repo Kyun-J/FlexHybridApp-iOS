@@ -83,7 +83,7 @@
 				DF5F181B2444737D00BE44F4 /* flexhybridapp.h */,
 				DF5F181C2444737D00BE44F4 /* Info.plist */,
 				DF5F1823244473A700BE44F4 /* FlexWebView.swift */,
-				DFF4991C274F7B860031E85E /* FlexUtil */,
+				DFF4991C274F7B860031E85E /* util */,
 				DF85F11925CD22820020C9BE /* FlexEvent.swift */,
 				DFA5032824FE4461002DDFBE /* FlexAction.swift */,
 				DFA5032A24FE4521002DDFBE /* BrowserException.swift */,
@@ -103,7 +103,7 @@
 			path = js;
 			sourceTree = "<group>";
 		};
-		DFF4991C274F7B860031E85E /* FlexUtil */ = {
+		DFF4991C274F7B860031E85E /* util */ = {
 			isa = PBXGroup;
 			children = (
 				DFF4991D274F7BA10031E85E /* FlexError.swift */,
@@ -113,7 +113,7 @@
 				DFF49925274F7C600031E85E /* DeviceInfo.swift */,
 				DFF49927274F7D5A0031E85E /* CodableExtension.swift */,
 			);
-			path = FlexUtil;
+			path = util;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

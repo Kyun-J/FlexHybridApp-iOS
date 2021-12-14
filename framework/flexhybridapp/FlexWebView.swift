@@ -9,7 +9,7 @@
 import Foundation
 import WebKit
 
-private let VERSION = Bundle(identifier: "app.dvkyun.flexhybridapp")?.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+fileprivate let VERSION = Bundle(identifier: "app.dvkyun.flexhybridapp")?.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
 
 @IBDesignable
 open class FlexWebView : WKWebView {
@@ -93,6 +93,9 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     
     private var jsString: String? = nil
     private var baseUrl: String? = nil
+    private var allowUrlMap: [String: Bool] = [:]
+    private var recentConfigRuleString: String? = nil
+    
     private var showWebViewConsole = true
     
     private var userNavigation: WKNavigationDelegate? = nil
@@ -101,7 +104,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     
     internal var config: WKWebViewConfiguration = WKWebViewConfiguration()
     
-    private var beforeFlexLoadEvalList : Array<BeforeFlexEval> = []
+    private var beforeFlexLoadEvalList : [BeforeFlexEval] = []
     
     private var isFlexLoad = false
     private var isFirstPageLoad = false
@@ -161,7 +164,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         baseUrl
     }
     
-    public var FlexWebView: FlexWebView? {
+    public var webView: FlexWebView? {
         flexWebView
     }
        
@@ -180,6 +183,61 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             FlexMsg.err(FlexString.ERROR6)
         } else {
             baseUrl = url
+        }
+    }
+    
+    @available(iOS 11.0, *)
+    public func setAllowUrl(_ urlString: String, canFlexLoad: Bool = false) {
+        allowUrlMap[urlString] = canFlexLoad
+        configAllowContentRule()
+    }
+    
+    @available(iOS 11.0, *)
+    public func removeAllowUrl(_ urlString: String) {
+        allowUrlMap.removeValue(forKey: urlString)
+        if allowUrlMap.count == 0 {
+            config.userContentController.removeAllContentRuleLists()
+        } else {
+            configAllowContentRule()
+        }
+    }
+    
+    @available(iOS 11.0, *)
+    private func configAllowContentRule() {
+        var rule = [["trigger":["url-filter":".*"],"action":["type":"block"]]]
+        if let _baseUrl = baseUrl {
+            rule.append(["trigger":["url-filter":"\(_baseUrl)"],"action":["type":"ignore-previous-rules"]])
+        }
+        for _urlString in allowUrlMap.keys {
+            rule.append(["trigger":["url-filter":"\(_urlString)"],"action":["type":"ignore-previous-rules"]])
+        }
+        
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: rule, options: []) else {
+            return
+        }
+        let ruleString = String(data: jsonData, encoding: String.Encoding.utf8)
+        
+        recentConfigRuleString = ruleString
+        
+        WKContentRuleListStore.default()?.compileContentRuleList(
+            forIdentifier: "ContentRuleList",
+            encodedContentRuleList: ruleString
+        ) { (contentRuleList, error) in
+            if self.recentConfigRuleString != ruleString {
+                return
+            }
+            
+            if error != nil {
+                return
+            }
+            guard let contentRuleList = contentRuleList else {
+                return
+            }
+            
+            let configuration = self.config
+            
+            configuration.userContentController.removeAllContentRuleLists()
+            configuration.userContentController.add(contentRuleList)
         }
     }
     
@@ -591,16 +649,27 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     /*
      WKNavigationDelegate
      */
-        
     public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        if baseUrl == nil || (baseUrl != nil && webView.url != nil && webView.url!.absoluteString.contains(baseUrl!)) {
-            isFlexLoad = false
-            flexInterfaceInit()
-            evalJS(jsString!)
-            dependencies.forEach { (js) in
-                evalJS(js)
+        if let url = webView.url {
+            var needFlexLoad = false
+            if baseUrl == nil || (baseUrl != nil && url.absoluteString.contains(baseUrl!)) {
+                needFlexLoad = true
             }
-            evalJS("window.$FCheck = true;")
+            for (pattern, canLoadFlex) in allowUrlMap {
+                if url.absoluteString.range(of: pattern, options: .regularExpression) != nil {
+                    needFlexLoad = canLoadFlex
+                    break
+                }
+            }
+            if needFlexLoad {
+                isFlexLoad = false
+                flexInterfaceInit()
+                evalJS(jsString ?? "")
+                dependencies.forEach { (js) in
+                    evalJS(js)
+                }
+                evalJS("window.$FCheck = true;")
+            }
         }
         userNavigation?.webView?(webView, didCommit: navigation)
     }
@@ -609,11 +678,23 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
         if #available(iOS 11.0, *), isAutoCookieManage {
             saveCookie()
         }
-        if baseUrl == nil || (baseUrl != nil && webView.url != nil && webView.url!.absoluteString.contains(baseUrl!)) {
-            evalJS("if(typeof window.$flex === 'undefined' || window.$flex.isScript) { \(jsString!) }")
-            evalJS("const evalFrames=e=>{for(let o=0;o<e.frames.length;o++){if(void 0===e.frames[o].$flex){Object.defineProperty(e.frames[o],\"$flex\",{value:window.$flex,writable:!1,enumerable:!0});let n=void 0;\"function\"==typeof e.frames[o].onFlexLoad&&(n=e.frames[o].onFlexLoad),Object.defineProperty(e.frames[o],\"onFlexLoad\",{set:function(e){window.onFlexLoad=e},get:function(){return window._onFlexLoad}}),\"function\"==typeof n&&(e.frames[o].onFlexLoad=n)}evalFrames(e.frames[o])}};evalFrames(window);")
-            dependencies.forEach { (js) in
-                evalJS("if(typeof window.$FCheck === 'undefined') { \(js) }")
+        if let url = webView.url {
+            var needFlexLoad = false
+            if baseUrl == nil || (baseUrl != nil && url.absoluteString.contains(baseUrl!)) {
+                needFlexLoad = true
+            }
+            for (pattern, canLoadFlex) in allowUrlMap {
+                if url.absoluteString.range(of: pattern, options: .regularExpression) != nil {
+                    needFlexLoad = canLoadFlex
+                    break
+                }
+            }
+            if needFlexLoad {
+                evalJS("if(typeof window.$flex === 'undefined' || window.$flex.isScript) { \(jsString ?? "") }")
+                evalJS("setTimeout(()=>{const evalFrames=e=>{for(let o=0;o<e.frames.length;o++){if(void 0===e.frames[o].$flex){Object.defineProperty(e.frames[o],\"$flex\",{value:window.$flex,writable:!1,enumerable:!0});let n=void 0;\"function\"==typeof e.frames[o].onFlexLoad&&(n=e.frames[o].onFlexLoad),Object.defineProperty(e.frames[o],\"onFlexLoad\",{set:function(e){window.onFlexLoad=e},get:function(){return window._onFlexLoad}}),\"function\"==typeof n&&(e.frames[o].onFlexLoad=n)}evalFrames(e.frames[o])}};evalFrames(window);},0);")
+                dependencies.forEach { (js) in
+                    evalJS("if(typeof window.$FCheck === 'undefined') { \(js) }")
+                }
             }
         }
         userNavigation?.webView?(webView, didFinish: navigation)
@@ -713,7 +794,6 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     /*
     UIScrollViewDelegate
     */
-    
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
         if !flexWebView!.enableScroll {
             scrollView.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
