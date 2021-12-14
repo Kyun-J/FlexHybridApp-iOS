@@ -18,11 +18,11 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     enum TestError: Error {
         case test
     }
-    
-    let testReceive = FlexClosure.array { (arguments) -> Array<Any?>? in
+        
+    let testReceive = FlexClosure.interface { (arguments) in
         let data = arguments[0].asDictionary()!
         let dicData: [String:FlexData] = data["d2"]!.reified()!
-        print("\(data["d1"]!.asInt()!) \(String(describing: dicData["data"]?.toString()))")
+        print("\(data["d1"]!.asInt()!) \(String(describing: dicData["data"]!.toString()))")
         var returnValue: [Any?] = []
         returnValue.append(10)
         returnValue.append(24123.54235234)
@@ -44,6 +44,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         returnValue["key1"] = "value1\ntest"
         returnValue["key2"] = dictionaryValue
         returnValue["key3"] = ["arrayValue1",nil]
+        returnValue["key4"] = true
         // Promise return to Web
         // PromiseReturn can be called at any time.
         action.promiseReturn(returnValue)
@@ -52,44 +53,87 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     override func viewDidLoad() {
         super.viewDidLoad()
                 
+        component.addEventListener { (type, funcName, url, msg) in
+            var typeTxt = "";
+            if type == FlexEvent.SUCCESS {
+                typeTxt = "SUCCESS"
+            } else if type == FlexEvent.TIMEOUT {
+                typeTxt = "TIMEOUT"
+            } else if type == FlexEvent.EXCEPTION {
+                typeTxt = "EXCEPTION"
+            } else if type == FlexEvent.INIT {
+                typeTxt = "INIT"
+            }
+            print("\nEVENT --------- \(typeTxt)")
+            print("FUNCTUIN ------ $flex.\(funcName)")
+//            print("URL ----------- \(url)")
+            print("MSG ----------- \(msg ?? "nil")\n")
+        }
+                                
         // add js interface
-        component.intInterface("test1")
-        { (arguments) -> Int in
+        component.setInterface("test1")
+        { (arguments) in
             // code works in background...
             return arguments[0].asInt()! + 1
         }
-        component.voidInterface("test2")
-        { (arguments) -> Void in
+        component.setInterface("test2")
+        { (arguments) in
             // code works in background...
             
             // call $flex.web function
             // same as $flex.web.help("Help me Flex!") in js
             self.mWebView.evalFlexFunc("help", sendData: "Help me Flex!")
-            { (value) -> Void in
+            { (value) in
                 // Retrun from $flex.web.help func
                 let arr = value.asArray()!
                 let data1: String = arr[0].reified()!
-                let data2: String? = arr[1].reified()
+                let data2: Bool = arr[1].reified()!
                 print("Web Func Retrun ---------------")
-                print("\(data1) \(data2 ?? "this is null")")
+                print("\(data1) \(data2)")
                 print("-------------------------------")
             }
         }
         
-        component.arrayInterface("testReceive", testReceive)
+        component.setInterface("testReceive", nil, testReceive)
                 
         // add FlexAction
-        component.setAction("testAction", testAction)
+        component.setAction("testAction", nil, testAction)
         
         // test JS Reject
-        component.dictionaryInterface("testReject1")
-        { arguemnts -> Dictionary<String,Any?> in
+        component.setInterface("testReject1")
+        { arguemnts in
             throw TestError.test
         }
         
         component.setAction("testReject2")
-        { (action, arguemnts) -> Void in
+        { (action, arguemnts) in
             action.reject()
+        }
+        
+        component.setAction("modelTest1")
+        { (action, model: TestModel1?) in
+            print("Model Test 1 ------------")
+            print("\(String(describing: model?.string)) \(String(describing: model?.integer))")
+            print("-------------------------")
+            action.promiseReturn()
+        }
+        
+        component.setInterface("modelTest2")
+        { (model: TestModel2?) -> Void in
+            print("Model Test 2 ------------")
+            print("\(String(describing: model?.array)) \(String(describing: model?.dic))")
+            print("\(String(describing: model?.model.bool))")
+            print("-------------------------")
+        }
+        
+//        component.setInterface("modelTest3")
+//        { arguments -> TestModel2 in
+//            return TestModel2(array: ["test1"], dic: ["test2": "test3"], model: TestModel3(bool: true))
+//        }
+        
+        component.setAction("modelTest3")
+        { (action, arguments) in
+            action.promiseReturn(TestModel2(array: ["test1"], dic: ["test2": "test3"], model: TestModel3(bool: true)))
         }
         
         component.evalFlexFunc("directTest") { value -> Void in
@@ -98,9 +142,12 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         
         // setBaseUrl
         component.setBaseUrl("file://")
+        component.setAllowUrl(".*.facebook.com", canFlexLoad: false)
+        component.setAllowUrl(".*.google.com", canFlexLoad: true)
         component.setInterfaceTimeout(0)
-        component.setFlexOnloadWait(0)
+//        component.setFlexOnloadWait(0)
         component.setAllowsUrlAccessInFile(true)
+        component.setShowWebViewConsole(true)
         
         mWebView = FlexWebView(frame: self.view.frame, component: component)
         
@@ -145,18 +192,18 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
     }
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        print("user navigationDelegate")
+        print("--------- user navigationDelegate")
     }
     
     @available(iOS 13.0, *)
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, preferences: WKWebpagePreferences, decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
-        print("user decidePolicyFor")
+        print("--------- user decidePolicyFor")
         decisionHandler(.allow, preferences)
     }
     
         
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        print("userCC")
+        print("-------- userContentController")
     }
 
 }

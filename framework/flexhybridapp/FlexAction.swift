@@ -12,10 +12,10 @@ public class FlexAction {
     
     private let funcName: String
     private let mComponent: FlexComponent
-    private var isCall = false
+    private var _isFinished = false
     
     public var isFinished: Bool {
-        isCall
+        _isFinished
     }
     public var onFinished: (() -> Void)? = nil
     
@@ -25,7 +25,7 @@ public class FlexAction {
     }
     
     private func pRetrun(_ response: Any?) {
-        if isCall {
+        if _isFinished {
             FlexMsg.err(FlexString.ERROR7)
             return
         }
@@ -88,12 +88,16 @@ public class FlexAction {
         pRetrun(response)
     }
     
+    public func promiseReturn(_ response: Encodable) {
+        pRetrun(response)
+    }
+    
     public func promiseReturn() {
         resolveVoid()
     }
     
     public func resolveVoid() {
-        if isCall {
+        if _isFinished {
             FlexMsg.err(FlexString.ERROR7)
             return
         }
@@ -102,17 +106,17 @@ public class FlexAction {
     }
     
     public func reject(reason: BrowserException) {
-        if isCall {
+        if _isFinished {
             FlexMsg.err(FlexString.ERROR7)
             return
         }
-        isCall = true
+        _isFinished = true
         let rejectReson = reason.reason == nil ? "null" : "\"\(reason.reason!)\""
         mComponent.evalJS("$flex.flex.\(funcName)(false, \(rejectReson))")
     }
     
     public func reject(reason: String) {
-        if isCall {
+        if _isFinished {
             FlexMsg.err(FlexString.ERROR7)
             return
         }
@@ -121,7 +125,7 @@ public class FlexAction {
     }
     
     public func reject() {
-        if isCall {
+        if _isFinished {
             FlexMsg.err(FlexString.ERROR7)
             return
         }
@@ -130,7 +134,7 @@ public class FlexAction {
     }
     
     private func finish() {
-        isCall = true
+        _isFinished = true
         onFinished?()
     }
     
