@@ -3,12 +3,6 @@
 
 [Android Version](https://github.com/Kyun-J/FlexHybridApp-Android)
 
-# ToDo
-
-1. Interface Event Listener (working)
-2. Interface using Model (under consideration)
-3. <u>*Flutter version of FlexHybirdApp*</u> (in progress)
-
 # FlexibleHybrid
 
 FlexibleHybridApp is a framework that provides various convenience functions to develop HybridApp, such as implementing interfaces between Web and Native with promises.

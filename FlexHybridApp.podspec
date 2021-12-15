@@ -9,14 +9,14 @@
 Pod::Spec.new do |spec|
 
   spec.name         = "FlexHybridApp"
-  spec.version      = "0.6.3.1"
+  spec.version      = "1.0.1"
   spec.summary      = "FlexibleHybridApp-iOS"
-  spec.ios.deployment_target = '9.0'
-  spec.swift_version = '5.3.2'
+  spec.ios.deployment_target = '10.0'
+  spec.swift_version = '5.5.1'
   spec.author        = { "Kyun-J" => "dvkyun@gmail.com" }
   spec.source       = { :git => "https://github.com/Kyun-J/FlexHybridApp-iOS.git", :tag => "#{spec.version}" }
   spec.license      = { :type => "BSD", :file => "license" }
-  spec.source_files = "framework/flexhybridapp/*.{swift,xib}"
+  spec.source_files = "framework/flexhybridapp/*.{swift,xib}", "framework/flexhybridapp/util/*.swift"
   spec.resources = "framework/flexhybridapp/js/*.js"
   spec.description  = <<-DESC
   FlexibleHybridApp iOS Version
