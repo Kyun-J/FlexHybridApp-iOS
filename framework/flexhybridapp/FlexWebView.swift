@@ -95,6 +95,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     private var baseUrl: String? = nil
     private var allowUrlMap: [String: Bool] = [:]
     private var recentConfigRuleString: String? = nil
+    private var applyContentRuleList: Any? = nil
     
     private var showWebViewConsole = true
     
@@ -196,7 +197,9 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     public func removeAllowUrl(_ urlString: String) {
         allowUrlMap.removeValue(forKey: urlString)
         if allowUrlMap.count == 0 {
-            config.userContentController.removeAllContentRuleLists()
+            if let _applyContentRuleList = applyContentRuleList as? WKContentRuleList {
+                config.userContentController.remove(_applyContentRuleList)
+            }
         } else {
             configAllowContentRule()
         }
@@ -233,11 +236,14 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
             guard let contentRuleList = contentRuleList else {
                 return
             }
-            
+                        
             let configuration = self.config
             
-            configuration.userContentController.removeAllContentRuleLists()
+            if let _applyContentRuleList = self.applyContentRuleList as? WKContentRuleList {
+                configuration.userContentController.remove(_applyContentRuleList)
+            }
             configuration.userContentController.add(contentRuleList)
+            self.applyContentRuleList = contentRuleList
         }
     }
     
