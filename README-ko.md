@@ -314,13 +314,13 @@ component.setBaseUrl(".*.myurl.com")
 AllowUrlList을 설정하면, 설정된 url들과 BaseUrl을 제외한 모든 url의 접근이 차단됩니다.  
 
 ```swift
-flexWebView.addAllowUrl(".*.myurl.com")
+component.setAllowUrl(".*.myurl.com")
 ```
 
-URL설정 시 인터페이스를 허용하려면 addAllowUrl함수의 두번째 canFlexLoad 프로퍼티에 true를 추가하면 됩니다.
+URL설정 시 인터페이스를 허용하려면 setAllowUrl함수의 두번째 canFlexLoad 프로퍼티에 true를 추가하면 됩니다.
 
 ```swift
-flexWebView.addAllowUrl(".*.myurl.com", canFlexLoad: true)
+component.setAllowUrl(".*.myurl.com", canFlexLoad: true)
 ```
 
 ## cookie 유지
