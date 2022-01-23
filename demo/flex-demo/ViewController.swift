@@ -82,7 +82,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             
             // call $flex.web function
             // same as $flex.web.help("Help me Flex!") in js
-            self.mWebView.evalFlexFunc("help", sendData: "Help me Flex!")
+            self.component.evalFlexFunc("help", sendData: "Help me Flex!")
             { (value) in
                 // Retrun from $flex.web.help func
                 let arr = value.asArray()!
@@ -94,10 +94,10 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             }
         }
         
-        component.setInterface("testReceive", nil, testReceive)
+        component.setInterface("testReceive", testReceive)
                 
         // add FlexAction
-        component.setAction("testAction", nil, testAction)
+        component.setAction("testAction", testAction)
         
         // test JS Reject
         component.setInterface("testReject1")
@@ -126,15 +126,15 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
             print("-------------------------")
         }
         
-//        component.setInterface("modelTest3")
-//        { arguments -> TestModel2 in
-//            return TestModel2(array: ["test1"], dic: ["test2": "test3"], model: TestModel3(bool: true))
-//        }
-        
-        component.setAction("modelTest3")
-        { (action, arguments) in
-            action.promiseReturn(TestModel2(array: ["test1"], dic: ["test2": "test3"], model: TestModel3(bool: true)))
+        component.setInterface("modelTest3")
+        { arguments in
+            return TestModel2(array: ["test1"], dic: ["test2": "test3"], model: TestModel3(bool: true))
         }
+        
+//        component.setAction("modelTest3")
+//        { (action, arguments) in
+//            action.promiseReturn(TestModel2(array: ["test1"], dic: ["test2": "test3"], model: TestModel3(bool: true)))
+//        }
         
         component.evalFlexFunc("directTest") { value -> Void in
             print("dirct test suc!!")

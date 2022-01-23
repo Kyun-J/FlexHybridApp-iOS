@@ -26,7 +26,7 @@ extension Dictionary {
         return objects
     }
     
-    func dictionaryBoolCheck() -> [String: Any?] {
+    private func dictionaryBoolCheck() -> [String: Any?] {
         guard let value = self as? [String: Any?] else {
             return [:]
         }
