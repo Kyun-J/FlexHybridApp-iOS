@@ -325,8 +325,8 @@ flexWebView.addAllowUrl(".*.myurl.com", canFlexLoad: true)
 
 ## cookie 유지
 
-**iOS 11.0 이상에서만 사용할 수 있습니다.**
-**이 기능은 아주 기본적인 기능으로, 문제 발생시 직접 cookie 관련 기능을 구현하여 사용하시기 바랍니다.**
+**iOS 11.0 이상에서만 사용할 수 있습니다.**  
+**이 기능은 아주 기본적인 기능으로, 문제 발생시 직접 cookie 관련 기능을 구현하여 사용하시기 바랍니다.**  
 쿠키를 자동으로 유지하는 기능입니다.  
 기본값은 비활성이며, 기능 활성 시 자동으로 동작합니다.  
 앱 내에 해당 기능이 활성화된 FlexWebView들은 모든 쿠키를 공유합니다.
@@ -343,7 +343,7 @@ component.setAutoCookieManage(true, clearAll: true) // activate and delete all c
 
 \$flex Object는 FlexWebView를 와 Promise 형태로 상호간 인터페이스가 구성되어있는 객체입니다.  
 \$flex는 웹뷰에 웹페이지 로드 후, 런타임으로 웹페이지에 선언됩니다.  
-\$flex가 로드 완료되는 시점은, window.onFlexLoad함수를 통해 확인할 수 있습니다.
+\$flex가 로드 완료되는 시점은, window.onFlexLoad함수를 통해 확인할 수 있습니다.  
 \$flex는 액세스 가능한 모든 하위 프레임에서도 사용 할 수 있습니다. (Ex)Cross-Origin을 위반하지 않는 iframe)  
 \$flex Object의 구성 요소는 다음과 같습니다.
 
@@ -359,5 +359,5 @@ $fles.isScript; // false
 ```
 # ToDo
 
-swift5.5 이상에서 async await 적용
+swift5.5 이상에서 async await 적용  
 Flutter 버전 FlexHybirdApp

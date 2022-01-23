@@ -1,3 +1,5 @@
+[한국어 README](https://github.com/Kyun-J/FlexHybridApp-iOS/blob/master/README-ko.md)
+
 [Android Version](https://github.com/Kyun-J/FlexHybridApp-Android)
 
 [Typescript Support](https://github.com/Kyun-J/FlexHybridApp-Script)
@@ -326,8 +328,8 @@ flexWebView.addAllowUrl(".*.myurl.com", canFlexLoad: true)
 
 ## Automanage cookie
 
-**Only available for iOS 11.0 and above.**
-**This feature is a very basic feature, so please implement and use cookie-related features directly in case of a problem.**
+**Only available for iOS 11.0 and above.**  
+**This feature is a very basic feature, so please implement and use cookie-related features directly in case of a problem.**  
 It's a feature that automatically maintains cookies.  
 The default value is inactive and operates automatically when the feature is activated.  
 FlexWebViews with that feature enabled in the app share all cookies.
@@ -359,5 +361,5 @@ $fles.isScript; // false
 ```
 # ToDo
 
-Apply async awit from Swift 5.5.
+Apply async awit from Swift 5.5.  
 Flutter version FlexHybirdApp.
