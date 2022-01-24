@@ -119,7 +119,7 @@ Upon web-to-native interface, Arguments delivered from a function in Web are for
 
 ```js
 // in js
-$flex.funcName("test1", 2, 3.1, true, [0, 1, 2], { test: "object" });
+$flex.funcName("test1", 2, 3.1, true, [0, 1, 2], { test: "object" }, "reified");
 ```
 
 ```swift
@@ -130,8 +130,9 @@ component.setInterface("funcName") { args in
     var second = args[1].asInt() // 2
     var third = args[2].asDouble() // 3.1
     var fourth = args[3].asBool() // true
-    var fifth = args[4].asArray() // array of 0, 1, 2
-    var sixth = args[5].asDictionary() // map of first key - test, value - "object"
+    var fifth = args[4].asArray() // array of FlexData(0), FlexData(1), FlexData(2)
+    var sixth = args[5].asDictionary() // map of first key - test, value - FlexData("object")
+    var seventh: String? = args[6].reified() // "reified"
 }
 ```
 
@@ -334,6 +335,24 @@ FlexWebViews with that feature enabled in the app share all cookies.
 ```swift
 component.setAutoCookieManage(true) // activate
 component.setAutoCookieManage(true, clearAll: true) // activate and delete all cookies 
+```
+
+## Web console message output.
+Displays messages from web console.log, debug, error, and info in the output window of xcode.  
+It is activated by default.  
+
+**This output may not be the same as the console message on web.**
+
+```swift
+component.setShowWebViewConsole(true)
+```
+
+## FileAccess
+
+Ability to set allowAccessFromFileURLs, allowUniversalAccessFromFileURLs at once.
+
+```swift
+component.setAllowsUrlAccessInFile(true)
 ```
 
 # Use in js

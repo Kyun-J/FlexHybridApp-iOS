@@ -116,7 +116,7 @@ Web to native 인터페이스시, Web의 함수에서 전달하는 Arguments들�
 
 ```js
 // in js
-$flex.funcName("test1", 2, 3.1, true, [0, 1, 2], { test: "object" });
+$flex.funcName("test1", 2, 3.1, true, [0, 1, 2], { test: "object" }, "reified");
 ```
 
 ```swift
@@ -127,8 +127,9 @@ component.setInterface("funcName") { args in
     var second = args[1].asInt() // 2
     var third = args[2].asDouble() // 3.1
     var fourth = args[3].asBool() // true
-    var fifth = args[4].asArray() // array of 0, 1, 2
-    var sixth = args[5].asDictionary() // map of first key - test, value - "object"
+    var fifth = args[4].asArray() // array of FlexData(0), FlexData(1), FlexData(2)
+    var sixth = args[5].asDictionary() // map of first key - test, value - FlexData("object")
+    var seventh: String? = args[6].reified() // "reified"
 }
 ```
 
@@ -324,6 +325,7 @@ component.setAllowUrl(".*.myurl.com", canFlexLoad: true)
 
 **iOS 11.0 이상에서만 사용할 수 있습니다.**  
 **이 기능은 아주 기본적인 기능으로, 문제 발생시 직접 cookie 관련 기능을 구현하여 사용하시기 바랍니다.**  
+  
 쿠키를 자동으로 유지하는 기능입니다.  
 기본값은 비활성이며, 기능 활성 시 자동으로 동작합니다.  
 앱 내에 해당 기능이 활성화된 FlexWebView들은 모든 쿠키를 공유합니다.
@@ -333,6 +335,23 @@ component.setAutoCookieManage(true) // activate
 component.setAutoCookieManage(true, clearAll: true) // activate and delete all cookies 
 ```
 
+## Web console 메시지 출력
+web의 console.log, debug, error, info의 메시지를 xcode의 output창에 표시합니다.  
+기본값으로 활성화되어 있습니다.  
+
+**이 출력은 web의 console 메시지와 같지 않을 수 있습니다.**  
+
+```swift
+component.setShowWebViewConsole(true)
+```
+
+## FileAccess
+
+allowFileAccessFromFileURLs, allowUniversalAccessFromFileURLs 항목을 한번에 설정하는 기능.
+
+```swift
+component.setAllowsUrlAccessInFile(true)
+```
 
 # js에서의 사용
 
