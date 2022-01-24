@@ -187,8 +187,8 @@ Action객체를 통해 원하는 위치의 코드에서 값을 리턴 할 수 �
 var mAction: FlexAction? = null
 
 struct LocationResult: Codable {
-  var latitude: Double?
-  var longtitude: Double?
+  var latitude: Double
+  var longtitude: Double
 }
 
 component.setAction("actionTest") { (action, _) in
@@ -201,12 +201,11 @@ func getLocation() {
   var locationResult = LocationResult();
   switch status {
   case .authorizedAlways, .authorizedWhenInUse :
-      var location = Dictionary<String,String?>()
       self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
       self.locationManager.startUpdatingLocation()
       let coor = self.locationManager.location?.coordinate
       mAction?.promiseReturn(
-        LocationResult(latitude: coor?.latitude, longtitude: coor?.longitude)
+        LocationResult(latitude: Double(coor?.latitude ?? 0), longtitude: Double(coor?.longitude ?? 0))
       )
       break
   default:

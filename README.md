@@ -204,12 +204,11 @@ func getLocation() {
   var locationResult = LocationResult();
   switch status {
   case .authorizedAlways, .authorizedWhenInUse :
-      var location = Dictionary<String,String?>()
       self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
       self.locationManager.startUpdatingLocation()
       let coor = self.locationManager.location?.coordinate
       mAction?.promiseReturn(
-        LocationResult(latitude: coor?.latitude, longtitude: coor?.longitude)
+        LocationResult(latitude: Double(coor?.latitude ?? 0), longtitude: Double(coor?.longitude ?? 0))
       )
       break
   default:
