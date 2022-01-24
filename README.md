@@ -17,7 +17,7 @@ Add in Podfile
   pod 'FlexHybridApp'
 ```
 
-***iOS Deployment Target is 10.0**  
+***iOS Deployment Target is 10.0*** 
 
 # Key Features
 
@@ -131,10 +131,7 @@ component.setInterface("funcName") { args in
     val third = args[2].asDouble() // 3.1
     val fourth = args[3].asBoolean() // true
     val fifth = args[4].asArray() // array of 0, 1, 2
-    val sixth = args[5].asMap() // map of first key - test, value - "object"
-
-    val argsArray: Array<FlexData> = args.toArray()
-    val argsList: List<FlexData> = args.toList()
+    val sixth = args[5].asDictionary() // map of first key - test, value - "object"
 }
 ```
 

@@ -5,7 +5,7 @@
 # FlexibleHybrid
 
 WKWebView와 Native간 인터페이스 간소화, 비동기 처리를 비롯하여  
-WKWebView사용에 여러 편의 기능을 제공하는 라이브러리입니다.
+WKWebView사용에 여러 편의 기능을 제공하는 프레임워크입니다.
 
 # framework 추가 방법
 
@@ -128,10 +128,7 @@ component.setInterface("funcName") { args in
     val third = args[2].asDouble() // 3.1
     val fourth = args[3].asBoolean() // true
     val fifth = args[4].asArray() // array of 0, 1, 2
-    val sixth = args[5].asMap() // map of first key - test, value - "object"
-
-    val argsArray: Array<FlexData> = args.toArray()
-    val argsList: List<FlexData> = args.toList()
+    val sixth = args[5].asDictionary() // map of first key - test, value - "object"
 }
 ```
 
