@@ -126,12 +126,12 @@ $flex.funcName("test1", 2, 3.1, true, [0, 1, 2], { test: "object" });
 component.setInterface("funcName") { args in
     if (args == nil) return
 
-    val first = args[0].asString() // "test"
-    val second = args[1].asInt() // 2
-    val third = args[2].asDouble() // 3.1
-    val fourth = args[3].asBoolean() // true
-    val fifth = args[4].asArray() // array of 0, 1, 2
-    val sixth = args[5].asDictionary() // map of first key - test, value - "object"
+    var first = args[0].asString() // "test"
+    var second = args[1].asInt() // 2
+    var third = args[2].asDouble() // 3.1
+    var fourth = args[3].asBool() // true
+    var fifth = args[4].asArray() // array of 0, 1, 2
+    var sixth = args[5].asDictionary() // map of first key - test, value - "object"
 }
 ```
 
