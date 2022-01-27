@@ -2,7 +2,7 @@
 
 [Android Version](https://github.com/Kyun-J/FlexHybridApp-Android)
 
-[Typescript Support](https://github.com/Kyun-J/FlexHybridApp-Script)
+[Typescript Support](https://github.com/Kyun-J/FlexHybridApp-Scripts)
 
 # FlexibleHybrid
 
