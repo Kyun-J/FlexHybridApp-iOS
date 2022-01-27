@@ -142,8 +142,8 @@ class ViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHan
         
         // setBaseUrl
         component.setBaseUrl("file://")
-        component.setAllowUrl(".*.facebook.com", canFlexLoad: false)
-        component.setAllowUrl(".*.google.com", canFlexLoad: true)
+        component.addAllowUrl(".*.facebook.com", canFlexLoad: false)
+        component.addAllowUrl(".*.google.com", canFlexLoad: true)
         component.setInterfaceTimeout(0)
 //        component.setFlexOnloadWait(0)
         component.setAllowsUrlAccessInFile(true)

@@ -48,6 +48,8 @@ struct FlexMsg {
             t = "LOG 🟢"
         case FlexString.FLOG_ERROR:
             t = "ERROR 🛑"
+        case FlexString.FLOG_WARN:
+            t = "WRAN 🟠"
         case FlexString.FLOG_DEBUG:
             t = "DEBUG 🔶"
         case FlexString.FLOG_INFO:

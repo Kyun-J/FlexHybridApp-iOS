@@ -14,7 +14,7 @@ struct FlexString {
     static let ERROR3 = "Only possible nil, Int, Double, Float, Character, String, Dictionary<String,Any>, Array<Any>, FlexReject, Codable."
     static let ERROR4 = "FlexWebView to run javascript is null."
     static let ERROR5 = "The Interface or Action with the same name is already registered."
-    static let ERROR6 = "The BaseUrl can only use file, http, https protocols."
+    static let ERROR6 = "String included in Baseurl's regular expression rule cannot be set to allowUrl."
     static let ERROR7 = "PromiseReturn cannot be called twice in a single FlexAction."
     static let ERROR8 = "The type of data stored in FlexData and the type called are not identical."
     
@@ -22,6 +22,7 @@ struct FlexString {
     static let FLOG_ERROR = "flexerror"
     static let FLOG_DEBUG = "flexdebug"
     static let FLOG_INFO = "flexinfo"
+    static let FLOG_WARN = "flexwarn"
 
     static let FLEX_RETURN = "flexreturn"
     static let FLEX_LOAD = "flexload"
@@ -31,7 +32,7 @@ struct FlexString {
     static let EVT_TINEOUT = "flexTimeout"
     static let EVT_INIT = "flexInit"
 
-    static let FLEX_DEFINE = [FLOG_LOG, FLOG_ERROR, FLOG_DEBUG, FLOG_INFO, FLEX_RETURN, FLEX_LOAD, EVT_SUC, EVT_EXC, EVT_TINEOUT, EVT_INIT]
+    static let FLEX_DEFINE = [FLOG_LOG, FLOG_ERROR, FLOG_DEBUG, FLOG_INFO, FLOG_WARN, FLEX_RETURN, FLEX_LOAD, EVT_SUC, EVT_EXC, EVT_TINEOUT, EVT_INIT]
         
     static let CHECKBOOL = UUID().uuidString
 }

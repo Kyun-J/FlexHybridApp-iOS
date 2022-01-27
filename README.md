@@ -17,7 +17,7 @@ Add in Podfile
   pod 'FlexHybridApp'
 ```
 
-***iOS Deployment Target is 10.0*** 
+**_iOS Deployment Target is 10.0_**
 
 # Key Features
 
@@ -30,7 +30,6 @@ Add in Podfile
 5. By specifying an Url capable of interface operation, you can prevent **Native calls from unwanted sites**.
 
 and include other features...
-
 
 ## FlexComponent
 
@@ -145,7 +144,6 @@ At this time, the following rules apply.
 2. In the Web, it is converted into an object form.
 3. When receiving Model Objects from Native as Arguments, you must deliver only one object corresponding to that model on the Web.
 
-
 ```swift
 // in swift
 struct TestModel: Codable {
@@ -199,7 +197,7 @@ component.setAction("actionTest") { (action, _) in
     self.getLocation()
 }
 
-func getLocation() {              
+func getLocation() {
   let status = CLLocationManager.authorizationStatus()
   var locationResult = LocationResult();
   switch status {
@@ -311,16 +309,18 @@ component.setBaseUrl(".*.myurl.com")
 
 ### AllowUrlList
 
+**Only available for iOS 11.0 and above.**
+
 Setting the AllowUrlList blocks access to all url except for the set url and BaseUrl.
 
 ```swift
-component.setAllowUrl(".*.myurl.com")
+component.addAllowUrl(".*.myurl.com")
 ```
 
-To allow an interface when setting up a URL, add true to the second canFlexLoad property of the setAllowUrl function.
+To allow an interface when setting up a URL, add true to the second canFlexLoad property of the addAllowUrl function.
 
 ```swift
-component.setAllowUrl(".*.myurl.com", canFlexLoad: true)
+component.addAllowUrl(".*.myurl.com", canFlexLoad: true)
 ```
 
 ## Automanage cookie
@@ -333,12 +333,13 @@ FlexWebViews with that feature enabled in the app share all cookies.
 
 ```swift
 component.setAutoCookieManage(true) // activate
-component.setAutoCookieManage(true, clearAll: true) // activate and delete all cookies 
+component.setAutoCookieManage(true, clearAll: true) // activate and delete all cookies
 ```
 
 ## Web console message output.
-Displays messages from web console.log, debug, error, and info in the output window of xcode.  
-It is activated by default.  
+
+Displays messages from web console.log, debug, error, warn, and info in the output window of xcode.  
+It is activated by default.
 
 **This output may not be the same as the console message on web.**
 
@@ -374,6 +375,7 @@ $flex.isAndroid; // false
 $flex.isiOS; // true
 $fles.isScript; // false
 ```
+
 # ToDo
 
 Apply async awit from Swift 5.5.  

@@ -180,15 +180,17 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     public func setBaseUrl(_ url: String) {
         if isFirstPageLoad {
             FlexMsg.err(FlexString.ERROR1)
-        } else if url.prefix(7) != "file://" && url.prefix(7) != "http://" && url.prefix(8) != "https://" {
-            FlexMsg.err(FlexString.ERROR6)
         } else {
             baseUrl = url
         }
     }
     
     @available(iOS 11.0, *)
-    public func setAllowUrl(_ urlString: String, canFlexLoad: Bool = false) {
+    public func addAllowUrl(_ urlString: String, canFlexLoad: Bool = false) {
+        if let baseUrl = baseUrl, urlString.range(of: baseUrl, options: .regularExpression) != nil {
+            FlexMsg.err(FlexString.ERROR6)
+            return
+        }
         allowUrlMap[urlString] = canFlexLoad
         configAllowContentRule()
     }
@@ -207,7 +209,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     
     @available(iOS 11.0, *)
     private func configAllowContentRule() {
-        var rule = [["trigger":["url-filter":".*"],"action":["type":"block"]]]
+        var rule = [["trigger":["url-filter":".*", "resource-type":["document"]],"action":["type":"block"]]]
         if let _baseUrl = baseUrl {
             rule.append(["trigger":["url-filter":"\(_baseUrl)"],"action":["type":"ignore-previous-rules"]])
         }
@@ -512,7 +514,7 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
                 queue.async {
                     switch(mName) {
                     // WebLogs
-                    case FlexString.FLOG_LOG, FlexString.FLOG_INFO, FlexString.FLOG_DEBUG, FlexString.FLOG_ERROR:
+                    case FlexString.FLOG_LOG, FlexString.FLOG_INFO, FlexString.FLOG_DEBUG, FlexString.FLOG_ERROR, FlexString.FLOG_WARN:
                         if self.showWebViewConsole {
                             FlexMsg.webLog(mName, data["arguments"] as! [Any?])
                         }
@@ -658,13 +660,14 @@ open class FlexComponent: NSObject, WKNavigationDelegate, WKScriptMessageHandler
     public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         if let url = webView.url {
             var needFlexLoad = false
-            if baseUrl == nil || (baseUrl != nil && url.absoluteString.contains(baseUrl!)) {
+            if let baseUrl = baseUrl, url.absoluteString.range(of: baseUrl, options: .regularExpression) != nil {
                 needFlexLoad = true
-            }
-            for (pattern, canLoadFlex) in allowUrlMap {
-                if url.absoluteString.range(of: pattern, options: .regularExpression) != nil {
-                    needFlexLoad = canLoadFlex
-                    break
+            } else {
+                for (pattern, canLoadFlex) in allowUrlMap {
+                    if url.absoluteString.range(of: pattern, options: .regularExpression) != nil {
+                        needFlexLoad = canLoadFlex
+                        break
+                    }
                 }
             }
             if needFlexLoad {

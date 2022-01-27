@@ -1,6 +1,6 @@
 [Android Version](https://github.com/Kyun-J/FlexHybridApp-Android)
 
-[Typescript Support](https://github.com/Kyun-J/FlexHybridApp-Script)
+[Typescript Support](https://github.com/Kyun-J/FlexHybridApp-Scripts)
 
 # FlexibleHybrid
 
@@ -15,7 +15,7 @@ Podfile에 다음을 추가
   pod 'FlexHybridApp'
 ```
 
-***iOS Deployment Target은 10.0 입니다.***  
+**_iOS Deployment Target은 10.0 입니다._**
 
 # Flex 프레임워크 주요 특징
 
@@ -112,7 +112,7 @@ component.evalFlexFunc("funcName", "sendData") { response in
 ## FlexData
 
 Web에서 전달받은 데이터는 TypeSafe하게 불러오기 위하여 FlexData 객체로 변환됩니다.  
-Web to native 인터페이스시, Web의 함수에서 전달하는 Arguments들은 Array\<FlexData\>로 전달됩니다.  
+Web to native 인터페이스시, Web의 함수에서 전달하는 Arguments들은 Array\<FlexData\>로 전달됩니다.
 
 ```js
 // in js
@@ -141,7 +141,6 @@ component.setInterface("funcName") { args in
 1. Model Object는 **Codable를 Inheritance** 해야 합니다.
 2. Web에서는 Object 형태로 변환됩니다.
 3. Native에서 Model Object를 Arguments로 받을 때는, Web에서 해당 Model에 대응되는 Object 하나만 전달해야 합니다.
-
 
 ```swift
 // in swift
@@ -196,7 +195,7 @@ component.setAction("actionTest") { (action, _) in
     self.getLocation()
 }
 
-func getLocation() {              
+func getLocation() {
   let status = CLLocationManager.authorizationStatus()
   var locationResult = LocationResult();
   switch status {
@@ -308,37 +307,40 @@ component.setBaseUrl(".*.myurl.com")
 
 ### AllowUrlList
 
-AllowUrlList을 설정하면, 설정된 url들과 BaseUrl을 제외한 모든 url의 접근이 차단됩니다.  
+**iOS 11.0 이상에서만 사용할 수 있습니다.**
+
+AllowUrlList을 설정하면, 설정된 url들과 BaseUrl을 제외한 모든 url의 접근이 차단됩니다.
 
 ```swift
-component.setAllowUrl(".*.myurl.com")
+component.addAllowUrl(".*.myurl.com")
 ```
 
 URL설정 시 인터페이스를 허용하려면 setAllowUrl함수의 두번째 canFlexLoad 프로퍼티에 true를 추가하면 됩니다.
 
 ```swift
-component.setAllowUrl(".*.myurl.com", canFlexLoad: true)
+component.addAllowUrl(".*.myurl.com", canFlexLoad: true)
 ```
 
 ## cookie 유지
 
 **iOS 11.0 이상에서만 사용할 수 있습니다.**  
-**이 기능은 아주 기본적인 기능으로, 문제 발생시 직접 cookie 관련 기능을 구현하여 사용하시기 바랍니다.**  
-  
+**이 기능은 아주 기본적인 기능으로, 문제 발생시 직접 cookie 관련 기능을 구현하여 사용하시기 바랍니다.**
+
 쿠키를 자동으로 유지하는 기능입니다.  
 기본값은 비활성이며, 기능 활성 시 자동으로 동작합니다.  
 앱 내에 해당 기능이 활성화된 FlexWebView들은 모든 쿠키를 공유합니다.
 
 ```swift
 component.setAutoCookieManage(true) // activate
-component.setAutoCookieManage(true, clearAll: true) // activate and delete all cookies 
+component.setAutoCookieManage(true, clearAll: true) // activate and delete all cookies
 ```
 
 ## Web console 메시지 출력
-web의 console.log, debug, error, info의 메시지를 xcode의 output창에 표시합니다.  
-기본값으로 활성화되어 있습니다.  
 
-**이 출력은 web의 console 메시지와 같지 않을 수 있습니다.**  
+web의 console.log, debug, error, info, warn의 메시지를 xcode의 output창에 표시합니다.  
+기본값으로 활성화되어 있습니다.
+
+**이 출력은 web의 console 메시지와 같지 않을 수 있습니다.**
 
 ```swift
 component.setShowWebViewConsole(true)
@@ -372,6 +374,7 @@ $flex.isAndroid; // false
 $flex.isiOS; // true
 $fles.isScript; // false
 ```
+
 # ToDo
 
 swift5.5 이상에서 async await 적용  
