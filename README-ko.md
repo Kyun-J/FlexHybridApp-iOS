@@ -72,20 +72,7 @@ test(200);
 
 ### 인터페이스 등록
 
-1. [FlexHybridApp-Script](https://github.com/Kyun-J/FlexHybridApp-Scripts) 적용시
-
-```js
-// in js
-$flex.web.funcName = async (req) => {
-  return await new Promise((resolve) => {
-    setTimeout(() => resolve(`received from web - ${req}`), 100);
-  });
-};
-```
-
-2. 미적용시
-
-`window.onFlexLoad` 함수를 통해 \$flex 객체의 로드를 확인한 후 인터페이스를 등록하여햐 합니다.
+\$flex 객체가 로드 된 후 (`window.onFlexLoad` 함수로 \$flex 로드 시점 확인 가능) 인터페이스를 등록하여햐 합니다.
 
 ```js
 // in js

@@ -74,20 +74,7 @@ test(200);
 
 ### Interface registration
 
-1. When apply [FlexHybridApp-Script](https://github.com/Kyun-J/FlexHybridApp-Scripts)
-
-```js
-// in js
-$flex.web.funcName = async (req) => {
-  return await new Promise((resolve) => {
-    setTimeout(() => resolve(`received from web - ${req}`), 100);
-  });
-};
-```
-
-2. Not apply
-
-After checking the load of the \$flex object through the `window.onFlexLoad` function, register the interface.
+After the \$flex object is loaded (the `window.onFlexLoad` function can be checked on the \$flex Load time), register the interface.
 
 ```js
 // in js
