@@ -56,22 +56,6 @@ struct DeviceInfo {
         let identifier = self.getDeviceIdentifier()
         
         switch identifier {
-        case "iPhone1,1" :
-            return "iPhone"
-        case "iPhone1,2" :
-            return "iPhone3G"
-        case "iPhone2,1" :
-            return "iPhone3GS"
-        case "iPhone3,1", "iPhone3,2", "iPhone3,3" :
-            return "iPhone4"
-        case "iPhone4,1" :
-            return "iPhone4s"
-        case "iPhone5,1", "iPhone5,2" :
-            return "iPhone5"
-        case "iPhone5,3", "iPhone5,4" :
-            return "iPhone5c"
-        case "iPhone6,1", "iPhone6,2" :
-            return "iPhone5s"
         case "iPhone7,2" :
             return "iPhone6"
         case "iPhone7,1" :
@@ -120,6 +104,8 @@ struct DeviceInfo {
             return "iPhone_13_Pro"
         case "iPhone14,3":
             return "iPhone_13_Pro_Max"
+        case "iPhone14,6":
+            return "iPhone_SE_3rd_Generation"
         default:
             return "Unknown_iPhone_\(identifier)"
         }
@@ -171,6 +157,8 @@ struct DeviceInfo {
             return "iPad_Air3"
         case "iPad13,1", "iPad13,2" :
             return "iPad_Air4"
+        case "iPad13,16", "iPad13,17" :
+            return "iPad_Air5"
             
         case "iPad6,7", "iPad6,8" :
             return "iPad_Pro_12.9"
@@ -189,7 +177,7 @@ struct DeviceInfo {
         case "iPad8,11", "iPad8,12" :
             return "iPad_Pro_12.9_4th_Generation"
         case "iPad13,4", "iPad13,5", "iPad13,6", "iPad13,7" :
-            return "iPad_Pro_11_3nd_Generation"
+            return "iPad_Pro_11_3rd_Generation"
         case "iPad13,8", "iPad13,9", "iPad13,10", "iPad13,11" :
             return "iPad_Pro_12.9_5th_Generation"
             
